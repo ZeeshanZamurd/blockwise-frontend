@@ -1,0 +1,1960 @@
+{
+	"info": {
+		"_postman_id": "4c867d48-7924-46fe-b0c3-b417f8d1038e",
+		"name": "BlockWise-FE",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "46344727",
+		"_collection_link": "https://osama-8540415.postman.co/workspace/Osama's-Workspace~a8bfd64f-5d98-4d64-82a9-b75dd0c1fd8c/collection/46344727-4c867d48-7924-46fe-b0c3-b417f8d1038e?action=share&source=collection_link&creator=46344727"
+	},
+	"item": [
+		{
+			"name": "Signup",
+			"item": [
+				{
+					"name": "Step 1 - User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"osamaaaiq@gmail.comm\",\r\n    \"password\": \"222123\",\r\n    \"roleId\": 1,\r\n    \"firstName\": \"invited\",\r\n    \"lastName\": \"user\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/user",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"user"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Step 1 - User",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"email\": \"sullmaww222@gmail.com\",\r\n    \"password\": \"222123\",\r\n    \"roleId\": 1,\r\n    \"firstName\": \"osama\",\r\n    \"lastName\": \"sadeed\",\r\n    \"invitedUser\": false  \r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/api/user",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"api",
+										"user"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Sat, 06 Sep 2025 10:31:41 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"User registered successfully\",\n    \"data\": {\n        \"userId\": 7,\n        \"firstName\": \"osama\",\n        \"lastName\": \"sadeed\",\n        \"email\": \"sullmaww222@gmail.com\",\n        \"roleName\": \"DIRECTOR\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Step 2 - Building",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"userId\":7,\r\n    \"buildingName\": \"rockville\",\r\n    \"buildingAddress\": \"Gulberg greens, Islamabad\",\r\n    \"numberOfFlats\": 20\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/building/create",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"building",
+								"create"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Step 2 - Building",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"userId\":7,\r\n    \"buildingName\": \"rockville\",\r\n    \"buildingAddress\": \"Gulberg greens, Islamabad\",\r\n    \"numberOfFlats\": 20\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/api/building/create",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"api",
+										"building",
+										"create"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Sat, 06 Sep 2025 10:35:41 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Building created, linked to director, and username generated\",\n    \"data\": {\n        \"buildingId\": 12,\n        \"buildingName\": \"rockville\",\n        \"userId\": 7,\n        \"firstName\": \"osama\",\n        \"lastName\": \"sadeed\",\n        \"email\": \"sullmaww222@gmail.com\",\n        \"roleName\": \"DIRECTOR\",\n        \"userName\": \"osama.sadeed\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Step 3 - Sent Invites",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"buildingId\":1,\r\n    \"invitedEmails\" : [\r\n        \"osamaaaiq@gmail.com\",\r\n        \"waleed@gmail.com\"\r\n    ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/building/invite",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"building",
+								"invite"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Building",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"directorId\":1,\r\n    \"buildingName\": \"rockville\",\r\n    \"buildingAddress\": \"Gulberg greens, Islamabad\",\r\n    \"numberOfFlats\": 20\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://bc6d4fe14d98.ngrok-free.app/api/buildings/create",
+									"protocol": "https",
+									"host": [
+										"bc6d4fe14d98",
+										"ngrok-free",
+										"app"
+									],
+									"path": [
+										"api",
+										"buildings",
+										"create"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Date",
+									"value": "Sun, 10 Aug 2025 10:14:27 GMT"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "Ngrok-Agent-Ips",
+									"value": "154.192.0.90"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "X-Xss-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Building created and linked to director\",\n    \"data\": {\n        \"id\": 1,\n        \"buildingName\": \"rockville\",\n        \"buildingAddress\": \"Gulberg greens, Islamabad\",\n        \"numFlats\": 20,\n        \"uniqueEmail\": \"rockville-b476fb@buildings.blocwise.co\",\n        \"createdAt\": \"2025-08-10T15:14:27.61998\",\n        \"directors\": []\n    }\n}"
+						},
+						{
+							"name": "Step 2 - Building",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"directorId\":5,\r\n    \"buildingName\": \"Safa Agge\",\r\n    \"buildingAddress\": \"Gulberg greens, Islamabad\",\r\n    \"numberOfFlats\": 40\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:8080/api/buildings/create",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"buildings",
+										"create"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 13 Aug 2025 15:24:30 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Building created, linked to director, and username generated\",\n    \"data\": {\n        \"id\": 5,\n        \"username\": \"osama.iqbal\",\n        \"firstName\": \"osama\",\n        \"lastName\": \"iqbal\",\n        \"email\": \"osama.iqbal@gmail.com\",\n        \"password\": \"$2a$10$MFxmL.FpPgsAUygcrZyl7eVlE2Pzl0Z1347vpPqDvr7gmziGYMJtS\",\n        \"createdAt\": \"2025-08-13T20:23:40.723935\",\n        \"building\": {\n            \"id\": 5,\n            \"buildingName\": \"Safa Agge\",\n            \"buildingAddress\": \"Gulberg greens, Islamabad\",\n            \"numFlats\": 40,\n            \"uniqueEmail\": \"safaagge-0184@building.blocwise.co\",\n            \"createdAt\": \"2025-08-13T20:24:30.833579\",\n            \"directors\": []\n        }\n    },\n    \"errors\": \"Generated username: osama.iqbal\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Roles - List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/api/roles",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"roles"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Roles",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseURL}}/api/roles",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"api",
+										"roles"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Sat, 06 Sep 2025 10:41:07 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Invitations sent successfully\",\n    \"data\": [\n        {\n            \"id\": 1,\n            \"roleName\": \"DIRECTOR\",\n            \"status\": true,\n            \"roleDesc\": \"Manage the building\",\n            \"createdAt\": \"2025-09-06T14:47:07.695365\",\n            \"updatedAt\": \"2025-09-06T14:47:07.695365\"\n        },\n        {\n            \"id\": 2,\n            \"roleName\": \"BOARD MANAGER\",\n            \"status\": true,\n            \"roleDesc\": \"Manage the building\",\n            \"createdAt\": \"2025-09-06T14:47:07.695365\",\n            \"updatedAt\": \"2025-09-06T14:47:07.695365\"\n        },\n        {\n            \"id\": 3,\n            \"roleName\": \"AGENT\",\n            \"status\": true,\n            \"roleDesc\": \"Manage the building\",\n            \"createdAt\": \"2025-09-06T14:47:07.695365\",\n            \"updatedAt\": \"2025-09-06T14:47:07.695365\"\n        }\n    ]\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Login",
+			"item": [
+				{
+					"name": "login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "\r\n{\r\n  \"email\": \"osamaaaiq@gmail.comm\",\r\n  \"password\": \"222123\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/auth/login",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "login",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "\r\n{\r\n  \"email\": \"osamaaaiq@gmail.comm\",\r\n  \"password\": \"222123\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/api/auth/login",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"api",
+										"auth",
+										"login"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Sun, 14 Sep 2025 09:01:08 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"token\": \"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJvc2FtYWFhaXFAZ21haWwuY29tbSIsInJvbGUiOiJESVJFQ1RPUiIsInVzZXJuYW1lIjoiaW52aXRlZC5vc2FtYSIsImJ1aWxkaW5nSWQiOjcsImJ1aWxkaW5nRW1haWwiOiJzYWZhYWdnZS00NDI5QGJ1aWxkaW5nLmJsb2N3aXNlLmNvIiwiaWF0IjoxNzU3ODQwNDY4LCJleHAiOjE3NTc4NDQwNjh9.HPHTz_yEOjZfN2Xx7UNisWxK9i1Y1QkJ3vVWpaOjYKM\",\n    \"expiresAt\": \"2025-09-14T10:01:08.645+00:00\"\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Building",
+			"item": [
+				{
+					"name": "Building Details",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJvc2FtYWFhaXFAZ21haWwuY29tbSIsInJvbGUiOiJESVJFQ1RPUiIsInVzZXJuYW1lIjoiaW52aXRlZC5vc2FtYSIsImJ1aWxkaW5nSWQiOjcsImJ1aWxkaW5nRW1haWwiOiJzYWZhYWdnZS00NDI5QGJ1aWxkaW5nLmJsb2N3aXNlLmNvIiwiaWF0IjoxNzU3ODQwNDY4LCJleHAiOjE3NTc4NDQwNjh9.HPHTz_yEOjZfN2Xx7UNisWxK9i1Y1QkJ3vVWpaOjYKM",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/api/building/detail",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"building",
+								"detail"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Building Details",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseURL}}/api/building/detail",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"api",
+										"building",
+										"detail"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Sun, 14 Sep 2025 09:12:06 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Building details fetched successfully\",\n    \"data\": {\n        \"buildingId\": 7,\n        \"buildingName\": \"Safa Agge\",\n        \"buildingAddress\": \"Gulberg greens, Islamabad\",\n        \"numberOfFlats\": 40,\n        \"uniqueEmail\": \"safaagge-4429@building.blocwise.co\",\n        \"users\": [\n            {\n                \"id\": 9,\n                \"username\": \"invited.user\",\n                \"firstName\": \"invited\",\n                \"lastName\": \"user\",\n                \"email\": \"osamaaaiq@gmail.com\",\n                \"roleName\": \"DIRECTOR\"\n            },\n            {\n                \"id\": 10,\n                \"username\": \"invited.user1\",\n                \"firstName\": \"invited\",\n                \"lastName\": \"user\",\n                \"email\": \"waleed@gmail.com\",\n                \"roleName\": \"DIRECTOR\"\n            },\n            {\n                \"id\": 12,\n                \"username\": \"invited.osama\",\n                \"firstName\": \"invited\",\n                \"lastName\": \"user\",\n                \"email\": \"osamaaaiq@gmail.comm\",\n                \"roleName\": \"DIRECTOR\"\n            }\n        ]\n    }\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Issues",
+			"item": [
+				{
+					"name": "get issues by building Id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/issues/building/7",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"issues",
+								"building",
+								"7"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "issues",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8080/issues/building/7",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"issues",
+										"building",
+										"7"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Sat, 16 Aug 2025 13:52:48 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"id\": 1,\n        \"buildingId\": 7,\n        \"emailId\": 5,\n        \"issueName\": \"Replace service kit\",\n        \"issueDesc\": \"Boiler 4 has high carbon monoxide levels necessitating a service kit replacement for safety.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T15:14:31.421026\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 2,\n        \"buildingId\": 7,\n        \"emailId\": 5,\n        \"issueName\": \"Adjust stack\",\n        \"issueDesc\": \"Incorrect positioning of stacks for Booster Pumps 1&2 may lead to inefficiencies and potential damage.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T15:14:31.424315\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 3,\n        \"buildingId\": 7,\n        \"emailId\": 6,\n        \"issueName\": \"Conduct review\",\n        \"issueDesc\": \"Need approval to carry out a Gap Analysis for the Building Safety Case.\",\n        \"issueCategory\": \"Major Works\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T15:21:05.150878\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 4,\n        \"buildingId\": 7,\n        \"emailId\": 6,\n        \"issueName\": \"Confirm approval\",\n        \"issueDesc\": \"Approval is required to proceed with the review by Encore.\",\n        \"issueCategory\": \"Administrative\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T15:21:05.152598\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 5,\n        \"buildingId\": 7,\n        \"emailId\": 7,\n        \"issueName\": \"Boiler 4 Service Kit Replacement\",\n        \"issueDesc\": \"High carbon monoxide level necessitates service kit replacement for safety.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:00:09.106313\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 6,\n        \"buildingId\": 7,\n        \"emailId\": 7,\n        \"issueName\": \"Booster Pump 1&2 Stack Adjustment\",\n        \"issueDesc\": \"Misalignment of stack in Booster Pumps could cause operational inefficiencies.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:00:09.11018\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 7,\n        \"buildingId\": 7,\n        \"emailId\": 8,\n        \"issueName\": \"Building Safety Case Review Approval\",\n        \"issueDesc\": \"Director approval is needed for the Gap Analysis review.\",\n        \"issueCategory\": \"Administrative\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:01:21.985765\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 8,\n        \"buildingId\": 7,\n        \"emailId\": 8,\n        \"issueName\": \"Encore Review Cost Confirmation\",\n        \"issueDesc\": \"Confirmation required for £1000+VAT review cost.\",\n        \"issueCategory\": \"Administrative\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:01:21.986806\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 9,\n        \"buildingId\": 7,\n        \"emailId\": 9,\n        \"issueName\": \"AGM Meeting Reschedule\",\n        \"issueDesc\": \"The AGM meeting date has been postponed to Thursday.\",\n        \"issueCategory\": \"Meetings\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:04:45.679878\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 10,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Reinstatement\",\n        \"issueDesc\": \"Emergency auto-dialler is inoperative, requiring urgent action.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.776364\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 11,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Sign Installation\",\n        \"issueDesc\": \"Installation of 'Do Not Use Lift in Fire' signs needed.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.778402\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 12,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Spare Parts Supply\",\n        \"issueDesc\": \"Critical spare parts need to be supplied and stored.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.779283\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 13,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Danger Notice Installation\",\n        \"issueDesc\": \"Installation of a 415V danger notice is required.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.78089\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 14,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Pit Cleaning\",\n        \"issueDesc\": \"Cleaning and painting of the lift pit is necessary.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.781993\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 15,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Deep Pit Notice\",\n        \"issueDesc\": \"Installation of a 'Beware Deep Pit' notice required.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.783118\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 16,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Counterweight Painting\",\n        \"issueDesc\": \"Counterweight needs to be painted safety yellow.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.785061\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 17,\n        \"buildingId\": 7,\n        \"emailId\": 13,\n        \"issueName\": \"Front Passenger Lift Repair\",\n        \"issueDesc\": \"Emergency auto-dialler inoperative, urgent reinstatement required.\",\n        \"issueCategory\": \"Major Works\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:26.169441\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 18,\n        \"buildingId\": 7,\n        \"emailId\": 13,\n        \"issueName\": \"Front Passenger Lift Improvement\",\n        \"issueDesc\": \"Installation of 'Do Not Use Lift in Fire' signs needed.\",\n        \"issueCategory\": \"Major Works\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:26.171452\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 19,\n        \"buildingId\": 7,\n        \"emailId\": 13,\n        \"issueName\": \"Front Passenger Lift Spare Parts\",\n        \"issueDesc\": \"Critical spare parts need to be supplied and stored.\",\n        \"issueCategory\": \"Major Works\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:26.172717\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 20,\n        \"buildingId\": 7,\n        \"emailId\": 14,\n        \"issueName\": \"Front Passenger Lift Reinstatement\",\n        \"issueDesc\": \"Emergency auto-dialler inoperative, needs reinstatement of telephone line.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:29.547405\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 21,\n        \"buildingId\": 7,\n        \"emailId\": 14,\n        \"issueName\": \"Front Passenger Lift Sign Installation\",\n        \"issueDesc\": \"Installation of 'Do Not Use Lift in Fire' signs is required.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:29.549556\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 22,\n        \"buildingId\": 7,\n        \"emailId\": 14,\n        \"issueName\": \"Front Passenger Lift Spare Parts Supply\",\n        \"issueDesc\": \"Critical spare parts need to be supplied and stored.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:29.550669\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 23,\n        \"buildingId\": 7,\n        \"emailId\": 14,\n        \"issueName\": \"Front Passenger Lift Danger Notice Installation\",\n        \"issueDesc\": \"A 415V danger notice needs to be installed for health and safety compliance.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:29.551833\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 24,\n        \"buildingId\": 7,\n        \"emailId\": 14,\n        \"issueName\": \"Front Passenger Lift Cleaning and Painting\",\n        \"issueDesc\": \"The lift pit requires cleaning, painting, and installation of oil collector trays.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:29.553647\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 25,\n        \"buildingId\": 7,\n        \"emailId\": 14,\n        \"issueName\": \"Front Passenger Lift Deep Pit Notice Installation\",\n        \"issueDesc\": \"A 'Beware Deep Pit' notice needs to be installed.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:29.558512\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 26,\n        \"buildingId\": 7,\n        \"emailId\": 14,\n        \"issueName\": \"Front Passenger Lift Counterweight Painting\",\n        \"issueDesc\": \"The counterweight must be painted safety yellow.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:29.560726\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "get issues by Issue Id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/issues/16",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"issues",
+								"16"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Issue Details",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseURL}}/issues/16",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"issues",
+										"16"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Sat, 13 Sep 2025 08:48:14 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Building details fetched successfully\",\n    \"data\": {\n        \"id\": 16,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Counterweight Painting\",\n        \"issueDesc\": \"Counterweight needs to be painted safety yellow.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"NOT_STARTED\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.785061\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": [\n            {\n                \"messageId\": \"759174eb-2940-4361-83ee-af38f87576e8\",\n                \"inReplyTo\": \"\",\n                \"fromEmail\": \"osamaaaiq@gmail.com\",\n                \"toEmail\": \"safaagge-4429@building.blocwise.co\",\n                \"subject\": \"Front Passenger Lift Quote- Directors Approval Required\",\n                \"bodyText\": \"Dear Directors,\\n\\n\\n\\n\\n\\nThe lift company has provided a quotation for works required for the front\\npassenger lift, based on issues raised in the LOLER/Insurance reports and\\nby their service engineers.\\n\\n\\n\\nThey strongly recommend urgent action for items in Sections A & B.\\n\\n\\n\\n   - *Section A (Immediate Attention – LOLER Defect)*:\\n      - The emergency auto-dialler is inoperative, requiring reinstatement\\n      of the telephone line or installation of a GSM unit (£1,333.99).\\n   - *Section B (Performance & Reliability Improvements)*:\\n      - Install “Do Not Use Lift in Fire” signs (£178–£394.08).\\n      - Supply and store critical spare parts (£1,704.00).\\n   - *Section C (Health & Safety Compliance)*:\\n      - Install a 415V danger notice (£110.00).\\n      - Clean and paint the lift pit, add oil collector trays (£715.99).\\n      - Install a \\\"Beware Deep Pit\\\" notice (£110.00).\\n      - Paint the counterweight safety yellow (£631.99).\\n\\n\\n\\nPlease advise on how you wish to proceed\\n\",\n                \"bodyHtml\": \"<div dir=\\\"ltr\\\"><p class=\\\"MsoNormal\\\"><span style=\\\"font-size:11pt;font-family:Calibri,sans-serif\\\">Dear Directors,<u></u><u></u></span></p><p class=\\\"MsoNormal\\\"><span style=\\\"font-size:11pt;font-family:Calibri,sans-serif\\\"><u></u> <u></u></span></p><p class=\\\"MsoNormal\\\"><span style=\\\"font-size:11pt;font-family:Calibri,sans-serif\\\"><u></u> <u></u></span></p><p class=\\\"MsoNormal\\\"><span style=\\\"font-size:11pt;font-family:Calibri,sans-serif\\\">The lift company has provided a quotation for works required for the front passenger lift, based on issues raised in the LOLER/Insurance reports and by their service engineers.<u></u><u></u></span></p><p class=\\\"MsoNormal\\\"><span style=\\\"font-size:11pt;font-family:Calibri,sans-serif\\\"><u></u> <u></u></span></p><p class=\\\"MsoNormal\\\"><span style=\\\"font-size:11pt;font-family:Calibri,sans-serif\\\">They strongly recommend urgent action for items in Sections A &amp; B.<u></u><u></u></span></p><p class=\\\"MsoNormal\\\"><span style=\\\"font-size:11pt;font-family:Calibri,sans-serif\\\"><u></u> <u></u></span></p><ul type=\\\"disc\\\" style=\\\"margin-top:0cm\\\"><li class=\\\"MsoNormal\\\" style=\\\"margin-left:15px\\\"><b><span style=\\\"font-size:11pt;font-family:Calibri,sans-serif\\\">Section A (Immediate Attention – LOLER Defect)</span></b><span style=\\\"font-size:11pt;font-family:Calibri,sans-serif\\\">:<u></u><u></u></span></li><ul type=\\\"circle\\\" style=\\\"margin-top:0cm\\\"><li class=\\\"MsoNormal\\\" style=\\\"margin-left:15px\\\"><span style=\\\"font-size:11pt;font-family:Calibri,sans-serif\\\">The emergency auto-dialler is inoperative, requiring reinstatement of the telephone line or installation of a GSM unit (£1,333.99).<u></u><u></u></span></li></ul><li class=\\\"MsoNormal\\\" style=\\\"margin-left:15px\\\"><b><span style=\\\"font-size:11pt;font-family:Calibri,sans-serif\\\">Section B (Performance &amp; Reliability Improvements)</span></b><span style=\\\"font-size:11pt;font-family:Calibri,sans-serif\\\">:<u></u><u></u></span></li><ul type=\\\"circle\\\" style=\\\"margin-top:0cm\\\"><li class=\\\"MsoNormal\\\" style=\\\"margin-left:15px\\\"><span style=\\\"font-size:11pt;font-family:Calibri,sans-serif\\\">Install “Do Not Use Lift in Fire” signs (£178–£394.08).<u></u><u></u></span></li><li class=\\\"MsoNormal\\\" style=\\\"margin-left:15px\\\"><span style=\\\"font-size:11pt;font-family:Calibri,sans-serif\\\">Supply and store critical spare parts (£1,704.00).<u></u><u></u></span></li></ul><li class=\\\"MsoNormal\\\" style=\\\"margin-left:15px\\\"><b><span style=\\\"font-size:11pt;font-family:Calibri,sans-serif\\\">Section C (Health &amp; Safety Compliance)</span></b><span style=\\\"font-size:11pt;font-family:Calibri,sans-serif\\\">:<u></u><u></u></span></li><ul type=\\\"circle\\\" style=\\\"margin-top:0cm\\\"><li class=\\\"MsoNormal\\\" style=\\\"margin-left:15px\\\"><span style=\\\"font-size:11pt;font-family:Calibri,sans-serif\\\">Install a 415V danger notice (£110.00).<u></u><u></u></span></li><li class=\\\"MsoNormal\\\" style=\\\"margin-left:15px\\\"><span style=\\\"font-size:11pt;font-family:Calibri,sans-serif\\\">Clean and paint the lift pit, add oil collector trays (£715.99).<u></u><u></u></span></li><li class=\\\"MsoNormal\\\" style=\\\"margin-left:15px\\\"><span style=\\\"font-size:11pt;font-family:Calibri,sans-serif\\\">Install a &quot;Beware Deep Pit&quot; notice (£110.00).<u></u><u></u></span></li><li class=\\\"MsoNormal\\\" style=\\\"margin-left:15px\\\"><span style=\\\"font-size:11pt;font-family:Calibri,sans-serif\\\">Paint the counterweight safety yellow (£631.99).<u></u><u></u></span></li></ul></ul><p class=\\\"MsoNormal\\\"><span style=\\\"font-size:11pt;font-family:Calibri,sans-serif\\\"><u></u> <u></u></span></p><p class=\\\"MsoNormal\\\"><span style=\\\"font-size:11pt;font-family:Calibri,sans-serif\\\">Please advise on how you wish to proceed</span></p></div>\\n\",\n                \"summary\": \"Quotation for urgent works needed on the front passenger lift based on safety reports.\"\n            },\n            {\n                \"messageId\": \"27b9b547-2e46-4085-9bcf-635a0d9554bb\",\n                \"inReplyTo\": \"759174eb-2940-4361-83ee-af38f87576e8\",\n                \"fromEmail\": \"osamaaaiq@gmail.com\",\n                \"toEmail\": \"safaagge-4429@building.blocwise.co\",\n                \"subject\": \"AGM Agenda\",\n                \"bodyText\": \"Hi George,\\n\\n\\n\\nI’m happy with the agenda you set out.\\n\\n\\n\\nJust as an FYI our meeting has been put back until Thursday now. We will\\nconfirm as a group then if that’s ok ?\\n\\n\\n\\nMany thanks,\\n\\n\\n\\nPhil\\n\",\n                \"bodyHtml\": \"<div dir=\\\"ltr\\\"><div class=\\\"gmail-adn gmail-ads\\\" style=\\\"border-left:none;padding:0px;display:flex\\\"><div class=\\\"gmail-gs\\\" style=\\\"margin:0px;min-width:0px;padding:0px 0px 20px;width:auto\\\"><div class=\\\"gmail-\\\"><div id=\\\"gmail-:271\\\" class=\\\"gmail-ii gmail-gt\\\" style=\\\"direction:ltr;margin:8px 0px 0px;padding:0px;font-size:0.875rem;overflow-x:hidden\\\"><div id=\\\"gmail-:270\\\" class=\\\"gmail-a3s gmail-aiL\\\" style=\\\"direction:ltr;font-variant-numeric:normal;font-variant-east-asian:normal;font-variant-alternates:normal;font-size-adjust:none;font-kerning:auto;font-feature-settings:normal;font-stretch:normal;font-size:small;line-height:1.5;overflow:auto hidden\\\"><div dir=\\\"ltr\\\"><p class=\\\"MsoNormal\\\"><span style=\\\"color:rgb(31,73,125)\\\">Hi George,<u></u><u></u></span></p><p class=\\\"MsoNormal\\\"><span style=\\\"color:rgb(31,73,125)\\\"><u></u> <u></u></span></p><p class=\\\"MsoNormal\\\"><span style=\\\"color:rgb(31,73,125)\\\">I’m happy with the agenda you set out.<u></u><u></u></span></p><p class=\\\"MsoNormal\\\"><span style=\\\"color:rgb(31,73,125)\\\"><u></u> <u></u></span></p><p class=\\\"MsoNormal\\\"><span style=\\\"color:rgb(31,73,125)\\\">Just as an FYI our meeting has been put back until Thursday now. We will confirm as a group then if that’s ok ?<u></u><u></u></span></p><p class=\\\"MsoNormal\\\"><span style=\\\"color:rgb(31,73,125)\\\"><u></u> <u></u></span></p><p class=\\\"MsoNormal\\\"><span style=\\\"color:rgb(31,73,125)\\\">Many thanks,<u></u><u></u></span></p><p class=\\\"MsoNormal\\\"><span style=\\\"color:rgb(31,73,125)\\\"><u></u> <u></u></span></p><p class=\\\"MsoNormal\\\"><span style=\\\"color:rgb(31,73,125)\\\">Phil</span></p></div><div class=\\\"gmail-yj6qo\\\"></div><div class=\\\"gmail-adL\\\"></div></div></div><div class=\\\"gmail-WhmR8e\\\" style=\\\"clear:both\\\"></div></div></div><div class=\\\"gmail-ajx\\\" style=\\\"clear:both\\\"></div></div><div class=\\\"gmail-gA gmail-gt gmail-acV\\\" style=\\\"font-size:0.875rem;padding:0px;width:auto;border-bottom-left-radius:0px;border-bottom-right-radius:0px;border-top:none;margin:0px;background:transparent\\\"><div class=\\\"gmail-gB gmail-xu\\\" style=\\\"border-top:0px;padding:0px\\\"><div class=\\\"gmail-mVCoBd\\\" style=\\\"font-family:&quot;Google Sans&quot;,Roboto,RobotoDraft,Helvetica,Arial,sans-serif\\\"></div><div class=\\\"gmail-ip gmail-iq\\\" style=\\\"clear:both;margin:0px;padding:16px 0px;border-top:none;font-family:&quot;Google Sans&quot;,Roboto,RobotoDraft,Helvetica,Arial,sans-serif\\\"><br class=\\\"gmail-Apple-interchange-newline\\\"></div></div></div></div>\\n\",\n                \"summary\": \"The AGM meeting has been rescheduled to Thursday, pending group confirmation.\"\n            }\n        ],\n        \"linkedIssues\": [\n            {\n                \"id\": 19,\n                \"issueName\": \"Front Passenger Lift Spare Parts\",\n                \"issueStatus\": \"NOT_STARTED\",\n                \"createdDate\": \"2025-08-14T17:27:26.172717\"\n            },\n            {\n                \"id\": 20,\n                \"issueName\": \"Front Passenger Lift Reinstatement\",\n                \"issueStatus\": \"NOT_STARTED\",\n                \"createdDate\": \"2025-08-14T17:27:29.547405\"\n            }\n        ],\n        \"auditHistory\": [],\n        \"directorComments\": [\n            {\n                \"id\": 1,\n                \"directorName\": \"osama sadeed\",\n                \"directorUsername\": \"osama.sadeed\",\n                \"comment\": \"This is serious\",\n                \"createdDate\": \"2025-09-10T23:45:29.370557\"\n            }\n        ]\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Issue Status List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/issues/status",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"issues",
+								"status"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Status List",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseURL}}/issues/status",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"issues",
+										"status"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Sat, 13 Sep 2025 12:36:22 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Issues Status fetched successfully\",\n    \"data\": [\n        {\n            \"id\": 4,\n            \"name\": \"CLOSED\"\n        },\n        {\n            \"id\": 5,\n            \"name\": \"PAUSED\"\n        },\n        {\n            \"id\": 1,\n            \"name\": \"NOT_STARTED\"\n        },\n        {\n            \"id\": 2,\n            \"name\": \"IN_PROGRESS\"\n        },\n        {\n            \"id\": 3,\n            \"name\": \"IN_REVIEW\"\n        }\n    ]\n}"
+						}
+					]
+				},
+				{
+					"name": "create manual issue",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"buildingId\": 7,\r\n    \"issueName\": \"Manually Issue Creation 222\",\r\n    \"issueDesc\": \"Manually Issue Creation TESTING DESC222\",\r\n    \"issueCategory\": \"Maintenance\",\r\n    \"issuePriority\": \"High\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/issues",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"issues"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "manual issue creation",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"buildingId\": 7,\r\n    \"issueName\": \"Manually Issue Creation 222\",\r\n    \"issueDesc\": \"Manually Issue Creation TESTING DESC222\",\r\n    \"issueCategory\": \"Maintenance\",\r\n    \"issuePriority\": \"High\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/issues",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"issues"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Sat, 13 Sep 2025 10:38:59 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Building Issues created successfully\",\n    \"data\": {\n        \"id\": 28,\n        \"buildingId\": 7,\n        \"emailId\": null,\n        \"issueName\": \"Manually Issue Creation 222\",\n        \"issueDesc\": \"Manually Issue Creation TESTING DESC222\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": null,\n        \"issuePriority\": \"High\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Edit Issue Manually",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"issueName\": \"Basement Door | Edited Again\",\r\n  \"issueDesc\": \"Pipe burst causing water leak\",\r\n  \"statusId\": 3,\r\n  \"latestUpdate\": \"Plumber has been assigned\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/issues/27",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"issues",
+								"27"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "manual issue creation",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"buildingId\": 7,\r\n    \"issueName\": \"Manually Issue Creation 222\",\r\n    \"issueDesc\": \"Manually Issue Creation TESTING DESC222\",\r\n    \"issueCategory\": \"Maintenance\",\r\n    \"issuePriority\": \"High\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/issues",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"issues"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Sat, 13 Sep 2025 10:38:59 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Building Issues created successfully\",\n    \"data\": {\n        \"id\": 28,\n        \"buildingId\": 7,\n        \"emailId\": null,\n        \"issueName\": \"Manually Issue Creation 222\",\n        \"issueDesc\": \"Manually Issue Creation TESTING DESC222\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": null,\n        \"issuePriority\": \"High\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "get issues by building Id and category",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/issues/building/7/category/Maintenance",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"issues",
+								"building",
+								"7",
+								"category",
+								"Maintenance"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Maintenance",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8080/issues/building/7/category/Maintenance",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"issues",
+										"building",
+										"7",
+										"category",
+										"Maintenance"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Sat, 16 Aug 2025 13:59:55 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"id\": 1,\n        \"buildingId\": 7,\n        \"emailId\": 5,\n        \"issueName\": \"Replace service kit\",\n        \"issueDesc\": \"Boiler 4 has high carbon monoxide levels necessitating a service kit replacement for safety.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T15:14:31.421026\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 2,\n        \"buildingId\": 7,\n        \"emailId\": 5,\n        \"issueName\": \"Adjust stack\",\n        \"issueDesc\": \"Incorrect positioning of stacks for Booster Pumps 1&2 may lead to inefficiencies and potential damage.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T15:14:31.424315\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 5,\n        \"buildingId\": 7,\n        \"emailId\": 7,\n        \"issueName\": \"Boiler 4 Service Kit Replacement\",\n        \"issueDesc\": \"High carbon monoxide level necessitates service kit replacement for safety.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:00:09.106313\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 6,\n        \"buildingId\": 7,\n        \"emailId\": 7,\n        \"issueName\": \"Booster Pump 1&2 Stack Adjustment\",\n        \"issueDesc\": \"Misalignment of stack in Booster Pumps could cause operational inefficiencies.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:00:09.11018\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 10,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Reinstatement\",\n        \"issueDesc\": \"Emergency auto-dialler is inoperative, requiring urgent action.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.776364\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 11,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Sign Installation\",\n        \"issueDesc\": \"Installation of 'Do Not Use Lift in Fire' signs needed.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.778402\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 12,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Spare Parts Supply\",\n        \"issueDesc\": \"Critical spare parts need to be supplied and stored.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.779283\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 13,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Danger Notice Installation\",\n        \"issueDesc\": \"Installation of a 415V danger notice is required.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.78089\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 14,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Pit Cleaning\",\n        \"issueDesc\": \"Cleaning and painting of the lift pit is necessary.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.781993\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 15,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Deep Pit Notice\",\n        \"issueDesc\": \"Installation of a 'Beware Deep Pit' notice required.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.783118\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 16,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Counterweight Painting\",\n        \"issueDesc\": \"Counterweight needs to be painted safety yellow.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.785061\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 20,\n        \"buildingId\": 7,\n        \"emailId\": 14,\n        \"issueName\": \"Front Passenger Lift Reinstatement\",\n        \"issueDesc\": \"Emergency auto-dialler inoperative, needs reinstatement of telephone line.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:29.547405\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 21,\n        \"buildingId\": 7,\n        \"emailId\": 14,\n        \"issueName\": \"Front Passenger Lift Sign Installation\",\n        \"issueDesc\": \"Installation of 'Do Not Use Lift in Fire' signs is required.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:29.549556\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 22,\n        \"buildingId\": 7,\n        \"emailId\": 14,\n        \"issueName\": \"Front Passenger Lift Spare Parts Supply\",\n        \"issueDesc\": \"Critical spare parts need to be supplied and stored.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:29.550669\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 23,\n        \"buildingId\": 7,\n        \"emailId\": 14,\n        \"issueName\": \"Front Passenger Lift Danger Notice Installation\",\n        \"issueDesc\": \"A 415V danger notice needs to be installed for health and safety compliance.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:29.551833\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 24,\n        \"buildingId\": 7,\n        \"emailId\": 14,\n        \"issueName\": \"Front Passenger Lift Cleaning and Painting\",\n        \"issueDesc\": \"The lift pit requires cleaning, painting, and installation of oil collector trays.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:29.553647\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 25,\n        \"buildingId\": 7,\n        \"emailId\": 14,\n        \"issueName\": \"Front Passenger Lift Deep Pit Notice Installation\",\n        \"issueDesc\": \"A 'Beware Deep Pit' notice needs to be installed.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:29.558512\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 26,\n        \"buildingId\": 7,\n        \"emailId\": 14,\n        \"issueName\": \"Front Passenger Lift Counterweight Painting\",\n        \"issueDesc\": \"The counterweight must be painted safety yellow.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:29.560726\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "get issues by building Id and status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/issues/building/7/status/Open",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"issues",
+								"building",
+								"7",
+								"status",
+								"Open"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Open",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8080/issues/building/7/status/Open",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"issues",
+										"building",
+										"7",
+										"status",
+										"Open"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Sat, 16 Aug 2025 14:00:58 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"id\": 1,\n        \"buildingId\": 7,\n        \"emailId\": 5,\n        \"issueName\": \"Replace service kit\",\n        \"issueDesc\": \"Boiler 4 has high carbon monoxide levels necessitating a service kit replacement for safety.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T15:14:31.421026\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 2,\n        \"buildingId\": 7,\n        \"emailId\": 5,\n        \"issueName\": \"Adjust stack\",\n        \"issueDesc\": \"Incorrect positioning of stacks for Booster Pumps 1&2 may lead to inefficiencies and potential damage.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T15:14:31.424315\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 3,\n        \"buildingId\": 7,\n        \"emailId\": 6,\n        \"issueName\": \"Conduct review\",\n        \"issueDesc\": \"Need approval to carry out a Gap Analysis for the Building Safety Case.\",\n        \"issueCategory\": \"Major Works\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T15:21:05.150878\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 4,\n        \"buildingId\": 7,\n        \"emailId\": 6,\n        \"issueName\": \"Confirm approval\",\n        \"issueDesc\": \"Approval is required to proceed with the review by Encore.\",\n        \"issueCategory\": \"Administrative\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T15:21:05.152598\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 5,\n        \"buildingId\": 7,\n        \"emailId\": 7,\n        \"issueName\": \"Boiler 4 Service Kit Replacement\",\n        \"issueDesc\": \"High carbon monoxide level necessitates service kit replacement for safety.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:00:09.106313\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 6,\n        \"buildingId\": 7,\n        \"emailId\": 7,\n        \"issueName\": \"Booster Pump 1&2 Stack Adjustment\",\n        \"issueDesc\": \"Misalignment of stack in Booster Pumps could cause operational inefficiencies.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:00:09.11018\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 7,\n        \"buildingId\": 7,\n        \"emailId\": 8,\n        \"issueName\": \"Building Safety Case Review Approval\",\n        \"issueDesc\": \"Director approval is needed for the Gap Analysis review.\",\n        \"issueCategory\": \"Administrative\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:01:21.985765\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 8,\n        \"buildingId\": 7,\n        \"emailId\": 8,\n        \"issueName\": \"Encore Review Cost Confirmation\",\n        \"issueDesc\": \"Confirmation required for £1000+VAT review cost.\",\n        \"issueCategory\": \"Administrative\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:01:21.986806\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 9,\n        \"buildingId\": 7,\n        \"emailId\": 9,\n        \"issueName\": \"AGM Meeting Reschedule\",\n        \"issueDesc\": \"The AGM meeting date has been postponed to Thursday.\",\n        \"issueCategory\": \"Meetings\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:04:45.679878\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 10,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Reinstatement\",\n        \"issueDesc\": \"Emergency auto-dialler is inoperative, requiring urgent action.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.776364\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 11,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Sign Installation\",\n        \"issueDesc\": \"Installation of 'Do Not Use Lift in Fire' signs needed.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.778402\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 12,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Spare Parts Supply\",\n        \"issueDesc\": \"Critical spare parts need to be supplied and stored.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.779283\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 13,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Danger Notice Installation\",\n        \"issueDesc\": \"Installation of a 415V danger notice is required.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.78089\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 14,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Pit Cleaning\",\n        \"issueDesc\": \"Cleaning and painting of the lift pit is necessary.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.781993\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 15,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Deep Pit Notice\",\n        \"issueDesc\": \"Installation of a 'Beware Deep Pit' notice required.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.783118\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 16,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Counterweight Painting\",\n        \"issueDesc\": \"Counterweight needs to be painted safety yellow.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.785061\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 17,\n        \"buildingId\": 7,\n        \"emailId\": 13,\n        \"issueName\": \"Front Passenger Lift Repair\",\n        \"issueDesc\": \"Emergency auto-dialler inoperative, urgent reinstatement required.\",\n        \"issueCategory\": \"Major Works\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:26.169441\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 18,\n        \"buildingId\": 7,\n        \"emailId\": 13,\n        \"issueName\": \"Front Passenger Lift Improvement\",\n        \"issueDesc\": \"Installation of 'Do Not Use Lift in Fire' signs needed.\",\n        \"issueCategory\": \"Major Works\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:26.171452\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 19,\n        \"buildingId\": 7,\n        \"emailId\": 13,\n        \"issueName\": \"Front Passenger Lift Spare Parts\",\n        \"issueDesc\": \"Critical spare parts need to be supplied and stored.\",\n        \"issueCategory\": \"Major Works\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:26.172717\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 20,\n        \"buildingId\": 7,\n        \"emailId\": 14,\n        \"issueName\": \"Front Passenger Lift Reinstatement\",\n        \"issueDesc\": \"Emergency auto-dialler inoperative, needs reinstatement of telephone line.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:29.547405\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 21,\n        \"buildingId\": 7,\n        \"emailId\": 14,\n        \"issueName\": \"Front Passenger Lift Sign Installation\",\n        \"issueDesc\": \"Installation of 'Do Not Use Lift in Fire' signs is required.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:29.549556\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 22,\n        \"buildingId\": 7,\n        \"emailId\": 14,\n        \"issueName\": \"Front Passenger Lift Spare Parts Supply\",\n        \"issueDesc\": \"Critical spare parts need to be supplied and stored.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:29.550669\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 23,\n        \"buildingId\": 7,\n        \"emailId\": 14,\n        \"issueName\": \"Front Passenger Lift Danger Notice Installation\",\n        \"issueDesc\": \"A 415V danger notice needs to be installed for health and safety compliance.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:29.551833\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 24,\n        \"buildingId\": 7,\n        \"emailId\": 14,\n        \"issueName\": \"Front Passenger Lift Cleaning and Painting\",\n        \"issueDesc\": \"The lift pit requires cleaning, painting, and installation of oil collector trays.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:29.553647\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 25,\n        \"buildingId\": 7,\n        \"emailId\": 14,\n        \"issueName\": \"Front Passenger Lift Deep Pit Notice Installation\",\n        \"issueDesc\": \"A 'Beware Deep Pit' notice needs to be installed.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:29.558512\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 26,\n        \"buildingId\": 7,\n        \"emailId\": 14,\n        \"issueName\": \"Front Passenger Lift Counterweight Painting\",\n        \"issueDesc\": \"The counterweight must be painted safety yellow.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:29.560726\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "get issues by building Id and priority",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/issues/building/7/priority/High",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"issues",
+								"building",
+								"7",
+								"priority",
+								"High"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "High",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8080/issues/building/7/priority/High",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"issues",
+										"building",
+										"7",
+										"priority",
+										"High"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Sat, 16 Aug 2025 14:01:46 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"id\": 1,\n        \"buildingId\": 7,\n        \"emailId\": 5,\n        \"issueName\": \"Replace service kit\",\n        \"issueDesc\": \"Boiler 4 has high carbon monoxide levels necessitating a service kit replacement for safety.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T15:14:31.421026\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 2,\n        \"buildingId\": 7,\n        \"emailId\": 5,\n        \"issueName\": \"Adjust stack\",\n        \"issueDesc\": \"Incorrect positioning of stacks for Booster Pumps 1&2 may lead to inefficiencies and potential damage.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T15:14:31.424315\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 3,\n        \"buildingId\": 7,\n        \"emailId\": 6,\n        \"issueName\": \"Conduct review\",\n        \"issueDesc\": \"Need approval to carry out a Gap Analysis for the Building Safety Case.\",\n        \"issueCategory\": \"Major Works\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T15:21:05.150878\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 4,\n        \"buildingId\": 7,\n        \"emailId\": 6,\n        \"issueName\": \"Confirm approval\",\n        \"issueDesc\": \"Approval is required to proceed with the review by Encore.\",\n        \"issueCategory\": \"Administrative\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T15:21:05.152598\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 5,\n        \"buildingId\": 7,\n        \"emailId\": 7,\n        \"issueName\": \"Boiler 4 Service Kit Replacement\",\n        \"issueDesc\": \"High carbon monoxide level necessitates service kit replacement for safety.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:00:09.106313\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 6,\n        \"buildingId\": 7,\n        \"emailId\": 7,\n        \"issueName\": \"Booster Pump 1&2 Stack Adjustment\",\n        \"issueDesc\": \"Misalignment of stack in Booster Pumps could cause operational inefficiencies.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:00:09.11018\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 7,\n        \"buildingId\": 7,\n        \"emailId\": 8,\n        \"issueName\": \"Building Safety Case Review Approval\",\n        \"issueDesc\": \"Director approval is needed for the Gap Analysis review.\",\n        \"issueCategory\": \"Administrative\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:01:21.985765\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 8,\n        \"buildingId\": 7,\n        \"emailId\": 8,\n        \"issueName\": \"Encore Review Cost Confirmation\",\n        \"issueDesc\": \"Confirmation required for £1000+VAT review cost.\",\n        \"issueCategory\": \"Administrative\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:01:21.986806\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 9,\n        \"buildingId\": 7,\n        \"emailId\": 9,\n        \"issueName\": \"AGM Meeting Reschedule\",\n        \"issueDesc\": \"The AGM meeting date has been postponed to Thursday.\",\n        \"issueCategory\": \"Meetings\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:04:45.679878\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 10,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Reinstatement\",\n        \"issueDesc\": \"Emergency auto-dialler is inoperative, requiring urgent action.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.776364\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 11,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Sign Installation\",\n        \"issueDesc\": \"Installation of 'Do Not Use Lift in Fire' signs needed.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.778402\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 12,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Spare Parts Supply\",\n        \"issueDesc\": \"Critical spare parts need to be supplied and stored.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.779283\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 13,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Danger Notice Installation\",\n        \"issueDesc\": \"Installation of a 415V danger notice is required.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.78089\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 14,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Pit Cleaning\",\n        \"issueDesc\": \"Cleaning and painting of the lift pit is necessary.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.781993\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 15,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Deep Pit Notice\",\n        \"issueDesc\": \"Installation of a 'Beware Deep Pit' notice required.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.783118\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 16,\n        \"buildingId\": 7,\n        \"emailId\": 12,\n        \"issueName\": \"Front Passenger Lift Counterweight Painting\",\n        \"issueDesc\": \"Counterweight needs to be painted safety yellow.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:24:04.785061\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 17,\n        \"buildingId\": 7,\n        \"emailId\": 13,\n        \"issueName\": \"Front Passenger Lift Repair\",\n        \"issueDesc\": \"Emergency auto-dialler inoperative, urgent reinstatement required.\",\n        \"issueCategory\": \"Major Works\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:26.169441\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 18,\n        \"buildingId\": 7,\n        \"emailId\": 13,\n        \"issueName\": \"Front Passenger Lift Improvement\",\n        \"issueDesc\": \"Installation of 'Do Not Use Lift in Fire' signs needed.\",\n        \"issueCategory\": \"Major Works\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:26.171452\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 19,\n        \"buildingId\": 7,\n        \"emailId\": 13,\n        \"issueName\": \"Front Passenger Lift Spare Parts\",\n        \"issueDesc\": \"Critical spare parts need to be supplied and stored.\",\n        \"issueCategory\": \"Major Works\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:26.172717\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 20,\n        \"buildingId\": 7,\n        \"emailId\": 14,\n        \"issueName\": \"Front Passenger Lift Reinstatement\",\n        \"issueDesc\": \"Emergency auto-dialler inoperative, needs reinstatement of telephone line.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:29.547405\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 21,\n        \"buildingId\": 7,\n        \"emailId\": 14,\n        \"issueName\": \"Front Passenger Lift Sign Installation\",\n        \"issueDesc\": \"Installation of 'Do Not Use Lift in Fire' signs is required.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:29.549556\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 22,\n        \"buildingId\": 7,\n        \"emailId\": 14,\n        \"issueName\": \"Front Passenger Lift Spare Parts Supply\",\n        \"issueDesc\": \"Critical spare parts need to be supplied and stored.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:29.550669\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 23,\n        \"buildingId\": 7,\n        \"emailId\": 14,\n        \"issueName\": \"Front Passenger Lift Danger Notice Installation\",\n        \"issueDesc\": \"A 415V danger notice needs to be installed for health and safety compliance.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:29.551833\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 24,\n        \"buildingId\": 7,\n        \"emailId\": 14,\n        \"issueName\": \"Front Passenger Lift Cleaning and Painting\",\n        \"issueDesc\": \"The lift pit requires cleaning, painting, and installation of oil collector trays.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:29.553647\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 25,\n        \"buildingId\": 7,\n        \"emailId\": 14,\n        \"issueName\": \"Front Passenger Lift Deep Pit Notice Installation\",\n        \"issueDesc\": \"A 'Beware Deep Pit' notice needs to be installed.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:29.558512\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    },\n    {\n        \"id\": 26,\n        \"buildingId\": 7,\n        \"emailId\": 14,\n        \"issueName\": \"Front Passenger Lift Counterweight Painting\",\n        \"issueDesc\": \"The counterweight must be painted safety yellow.\",\n        \"issueCategory\": \"Maintenance\",\n        \"issueStatus\": \"Open\",\n        \"issuePriority\": \"High\",\n        \"assignedTo\": null,\n        \"createdDate\": \"2025-08-14T17:27:29.560726\",\n        \"dueDate\": null,\n        \"latestUpdate\": null,\n        \"lastUpdateDate\": null,\n        \"lastUpdateBy\": null,\n        \"lastUpdateMethod\": null,\n        \"relatedCommunications\": 0,\n        \"directorComments\": null\n    }\n]"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Email",
+			"item": [
+				{
+					"name": "Email Details by messageId",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/email/linked/2b109fb8-c331-4bd1-a43e-9ca9316cc1c2",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"email",
+								"linked",
+								"2b109fb8-c331-4bd1-a43e-9ca9316cc1c2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Email Details by Building Token",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/email",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"email"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Directors",
+			"item": [
+				{
+					"name": "Building Directors",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/api/building/director/14",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"building",
+								"director",
+								"14"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Directors",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseURL}}/api/building/director/7",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"api",
+										"building",
+										"director",
+										"7"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Sun, 14 Sep 2025 09:17:28 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Building directors fetched successfully\",\n    \"data\": [\n        {\n            \"id\": 9,\n            \"username\": \"invited.user\",\n            \"firstName\": \"invited\",\n            \"lastName\": \"user\",\n            \"email\": \"osamaaaiq@gmail.com\",\n            \"roleName\": \"DIRECTOR\"\n        },\n        {\n            \"id\": 10,\n            \"username\": \"invited.user1\",\n            \"firstName\": \"invited\",\n            \"lastName\": \"user\",\n            \"email\": \"waleed@gmail.com\",\n            \"roleName\": \"DIRECTOR\"\n        },\n        {\n            \"id\": 12,\n            \"username\": \"invited.osama\",\n            \"firstName\": \"invited\",\n            \"lastName\": \"user\",\n            \"email\": \"osamaaaiq@gmail.comm\",\n            \"roleName\": \"DIRECTOR\"\n        }\n    ]\n}"
+						}
+					]
+				},
+				{
+					"name": "Director Comment",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n\r\n    \"issueId\" : 27,\r\n    \"directorId\" : 9,\r\n    \"comment\" : \"Critical please resolve as soon as possible\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/director",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"director"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "add comment",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n\r\n    \"issueId\" : 27,\r\n    \"directorId\" : 9,\r\n    \"comment\" : \"Critical please resolve as soon as possible\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/api/director",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"api",
+										"director"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Sat, 13 Sep 2025 12:30:36 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Comment added successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"directorName\": \"invited user\",\n        \"directorUsername\": \"invited.user\",\n        \"comment\": \"Critical please resolve as soon as possible\",\n        \"createdDate\": \"2025-09-13T17:30:36.515928\"\n    }\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Suppliers",
+			"item": [
+				{
+					"name": "add suppliers",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"Thames Valley Lifts\",\r\n  \"category\": \"Boiler and Heat Management\",\r\n  \"contact\": \"Mark Thompson\",\r\n  \"phone\": \"0208 123 4567\",\r\n  \"email\": \"mark@thamesvalleylifts.co.uk\",\r\n  \"address\": \"45 Industrial Estate, Kingston, KT2 7NH\",\r\n  \"rating\": 4.8,\r\n  \"lastService\": \"2024-05-15\",\r\n  \"nextService\": \"2024-11-15\",\r\n  \"status\": \"Active\",\r\n  \"services\": [\"Annual Boiler Service\", \"Emergency Repairs\", \"Safety Certificates\"],\r\n  \"notes\": \"Reliable service provider. Always punctual and professional.\",\r\n  \"totalJobs\": 12,\r\n  \"description\": \"Specializes in commercial boiler maintenance and heating system management for residential buildings.\",\r\n  \"buildingId\": 1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/suppliers",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"suppliers"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "add suppliers",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"Thames Valley Lifts\",\r\n  \"category\": \"Boiler and Heat Management\",\r\n  \"contact\": \"Mark Thompson\",\r\n  \"phone\": \"0208 123 4567\",\r\n  \"email\": \"mark@thamesvalleylifts.co.uk\",\r\n  \"address\": \"45 Industrial Estate, Kingston, KT2 7NH\",\r\n  \"rating\": 4.8,\r\n  \"lastService\": \"2024-05-15\",\r\n  \"nextService\": \"2024-11-15\",\r\n  \"status\": \"Active\",\r\n  \"services\": [\"Annual Boiler Service\", \"Emergency Repairs\", \"Safety Certificates\"],\r\n  \"notes\": \"Reliable service provider. Always punctual and professional.\",\r\n  \"totalJobs\": 12,\r\n  \"description\": \"Specializes in commercial boiler maintenance and heating system management for residential buildings.\",\r\n  \"buildingId\": 7\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseURL}}/api/suppliers",
+									"host": [
+										"{{baseURL}}"
+									],
+									"path": [
+										"api",
+										"suppliers"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Sun, 14 Sep 2025 09:18:51 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": 3,\n    \"name\": \"Thames Valley Lifts\",\n    \"category\": \"Boiler and Heat Management\",\n    \"contact\": \"Mark Thompson\",\n    \"phone\": \"0208 123 4567\",\n    \"email\": \"mark@thamesvalleylifts.co.uk\",\n    \"address\": \"45 Industrial Estate, Kingston, KT2 7NH\",\n    \"rating\": 4.8,\n    \"lastService\": \"2024-05-15\",\n    \"nextService\": \"2024-11-15\",\n    \"status\": \"Active\",\n    \"services\": [\n        \"Annual Boiler Service\",\n        \"Emergency Repairs\",\n        \"Safety Certificates\"\n    ],\n    \"notes\": \"Reliable service provider. Always punctual and professional.\",\n    \"totalJobs\": 12,\n    \"description\": \"Specializes in commercial boiler maintenance and heating system management for residential buildings.\"\n}"
+						}
+					]
+				},
+				{
+					"name": "get suppliers by building id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/api/suppliers/1",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"suppliers",
+								"1"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "suppliers",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:8080/api/suppliers/1",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"suppliers",
+										"1"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": [
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Sat, 16 Aug 2025 13:41:09 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"id\": 1,\n        \"name\": \"Thames Valley Lifts\",\n        \"category\": \"Boiler and Heat Management\",\n        \"contact\": \"Mark Thompson\",\n        \"phone\": \"0208 123 4567\",\n        \"email\": \"mark@thamesvalleylifts.co.uk\",\n        \"address\": \"45 Industrial Estate, Kingston, KT2 7NH\",\n        \"rating\": 4.8,\n        \"lastService\": \"2024-05-15\",\n        \"nextService\": \"2024-11-15\",\n        \"status\": \"Active\",\n        \"services\": [\n            \"Annual Boiler Service\",\n            \"Emergency Repairs\",\n            \"Safety Certificates\"\n        ],\n        \"notes\": \"Reliable service provider. Always punctual and professional.\",\n        \"totalJobs\": 12,\n        \"description\": \"Specializes in commercial boiler maintenance and heating system management for residential buildings.\"\n    },\n    {\n        \"id\": 2,\n        \"name\": \"Cier Gardening\",\n        \"category\": \"Gardeners\",\n        \"contact\": \"Sarah Chen\",\n        \"phone\": \"0207 456 7890\",\n        \"email\": \"info@ciergardening.com\",\n        \"address\": \"23 Green Lane, Croydon, CR0 4BX\",\n        \"rating\": 4.8,\n        \"lastService\": \"2024-05-15\",\n        \"nextService\": \"2024-11-15\",\n        \"status\": \"Active\",\n        \"services\": [\n            \"Annual Boiler Service\",\n            \"Emergency Repairs\",\n            \"Safety Certificates\"\n        ],\n        \"notes\": \"Excellent attention to detail. Residents frequently compliment their work.\",\n        \"totalJobs\": 8,\n        \"description\": \"Professional gardening service specializing in communal garden maintenance and landscaping.\"\n    }\n]"
+						}
+					]
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJvc2FtYWFhaXFAZ21haWwuY29tbSIsInJvbGUiOiJESVJFQ1RPUiIsInVzZXJuYW1lIjoiaW52aXRlZC5vc2FtYSIsImJ1aWxkaW5nSWQiOjcsImJ1aWxkaW5nRW1haWwiOiJzYWZhYWdnZS00NDI5QGJ1aWxkaW5nLmJsb2N3aXNlLmNvIiwiaWF0IjoxNzU3ODQwNDY4LCJleHAiOjE3NTc4NDQwNjh9.HPHTz_yEOjZfN2Xx7UNisWxK9i1Y1QkJ3vVWpaOjYKM",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseURL",
+			"value": ""
+		}
+	]
+}
