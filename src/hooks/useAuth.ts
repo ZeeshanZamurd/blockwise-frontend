@@ -1,7 +1,23 @@
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../store/store';
-import { setLoading, setError, clearError, setAuth, logout } from '../store/authSlice';
+import { setLoading, setError, clearError, setAuth, logout as logoutAction } from '../store/authSlice';
 import api from '../lib/api';
+
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+}
+
+const getErrorMessage = (error: unknown, defaultMessage: string): string => {
+  if (error && typeof error === 'object' && 'response' in error) {
+    const apiError = error as ApiError;
+    return apiError.response?.data?.message || defaultMessage;
+  }
+  return defaultMessage;
+};
 
 export const useAuth = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -16,9 +32,10 @@ export const useAuth = () => {
       const { token, user } = response.data;
       
       dispatch(setAuth({ user, token }));
+      
       return { success: true };
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Login failed';
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error, 'Login failed');
       dispatch(setError(errorMessage));
       return { success: false, error: errorMessage };
     } finally {
@@ -45,8 +62,8 @@ export const useAuth = () => {
       // Store user data from signup response
       dispatch(setAuth({ user: responseData.data, token: null }));
       return { success: true, userData: responseData.data };
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Signup failed';
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error, 'Signup failed');
       dispatch(setError(errorMessage));
       return { success: false, error: errorMessage };
     } finally {
@@ -93,8 +110,8 @@ export const useAuth = () => {
       
       dispatch(setAuth({ user: updatedUser, token: data.accessToken }));
       return { success: true, buildingData: data };
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Building creation failed';
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error, 'Building creation failed');
       dispatch(setError(errorMessage));
       return { success: false, error: errorMessage };
     } finally {
@@ -123,8 +140,8 @@ export const useAuth = () => {
       }
       
       return { success: true, inviteData: responseData.data };
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Invite failed';
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error, 'Invite failed');
       dispatch(setError(errorMessage));
       return { success: false, error: errorMessage };
     } finally {
@@ -138,7 +155,7 @@ export const useAuth = () => {
     } catch (error) {
       // Ignore logout API errors
     } finally {
-      dispatch(logout());
+      dispatch(logoutAction());
     }
   };
 

@@ -9,7 +9,9 @@ import { AlertTriangle, Search, Filter, Clock, CheckCircle, Plus, Calendar, User
 import EnhancedIssueDetailsModal from './EnhancedIssueDetailsModal';
 import CreateIssueForm from './CreateIssueForm';
 import { useSearchParams } from 'react-router-dom';
-import { useIssues } from '@/contexts/IssuesContext';
+import { useIssues, Issue } from '@/contexts/IssuesContext';
+import { useIssue } from '@/hooks/useIssue';
+import { useBuilding } from '@/hooks/useBuilding';
 import { EmptyEnhancedIssueLog } from './EmptyEnhancedIssueLog';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -23,13 +25,15 @@ const EnhancedIssueLog = ({ emptyDataMode = false }: EnhancedIssueLogProps) => {
   const [filterStatus, setFilterStatus] = useState('live'); // Default to 'live'
   const [filterPriority, setFilterPriority] = useState('all');
   const [filterTimeframe, setFilterTimeframe] = useState('all');
-  const [selectedIssue, setSelectedIssue] = useState<any>(null);
+  const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [viewedIssues, setViewedIssues] = useState<Set<string>>(() => {
     const stored = localStorage.getItem('issues_viewed_ids');
     return stored ? new Set(JSON.parse(stored)) : new Set();
   });
   const { issues, updateIssue } = useIssues();
+  const { fetchIssues } = useIssue();
+  const { building } = useBuilding();
 
   // Get "last visit" timestamp for new issues grouping
   const [lastVisit] = useState(() => {
@@ -44,7 +48,14 @@ const EnhancedIssueLog = ({ emptyDataMode = false }: EnhancedIssueLogProps) => {
     };
   }, []);
 
-  const handleIssueClick = (issue: any) => {
+  // Fetch issues when building data is available
+  useEffect(() => {
+    if (building?.buildingId && issues.length === 0) {
+      fetchIssues(building.buildingId);
+    }
+  }, [building?.buildingId, issues.length, fetchIssues]);
+
+  const handleIssueClick = (issue: Issue) => {
     setSelectedIssue(issue);
     const newViewedIssues = new Set(viewedIssues).add(issue.id);
     setViewedIssues(newViewedIssues);
@@ -254,7 +265,7 @@ const EnhancedIssueLog = ({ emptyDataMode = false }: EnhancedIssueLogProps) => {
                 <SelectContent>
                   <SelectItem value="all">All Priority</SelectItem>
                   <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem> 
                   <SelectItem value="low">Low</SelectItem>
                 </SelectContent>
               </Select>

@@ -5,8 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { useIssues } from '@/contexts/IssuesContext';
+import { useIssue } from '@/hooks/useIssue';
+import { useBuilding } from '@/hooks/useBuilding';
 import { X } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface CreateIssueFormProps {
   open: boolean;
@@ -14,41 +16,51 @@ interface CreateIssueFormProps {
 }
 
 const CreateIssueForm = ({ open, onClose }: CreateIssueFormProps) => {
-  const { addIssue } = useIssues();
+  const { createIssue, isLoading, error, clearIssueError } = useIssue();
+  const { building } = useBuilding();
   const [formData, setFormData] = useState({
     title: '',
     summary: '',
     priority: 'Medium' as 'Low' | 'Medium' | 'High' | 'Urgent',
     category: 'Maintenance',
-    status: 'Not started' as 'Not started' | 'In review' | 'In progress' | 'Closed' | 'Paused'
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.title || !formData.summary) {
+      toast.error('Please fill in all required fields');
       return;
     }
 
-    addIssue({
-      title: formData.title,
-      summary: formData.summary,
-      status: formData.status,
-      priority: formData.priority,
-      dateCreated: new Date().toISOString().split('T')[0],
-      category: formData.category
-    });
+    if (!building?.buildingId) {
+      toast.error('Building ID not found. Please ensure building data is loaded.');
+      return;
+    }
 
-    // Reset form
-    setFormData({
-      title: '',
-      summary: '',
-      priority: 'Medium',
-      category: 'Maintenance',
-      status: 'Not started'
-    });
+    const issueData = {
+      buildingId: building.buildingId,
+      issueName: formData.title,
+      issueDesc: formData.summary,
+      issueCategory: formData.category,
+      issuePriority: formData.priority,
+    };
 
-    onClose();
+    const result = await createIssue(issueData);
+    
+    if (result.success) {
+      toast.success('Issue created successfully!');
+      // Reset form
+      setFormData({
+        title: '',
+        summary: '',
+        priority: 'Medium',
+        category: 'Maintenance',
+      });
+      onClose();
+    } else {
+      toast.error(result.error || 'Failed to create issue');
+    }
   };
 
   const handleChange = (field: string, value: string) => {
@@ -57,6 +69,14 @@ const CreateIssueForm = ({ open, onClose }: CreateIssueFormProps) => {
       [field]: value
     }));
   };
+
+  // Handle error display
+  React.useEffect(() => {
+    if (error) {
+      toast.error(error);
+      clearIssueError();
+    }
+  }, [error, clearIssueError]);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -129,11 +149,11 @@ const CreateIssueForm = ({ open, onClose }: CreateIssueFormProps) => {
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-              Create Issue
+            <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={isLoading}>
+              {isLoading ? 'Creating...' : 'Create Issue'}
             </Button>
           </div>
         </form>

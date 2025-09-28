@@ -4,6 +4,8 @@ import storage from 'redux-persist/lib/storage';
 import { combineReducers } from '@reduxjs/toolkit';
 import authReducer from './authSlice';
 import rolesReducer from './rolesSlice';
+import issuesReducer from './issuesSlice';
+import buildingReducer from './buildingSlice';
 
 const persistConfig = {
   key: 'root',
@@ -14,6 +16,8 @@ const persistConfig = {
 const rootReducer = combineReducers({
   auth: authReducer,
   roles: rolesReducer,
+  issues: issuesReducer,
+  building: buildingReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
