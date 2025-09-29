@@ -20,11 +20,10 @@ const LinkedIssues: React.FC<LinkedIssuesProps> = ({ issueId, linkedIssues = [] 
   const [issueSearchTerm, setIssueSearchTerm] = useState('');
   const [selectedIssueId, setSelectedIssueId] = useState('');
 
-  // Get issues linked to this issue
+  // Use API linked issues data if available, otherwise fallback to context issues
   const currentIssue = issues.find(i => i.id === issueId);
-  const linkedIssuesList = issues.filter(issue => 
-    currentIssue?.linkedIssueIds?.includes(issue.id) || []
-  );
+  const linkedIssuesList = linkedIssues.length > 0 ? linkedIssues : 
+    issues.filter(issue => currentIssue?.linkedIssueIds?.includes(issue.id) || []);
 
   const filteredIssues = issues.filter(issue =>
     issue.id !== issueId && (
@@ -158,23 +157,40 @@ const LinkedIssues: React.FC<LinkedIssuesProps> = ({ issueId, linkedIssues = [] 
       <CardContent>
         <div className="space-y-3">
           {linkedIssuesList.length > 0 ? (
-            linkedIssuesList.map((linkedIssue) => (
-              <div key={linkedIssue.id} className="p-3 bg-muted/30 rounded-lg">
-                <div className="flex items-start justify-between mb-1">
-                  <div className="flex items-center space-x-2">
-                    <Link2 className="h-4 w-4 text-muted-foreground" />
-                    <h4 className="font-medium text-foreground text-sm">{linkedIssue.title}</h4>
+            linkedIssuesList.map((linkedIssue) => {
+              // Handle both API linked issue format and context issue format
+              const isApiFormat = linkedIssue.issueName;
+              const issue = isApiFormat ? {
+                id: linkedIssue.id.toString(),
+                title: linkedIssue.issueName,
+                status: linkedIssue.issueStatus === 'NOT_STARTED' ? 'Not started' : 
+                        linkedIssue.issueStatus === 'IN_PROGRESS' ? 'In progress' :
+                        linkedIssue.issueStatus === 'IN_REVIEW' ? 'In review' :
+                        linkedIssue.issueStatus === 'CLOSED' ? 'Closed' :
+                        linkedIssue.issueStatus === 'PAUSED' ? 'Paused' : 'Not started',
+                dateCreated: linkedIssue.createdDate
+              } : linkedIssue;
+              
+              return (
+                <div key={issue.id} className="p-3 bg-muted/30 rounded-lg">
+                  <div className="flex items-start justify-between mb-1">
+                    <div className="flex items-center space-x-2">
+                      <Link2 className="h-4 w-4 text-muted-foreground" />
+                      <h4 className="font-medium text-foreground text-sm">{issue.title}</h4>
+                    </div>
+                    <Badge className={getStatusColor(issue.status)} variant="outline">
+                      {issue.status}
+                    </Badge>
                   </div>
-                  <Badge className={getStatusColor(linkedIssue.status)} variant="outline">
-                    {linkedIssue.status}
-                  </Badge>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">ID: {issue.id}</span>
+                    <span className="text-muted-foreground">
+                      {issue.dateCreated ? new Date(issue.dateCreated).toLocaleDateString() : 'N/A'}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">{linkedIssue.id}</span>
-                  <span className="text-muted-foreground">{linkedIssue.dateCreated}</span>
-                </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <div className="text-center py-4 text-muted-foreground">
               <Link2 className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />

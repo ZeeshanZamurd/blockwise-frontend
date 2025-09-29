@@ -7,12 +7,26 @@ import { Textarea } from '@/components/ui/textarea';
 import { User, Send, AtSign } from 'lucide-react';
 
 interface DirectorCommentsProps {
-  initialComments?: any[];
+  directorComments?: DirectorComment[];
 }
 
-const DirectorComments: React.FC<DirectorCommentsProps> = ({ initialComments = [] }) => {
+interface DirectorComment {
+  id: number;
+  directorName?: string;
+  directorUsername?: string;
+  comment?: string;
+  createdDate?: string;
+  // Default format fields
+  author?: string;
+  date?: string;
+  isPrivate?: boolean;
+}
+
+const DirectorComments: React.FC<DirectorCommentsProps> = ({ directorComments = [] }) => {
   const [newComment, setNewComment] = useState('');
-  const [directorComments, setDirectorComments] = useState(initialComments.length > 0 ? initialComments : [
+  const [localComments, setLocalComments] = useState<DirectorComment[]>([]);
+  
+  const defaultComments: DirectorComment[] = [
     {
       id: 1,
       author: 'Sarah Wilson (Director)',
@@ -27,12 +41,15 @@ const DirectorComments: React.FC<DirectorCommentsProps> = ({ initialComments = [
       comment: '@sarah.wilson Agreed. I\'ll check the contract terms tomorrow. We should also consider a backup contractor for emergencies.',
       isPrivate: false
     }
-  ]);
+  ];
+
+  // Use API director comments if available, otherwise fallback to default
+  const allComments = directorComments.length > 0 ? [...directorComments, ...localComments] : [...defaultComments, ...localComments];
 
   const addComment = () => {
     if (!newComment.trim()) return;
     
-    const comment = {
+    const comment: DirectorComment = {
       id: Date.now(),
       author: 'Current Director',
       date: new Date().toLocaleString('en-GB', { 
@@ -46,7 +63,7 @@ const DirectorComments: React.FC<DirectorCommentsProps> = ({ initialComments = [
       isPrivate: false
     };
     
-    setDirectorComments([...directorComments, comment]);
+    setLocalComments([...localComments, comment]);
     setNewComment('');
   };
 
@@ -73,11 +90,29 @@ const DirectorComments: React.FC<DirectorCommentsProps> = ({ initialComments = [
         </p>
         
         <div className="space-y-4">
-          {[...directorComments].reverse().map((comment, index) => {
+          {[...allComments].reverse().map((comment, index) => {
+            // Handle API format vs default format
+            const isApiFormat = comment.directorName;
+            const displayData = isApiFormat ? {
+              id: comment.id,
+              author: comment.directorName,
+              username: comment.directorUsername,
+              comment: comment.comment,
+              date: comment.createdDate,
+              isPrivate: false
+            } : {
+              id: comment.id,
+              author: comment.author,
+              username: '',
+              comment: comment.comment,
+              date: comment.date,
+              isPrivate: comment.isPrivate || false
+            };
+
             // For demo purposes, mark first comment as new
             const isNewComment = index === 0;
             return (
-              <div key={comment.id} className={`p-3 rounded-lg border ${
+              <div key={displayData.id} className={`p-3 rounded-lg border ${
                 isNewComment 
                   ? "bg-blue-50 border-blue-200" 
                   : "bg-gray-50 border-transparent"
@@ -85,17 +120,22 @@ const DirectorComments: React.FC<DirectorCommentsProps> = ({ initialComments = [
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center space-x-2">
                     <User className="h-4 w-4 text-gray-500" />
-                    <span className="font-medium text-gray-900">{comment.author}</span>
-                    {comment.isPrivate && (
+                    <span className="font-medium text-gray-900">{displayData.author}</span>
+                    {displayData.username && (
+                      <span className="text-xs text-gray-500">(@{displayData.username})</span>
+                    )}
+                    {displayData.isPrivate && (
                       <Badge variant="outline" className="text-xs">Private</Badge>
                     )}
                     {isNewComment && (
                       <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">New</span>
                     )}
                   </div>
-                  <span className="text-xs text-gray-500">{comment.date}</span>
+                  <span className="text-xs text-gray-500">
+                    {displayData.date ? new Date(displayData.date).toLocaleString() : 'N/A'}
+                  </span>
                 </div>
-                <p className="text-sm text-gray-700">{comment.comment}</p>
+                <p className="text-sm text-gray-700">{displayData.comment}</p>
               </div>
             );
           })}

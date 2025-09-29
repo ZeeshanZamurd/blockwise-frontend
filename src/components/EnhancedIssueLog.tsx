@@ -32,7 +32,7 @@ const EnhancedIssueLog = ({ emptyDataMode = false }: EnhancedIssueLogProps) => {
     return stored ? new Set(JSON.parse(stored)) : new Set();
   });
   const { issues, updateIssue } = useIssues();
-  const { fetchIssues } = useIssue();
+  const { fetchIssues, getIssueById, getIssuesByBuildingIdAndPriority, getIssuesByBuildingIdAndStatus, isLoading: isIssuesLoading } = useIssue();
   const { building } = useBuilding();
 
   // Get "last visit" timestamp for new issues grouping
@@ -48,14 +48,72 @@ const EnhancedIssueLog = ({ emptyDataMode = false }: EnhancedIssueLogProps) => {
     };
   }, []);
 
-  // Fetch issues when building data is available
+  // Initial fetch issues when building data is available (only if no priority filter is set)
   useEffect(() => {
-    if (building?.buildingId && issues.length === 0) {
+    console.log('EnhancedIssueLog initial useEffect triggered:', {
+      buildingId: building?.buildingId,
+      issuesLength: issues.length,
+      filterPriority: filterPriority,
+      building: building
+    });
+    
+    // Only fetch if we have building data, no issues yet, and both filters are 'all'
+    // This prevents infinite API calls and conflicts with filtering
+    if (building?.buildingId && issues.length === 0 && !isIssuesLoading && filterPriority === 'all' && filterStatus === 'live') {
+      console.log('Initial fetch: Fetching all issues for building:', building.buildingId);
       fetchIssues(building.buildingId);
+    } else {
+      console.log('Not doing initial fetch. Reasons:', {
+        noBuildingId: !building?.buildingId,
+        hasIssues: issues.length > 0,
+        isLoading: isIssuesLoading,
+        priorityFilterNotAll: filterPriority !== 'all',
+        statusFilterNotLive: filterStatus !== 'live'
+      });
     }
-  }, [building?.buildingId, issues.length, fetchIssues]);
+  }, [building?.buildingId, issues.length, isIssuesLoading, filterPriority, filterStatus, fetchIssues]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleIssueClick = (issue: Issue) => {
+  // Handle priority filter changes
+  useEffect(() => {
+    console.log('Priority filter changed:', filterPriority);
+    
+    if (building?.buildingId) {
+      if (filterPriority !== 'all') {
+        console.log('Fetching issues by priority:', filterPriority, 'for building:', building.buildingId);
+        getIssuesByBuildingIdAndPriority(building.buildingId, filterPriority);
+      } else {
+        console.log('Priority filter set to all, fetching all issues for building:', building.buildingId);
+        fetchIssues(building.buildingId);
+      }
+    }
+  }, [filterPriority, building?.buildingId, fetchIssues, getIssuesByBuildingIdAndPriority]);
+
+      // Handle status filter changes
+      useEffect(() => {
+        console.log('Status filter changed:', filterStatus);
+
+        if (building?.buildingId) {
+          if (filterStatus === 'live') {
+            console.log('Status filter set to live, fetching all issues for building:', building.buildingId);
+            fetchIssues(building.buildingId);
+          } else {
+            console.log('Fetching issues by status:', filterStatus, 'for building:', building.buildingId);
+            getIssuesByBuildingIdAndStatus(building.buildingId, filterStatus);
+          }
+        }
+      }, [filterStatus, building?.buildingId, fetchIssues, getIssuesByBuildingIdAndStatus]);
+
+  const handleIssueClick = async (issue: Issue) => {
+    // Call API to get detailed issue data
+    const result = await getIssueById(issue.id);
+    
+    if (result.success) {
+      console.log('Issue Details API Response:', result.issue);
+      // TODO: Use the detailed issue data to populate the modal
+    } else {
+      console.error('Failed to fetch issue details:', result.error);
+    }
+    
     setSelectedIssue(issue);
     const newViewedIssues = new Set(viewedIssues).add(issue.id);
     setViewedIssues(newViewedIssues);
@@ -122,23 +180,12 @@ const EnhancedIssueLog = ({ emptyDataMode = false }: EnhancedIssueLogProps) => {
     }
   };
 
-  // Filter and sort issues based on search term, status, priority, and timeframe
+  // Filter and sort issues based on search term and timeframe
+  // Note: Priority and Status filtering are now handled by API calls
   const filteredIssues = issues.filter(issue => {
     const matchesSearch = issue.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          issue.summary.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          issue.category.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    let matchesStatus = true;
-    if (filterStatus === 'live') {
-      // Show all statuses except closed for 'live' filter
-      matchesStatus = issue.status.toLowerCase() !== 'closed';
-    } else if (filterStatus === 'overdue') {
-      matchesStatus = false; // Simplified for now
-    } else if (filterStatus !== 'all') {
-      matchesStatus = issue.status.toLowerCase() === filterStatus;
-    }
-    
-    const matchesPriority = filterPriority === 'all' || issue.priority.toLowerCase() === filterPriority;
     
     // Timeframe filtering
     let matchesTimeframe = true;
@@ -162,7 +209,7 @@ const EnhancedIssueLog = ({ emptyDataMode = false }: EnhancedIssueLogProps) => {
       }
     }
     
-    return matchesSearch && matchesStatus && matchesPriority && matchesTimeframe;
+    return matchesSearch && matchesTimeframe;
   }).sort((a, b) => {
     // Sort by most recent activity (lastUpdated or dateCreated)
     const aDate = new Date(a.lastUpdated || a.dateCreated);
@@ -246,16 +293,14 @@ const EnhancedIssueLog = ({ emptyDataMode = false }: EnhancedIssueLogProps) => {
                   <Filter className="h-4 w-4 mr-1 md:mr-2" />
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="live">Live Issues</SelectItem>
-                  <SelectItem value="overdue">Overdue ({overdueCount})</SelectItem>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="not started">Not started</SelectItem>
-                  <SelectItem value="in review">In review</SelectItem>
-                  <SelectItem value="in progress">In progress</SelectItem>
-                  <SelectItem value="closed">Closed</SelectItem>
-                  <SelectItem value="paused">Paused</SelectItem>
-                </SelectContent>
+                    <SelectContent>
+                      <SelectItem value="live">Live Issues</SelectItem>
+                      <SelectItem value="NOT_STARTED">Not Started</SelectItem>
+                      <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                      <SelectItem value="IN_REVIEW">In Review</SelectItem>
+                      <SelectItem value="CLOSED">Closed</SelectItem>
+                      <SelectItem value="PAUSED">Paused</SelectItem>
+                    </SelectContent>
               </Select>
               <Select value={filterPriority} onValueChange={setFilterPriority}>
                 <SelectTrigger className="w-full text-xs md:text-sm">
@@ -286,8 +331,40 @@ const EnhancedIssueLog = ({ emptyDataMode = false }: EnhancedIssueLogProps) => {
         </CardContent>
       </Card>
 
+      {/* Loading State */}
+      {isIssuesLoading && (
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-center space-x-3">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+              <p className="text-gray-600">Loading issues...</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Issues List */}
-      <div className="space-y-4">
+      {!isIssuesLoading && (
+        <div className="space-y-4">
+          {/* Empty State */}
+          {issues.length === 0 && building?.buildingId && (
+            <Card>
+              <CardContent className="p-6">
+                <div className="text-center">
+                  <AlertTriangle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Issues Found</h3>
+                  <p className="text-gray-600 mb-4">There are no issues for this building yet.</p>
+                  <Button 
+                    onClick={() => setShowCreateForm(true)}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create First Issue
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         {/* New since last visit section */}
         {newSinceVisit.length > 0 && (
           <>
@@ -422,7 +499,8 @@ const EnhancedIssueLog = ({ emptyDataMode = false }: EnhancedIssueLogProps) => {
             </div>
           );
         })}
-      </div>
+        </div>
+      )}
 
       {/* Issue Details Modal */}
       {selectedIssue && (

@@ -4,7 +4,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle, Mail, Calendar, Clock, MessageSquare } from 'lucide-react';
 
 interface AuditHistoryProps {
-  auditHistory?: any[];
+  auditHistory?: AuditEntry[];
+}
+
+interface AuditEntry {
+  id: number;
+  actionName?: string;
+  actionDescription?: string;
+  createdDate?: string;
+  performedBy?: string;
+  // Default format fields
+  type?: string;
+  date?: string;
+  user?: string;
+  description?: string;
+  details?: string;
 }
 
 const AuditHistory: React.FC<AuditHistoryProps> = ({ auditHistory = [] }) => {
@@ -43,10 +57,22 @@ const AuditHistory: React.FC<AuditHistoryProps> = ({ auditHistory = [] }) => {
     }
   ];
 
+  // Use API audit history if available, otherwise fallback to default
   const history = auditHistory.length > 0 ? auditHistory : defaultAuditHistory;
 
-  const getAuditIcon = (type: string) => {
-    switch (type) {
+  const getAuditIcon = (entry: AuditEntry) => {
+    // Handle API format
+    if (entry.actionName) {
+      const actionName = entry.actionName.toLowerCase();
+      if (actionName.includes('created')) return <AlertTriangle className="h-4 w-4 text-blue-500" />;
+      if (actionName.includes('status') || actionName.includes('change')) return <Clock className="h-4 w-4 text-yellow-500" />;
+      if (actionName.includes('comment')) return <MessageSquare className="h-4 w-4 text-green-500" />;
+      if (actionName.includes('update')) return <Mail className="h-4 w-4 text-purple-500" />;
+      return <Calendar className="h-4 w-4 text-gray-500" />;
+    }
+    
+    // Handle default format
+    switch (entry.type) {
       case 'created': return <AlertTriangle className="h-4 w-4 text-blue-500" />;
       case 'status_change': return <Clock className="h-4 w-4 text-yellow-500" />;
       case 'comment': return <MessageSquare className="h-4 w-4 text-green-500" />;
@@ -62,21 +88,41 @@ const AuditHistory: React.FC<AuditHistoryProps> = ({ auditHistory = [] }) => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {history.map((entry) => (
-            <div key={entry.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-              <div className="mt-1">
-                {getAuditIcon(entry.type)}
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-1">
-                  <h4 className="font-medium text-gray-900 text-sm">{entry.description}</h4>
-                  <span className="text-xs text-gray-500">{entry.date}</span>
+          {history.map((entry) => {
+            // Handle API format vs default format
+            const isApiFormat = entry.actionName;
+            const displayData = isApiFormat ? {
+              id: entry.id,
+              description: entry.actionName,
+              details: entry.actionDescription,
+              date: entry.createdDate,
+              user: entry.performedBy
+            } : {
+              id: entry.id,
+              description: entry.description,
+              details: entry.details,
+              date: entry.date,
+              user: entry.user
+            };
+
+            return (
+              <div key={displayData.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                <div className="mt-1">
+                  {getAuditIcon(entry)}
                 </div>
-                <p className="text-xs text-gray-600 mb-1">{entry.details}</p>
-                <p className="text-xs text-gray-500">By: {entry.user}</p>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <h4 className="font-medium text-gray-900 text-sm">{displayData.description}</h4>
+                    <span className="text-xs text-gray-500">
+                      {displayData.date ? new Date(displayData.date).toLocaleString() : 'N/A'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600 mb-1">{displayData.details}</p>
+                  <p className="text-xs text-gray-500">By: {displayData.user}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </CardContent>
     </Card>

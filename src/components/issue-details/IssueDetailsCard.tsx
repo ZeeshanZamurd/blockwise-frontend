@@ -12,11 +12,11 @@ interface IssueDetailsCardProps {
 
 const IssueDetailsCard: React.FC<IssueDetailsCardProps> = ({ issue }) => {
   const [isEditingUpdate, setIsEditingUpdate] = useState(false);
-  const [editedUpdate, setEditedUpdate] = useState(issue.lastUpdate ?? '');
+  const [editedUpdate, setEditedUpdate] = useState(issue.latestUpdate ?? issue.lastUpdate ?? '');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [editedTitle, setEditedTitle] = useState(issue.title ?? '');
+  const [editedTitle, setEditedTitle] = useState(issue.issueName ?? issue.title ?? '');
   const [isEditingSummary, setIsEditingSummary] = useState(false);
-  const [editedSummary, setEditedSummary] = useState(issue.summary ?? '');
+  const [editedSummary, setEditedSummary] = useState(issue.issueDesc ?? issue.summary ?? '');
 
   const getUpdateMethodIcon = (method?: string) => {
     const m = (method ?? '').toString().toLowerCase();
@@ -91,8 +91,8 @@ const IssueDetailsCard: React.FC<IssueDetailsCardProps> = ({ issue }) => {
           </div>
           <div className="flex items-center space-x-4 text-sm text-gray-600">
             <span>Issue ID: {issue.id}</span>
-            <span>Category: {issue.category}</span>
-            <span>Created: {issue.dateCreated || issue.date}</span>
+            <span>Category: {issue.issueCategory || issue.category}</span>
+            <span>Created: {issue.createdDate || issue.dateCreated || issue.date}</span>
             {issue.dueDate && <span>Due: {issue.dueDate}</span>}
           </div>
         </div>
@@ -122,7 +122,7 @@ const IssueDetailsCard: React.FC<IssueDetailsCardProps> = ({ issue }) => {
                 placeholder="Enter issue summary..."
               />
             ) : (
-              <p className="text-gray-700 text-sm">{issue.summary || 'No summary provided. Click Edit to add a summary.'}</p>
+              <p className="text-gray-700 text-sm">{issue.issueDesc || issue.summary || 'No summary provided. Click Edit to add a summary.'}</p>
             )}
           </div>
           <div>
@@ -149,11 +149,11 @@ const IssueDetailsCard: React.FC<IssueDetailsCardProps> = ({ issue }) => {
               />
             ) : (
               <p className="text-gray-700 text-sm mb-2">
-                {issue.lastUpdate || 'No updates yet. Click Edit to add an update.'}
+                {issue.latestUpdate || issue.lastUpdate || 'No updates yet. Click Edit to add an update.'}
               </p>
             )}
             
-            {issue.lastUpdate && (
+            {(issue.latestUpdate || issue.lastUpdate) && (
               <div className="flex items-center justify-between text-xs text-gray-500">
                 <div className="flex items-center space-x-2">
                   {getUpdateMethodIcon(issue.lastUpdateMethod)}
@@ -161,7 +161,8 @@ const IssueDetailsCard: React.FC<IssueDetailsCardProps> = ({ issue }) => {
                   <span>by {issue.lastUpdateBy || 'User'}</span>
                 </div>
                 <span>
-                  {issue.daysAgo === 0 ? 'today' : `${issue.daysAgo || 0} day${(issue.daysAgo || 0) > 1 ? 's' : ''} ago`}
+                  {issue.lastUpdateDate ? new Date(issue.lastUpdateDate).toLocaleDateString() : 
+                   issue.daysAgo === 0 ? 'today' : `${issue.daysAgo || 0} day${(issue.daysAgo || 0) > 1 ? 's' : ''} ago`}
                 </span>
               </div>
             )}

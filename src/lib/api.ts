@@ -13,6 +13,8 @@ export const api = axios.create({
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
+    console.log('API Request:', config.url, 'Method:', config.method);
+    
     // Try to get token from Redux Persist storage first
     const persistedState = localStorage.getItem('persist:root');
     if (persistedState) {
@@ -21,6 +23,7 @@ api.interceptors.request.use(
         const authState = JSON.parse(parsedState.auth);
         if (authState.token) {
           config.headers.Authorization = `Bearer ${authState.token}`;
+          console.log('Token added from Redux Persist:', authState.token.substring(0, 20) + '...');
         }
       } catch (error) {
         console.warn('Failed to parse persisted auth state:', error);
@@ -31,8 +34,10 @@ api.interceptors.request.use(
     const token = localStorage.getItem('authToken');
     if (token && !config.headers.Authorization) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('Token added from localStorage:', token.substring(0, 20) + '...');
     }
     
+    console.log('Final headers:', config.headers);
     return config;
   },
   (error) => {
@@ -44,6 +49,9 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    console.log('API Error:', error.response?.status, error.config?.url);
+    console.log('Error details:', error.response?.data);
+    
     // Only logout on auth-related endpoints or specific authentication errors
     const isAuthEndpoint = error.config?.url?.includes('/auth/login') || 
                           error.config?.url?.includes('/auth/logout') ||

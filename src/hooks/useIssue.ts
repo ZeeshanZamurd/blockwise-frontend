@@ -1,4 +1,5 @@
 import { useSelector, useDispatch } from 'react-redux';
+import { useCallback } from 'react';
 import { RootState, AppDispatch } from '../store/store';
 import { setLoading, setError, clearError, addIssue, updateIssue, deleteIssue, setIssues, Issue } from '../store/issuesSlice';
 import api from '../lib/api';
@@ -23,13 +24,17 @@ export const useIssue = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { issues, isLoading, error } = useSelector((state: RootState) => state.issues);
 
-  const fetchIssues = async (buildingId: number) => {
+  const fetchIssues = useCallback(async (buildingId: number) => {
+    console.log('fetchIssues called with buildingId:', buildingId);
     try {
       dispatch(setLoading(true));
       dispatch(clearError());
       
+      console.log('Making API call to:', `/issues/building/${buildingId}`);
       const response = await api.get(`/issues/building/${buildingId}`);
       const responseData = response.data;
+      
+      console.log('API response received:', responseData);
       
       // Check if the API response indicates success
       if (responseData.success === false) {
@@ -52,7 +57,7 @@ export const useIssue = () => {
         summary: apiIssue.issueDesc,
         category: apiIssue.issueCategory,
         priority: apiIssue.issuePriority,
-        status: apiIssue.issueStatus === 'NOT_STARTED' ? 'Not started' : 
+        status: apiIssue.issueStatus === 'NOT_STARTED' ? 'Not started' :
                 apiIssue.issueStatus === 'IN_PROGRESS' ? 'In progress' :
                 apiIssue.issueStatus === 'IN_REVIEW' ? 'In review' :
                 apiIssue.issueStatus === 'CLOSED' ? 'Closed' :
@@ -82,7 +87,7 @@ export const useIssue = () => {
     } finally {
       dispatch(setLoading(false));
     }
-  };
+  }, [dispatch]);
 
   const createIssue = async (issueData: {
     buildingId: number;
@@ -178,13 +183,22 @@ export const useIssue = () => {
     }
   };
 
-  const getIssuesByBuildingIdAndStatus = async (buildingId: number, status: string) => {
+  const getIssuesByBuildingIdAndStatus = useCallback(async (buildingId: number, status: string) => {
     try {
       dispatch(setLoading(true));
       dispatch(clearError());
       
-      const response = await api.get(`/issues/building/${buildingId}/status/${status}`);
+      // Map display status to API status format - use exact API status names
+      const apiStatus = status === 'live' ? 'NOT_STARTED' : // Map 'live' to NOT_STARTED for active issues
+                       status; // Use status as-is since it's now the exact API value
+      
+      console.log('Status filter:', status, '-> API Status:', apiStatus);
+      console.log('Making API call to:', `/issues/building/${buildingId}/status/${apiStatus}`);
+      console.log('Full URL will be:', `${api.defaults.baseURL}/issues/building/${buildingId}/status/${apiStatus}`);
+      const response = await api.get(`/issues/building/${buildingId}/status/${apiStatus}`);
       const responseData = response.data;
+      
+      console.log('Status API response received:', responseData);
       
       if (responseData.success === false) {
         const errorMessage = responseData.message || 'Failed to fetch issues by status';
@@ -192,7 +206,43 @@ export const useIssue = () => {
         return { success: false, error: errorMessage };
       }
       
-      return { success: true, issues: responseData.data };
+      // Map API response to match our Issue interface
+      const mappedIssues: Issue[] = responseData.data.map((apiIssue: {
+        id: number;
+        issueName: string;
+        issueDesc: string;
+        issueCategory: string;
+        issuePriority: string;
+        issueStatus: string;
+      }) => ({
+        id: apiIssue.id.toString(),
+        title: apiIssue.issueName,
+        summary: apiIssue.issueDesc,
+        category: apiIssue.issueCategory,
+        priority: apiIssue.issuePriority,
+        status: apiIssue.issueStatus === 'NOT_STARTED' ? 'Not started' :
+                apiIssue.issueStatus === 'IN_PROGRESS' ? 'In progress' :
+                apiIssue.issueStatus === 'IN_REVIEW' ? 'In review' :
+                apiIssue.issueStatus === 'CLOSED' ? 'Closed' :
+                apiIssue.issueStatus === 'PAUSED' ? 'Paused' : 'Not started',
+        dateCreated: new Date().toISOString(),
+        lastUpdated: new Date().toISOString(),
+        assignedTo: null,
+        reporter: null,
+        comments: [],
+        attachments: [],
+        tags: [],
+        dueDate: null,
+        estimatedHours: null,
+        actualHours: null,
+        linkedIssues: [],
+        subTasks: [],
+        auditHistory: []
+      }));
+      
+      // Store issues in Redux
+      dispatch(setIssues(mappedIssues));
+      return { success: true, issues: mappedIssues };
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(error, 'Failed to fetch issues by status');
       dispatch(setError(errorMessage));
@@ -200,15 +250,23 @@ export const useIssue = () => {
     } finally {
       dispatch(setLoading(false));
     }
-  };
+  }, [dispatch]);
 
-  const getIssuesByBuildingIdAndPriority = async (buildingId: number, priority: string) => {
+  const getIssuesByBuildingIdAndPriority = useCallback(async (buildingId: number, priority: string) => {
     try {
       dispatch(setLoading(true));
       dispatch(clearError());
       
-      const response = await api.get(`/issues/building/${buildingId}/priority/${priority}`);
+      // Capitalize the first letter of priority (high -> High, medium -> Medium, low -> Low)
+      const capitalizedPriority = priority.charAt(0).toUpperCase() + priority.slice(1).toLowerCase();
+      
+      console.log('Priority filter:', priority, '-> Capitalized:', capitalizedPriority);
+      console.log('Making API call to:', `/issues/building/${buildingId}/priority/${capitalizedPriority}`);
+      console.log('Full URL will be:', `${api.defaults.baseURL}/issues/building/${buildingId}/priority/${capitalizedPriority}`);
+      const response = await api.get(`/issues/building/${buildingId}/priority/${capitalizedPriority}`);
       const responseData = response.data;
+      
+      console.log('Priority API response received:', responseData);
       
       if (responseData.success === false) {
         const errorMessage = responseData.message || 'Failed to fetch issues by priority';
@@ -216,7 +274,43 @@ export const useIssue = () => {
         return { success: false, error: errorMessage };
       }
       
-      return { success: true, issues: responseData.data };
+      // Map API response to match our Issue interface
+      const mappedIssues: Issue[] = responseData.data.map((apiIssue: {
+        id: number;
+        issueName: string;
+        issueDesc: string;
+        issueCategory: string;
+        issuePriority: string;
+        issueStatus: string;
+      }) => ({
+        id: apiIssue.id.toString(),
+        title: apiIssue.issueName,
+        summary: apiIssue.issueDesc,
+        category: apiIssue.issueCategory,
+        priority: apiIssue.issuePriority,
+        status: apiIssue.issueStatus === 'NOT_STARTED' ? 'Not started' :
+                apiIssue.issueStatus === 'IN_PROGRESS' ? 'In progress' :
+                apiIssue.issueStatus === 'IN_REVIEW' ? 'In review' :
+                apiIssue.issueStatus === 'CLOSED' ? 'Closed' :
+                apiIssue.issueStatus === 'PAUSED' ? 'Paused' : 'Not started',
+        dateCreated: new Date().toISOString(),
+        lastUpdated: new Date().toISOString(),
+        assignedTo: null,
+        reporter: null,
+        comments: [],
+        attachments: [],
+        tags: [],
+        dueDate: null,
+        estimatedHours: null,
+        actualHours: null,
+        linkedIssues: [],
+        subTasks: [],
+        auditHistory: []
+      }));
+      
+      // Store issues in Redux
+      dispatch(setIssues(mappedIssues));
+      return { success: true, issues: mappedIssues };
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(error, 'Failed to fetch issues by priority');
       dispatch(setError(errorMessage));
@@ -224,9 +318,9 @@ export const useIssue = () => {
     } finally {
       dispatch(setLoading(false));
     }
-  };
+  }, [dispatch]);
 
-  const getIssueById = async (issueId: string) => {
+  const getIssueById = useCallback(async (issueId: string) => {
     try {
       dispatch(setLoading(true));
       dispatch(clearError());
@@ -248,14 +342,162 @@ export const useIssue = () => {
     } finally {
       dispatch(setLoading(false));
     }
-  };
+  }, [dispatch]);
+
+  const updateIssueDetails = useCallback(async (issueId: string, updateData: {
+    issueName?: string;
+    issueDesc?: string;
+    statusId?: number;
+    latestUpdate?: string;
+  }) => {
+    try {
+      dispatch(setLoading(true));
+      dispatch(clearError());
+      
+      const response = await api.put(`/issues/${issueId}`, updateData);
+      const responseData = response.data;
+      
+      if (responseData.success === false) {
+        const errorMessage = responseData.message || 'Failed to update issue';
+        dispatch(setError(errorMessage));
+        return { success: false, error: errorMessage };
+      }
+      
+      // Update the issue in Redux store
+      const reduxUpdateData: Partial<Issue> & { id: string } = {
+        id: issueId,
+        lastUpdated: new Date().toISOString()
+      };
+
+      // Map API fields to Redux fields
+      if (updateData.issueName) reduxUpdateData.title = updateData.issueName;
+      if (updateData.issueDesc) reduxUpdateData.summary = updateData.issueDesc;
+      // Note: latestUpdate is not stored in Redux Issue interface, it's handled separately
+      
+      // Map statusId to status if provided (based on API response)
+      if (updateData.statusId) {
+        const statusMap: { [key: number]: string } = {
+          1: 'Not started',    // NOT_STARTED
+          2: 'In progress',    // IN_PROGRESS
+          3: 'In review',      // IN_REVIEW
+          4: 'Closed',         // CLOSED
+          5: 'Paused'          // PAUSED
+        };
+        reduxUpdateData.status = statusMap[updateData.statusId] as 'Not started' | 'In review' | 'In progress' | 'Closed' | 'Paused';
+      }
+
+      dispatch(updateIssue(reduxUpdateData));
+      
+      return { success: true, issue: responseData.data };
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error, 'Failed to update issue');
+      dispatch(setError(errorMessage));
+      return { success: false, error: errorMessage };
+    } finally {
+      dispatch(setLoading(false));
+    }
+  }, [dispatch]);
+
+  const updateIssueStatus = useCallback(async (issueId: string, newStatus: string, buildingId?: number) => {
+    try {
+      dispatch(setLoading(true));
+      dispatch(clearError());
+      
+      // Map display status to statusId (based on API response)
+      const statusId = newStatus === 'Not started' ? 1 :    // NOT_STARTED
+                      newStatus === 'In progress' ? 2 :    // IN_PROGRESS
+                      newStatus === 'In review' ? 3 :       // IN_REVIEW
+                      newStatus === 'Closed' ? 4 :          // CLOSED
+                      newStatus === 'Paused' ? 5 :          // PAUSED
+                      1; // Default to NOT_STARTED
+      
+      const response = await api.put(`/issues/${issueId}`, { statusId });
+      const responseData = response.data;
+      
+      if (responseData.success === false) {
+        const errorMessage = responseData.message || 'Failed to update issue status';
+        dispatch(setError(errorMessage));
+        return { success: false, error: errorMessage };
+      }
+      
+      // Update the issue in Redux store
+      const updateData: Partial<Issue> & { id: string } = {
+        id: issueId,
+        status: newStatus as 'Not started' | 'In review' | 'In progress' | 'Closed' | 'Paused',
+        lastUpdated: new Date().toISOString()
+      };
+
+      dispatch(updateIssue(updateData));
+      
+      // Refresh the issues list in the background if buildingId is provided
+      if (buildingId) {
+        console.log('Refreshing issues list after status update for building:', buildingId);
+        // Don't show loading state for this background refresh
+        try {
+          const refreshResponse = await api.get(`/issues/building/${buildingId}`);
+          const refreshData = refreshResponse.data;
+          
+          if (refreshData.success !== false) {
+            // Map API response to match our Issue interface
+            const mappedIssues: Issue[] = refreshData.data.map((apiIssue: {
+              id: number;
+              issueName: string;
+              issueDesc: string;
+              issueCategory: string;
+              issuePriority: string;
+              issueStatus: string;
+            }) => ({
+              id: apiIssue.id.toString(),
+              title: apiIssue.issueName,
+              summary: apiIssue.issueDesc,
+              category: apiIssue.issueCategory,
+              priority: apiIssue.issuePriority,
+              status: apiIssue.issueStatus === 'NOT_STARTED' ? 'Not started' :
+                      apiIssue.issueStatus === 'IN_PROGRESS' ? 'In progress' :
+                      apiIssue.issueStatus === 'IN_REVIEW' ? 'In review' :
+                      apiIssue.issueStatus === 'CLOSED' ? 'Closed' :
+                      apiIssue.issueStatus === 'PAUSED' ? 'Paused' : 'Not started',
+              dateCreated: new Date().toISOString(),
+              lastUpdated: new Date().toISOString(),
+              assignedTo: null,
+              reporter: null,
+              comments: [],
+              attachments: [],
+              tags: [],
+              dueDate: null,
+              estimatedHours: null,
+              actualHours: null,
+              linkedIssues: [],
+              subTasks: [],
+              auditHistory: []
+            }));
+            
+            // Update the issues list silently
+            dispatch(setIssues(mappedIssues));
+            console.log('Issues list refreshed successfully');
+          }
+        } catch (refreshError) {
+          console.warn('Failed to refresh issues list after status update:', refreshError);
+          // Don't throw error - this is a background operation
+        }
+      }
+      
+      return { success: true, issue: responseData.data };
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error, 'Failed to update issue status');
+      dispatch(setError(errorMessage));
+      return { success: false, error: errorMessage };
+    } finally {
+      dispatch(setLoading(false));
+    }
+  }, [dispatch]);
 
   const editIssue = async (issueId: string, issueData: {
     issueName?: string;
     issueDesc?: string;
     issueCategory?: string;
     issuePriority?: string;
-    issueStatus?: string;
+    statusId?: number;
   }) => {
     try {
       dispatch(setLoading(true));
@@ -281,7 +523,18 @@ export const useIssue = () => {
       if (issueData.issueDesc) updateData.summary = issueData.issueDesc;
       if (issueData.issueCategory) updateData.category = issueData.issueCategory;
       if (issueData.issuePriority) updateData.priority = issueData.issuePriority as 'Low' | 'Medium' | 'High' | 'Urgent';
-      if (issueData.issueStatus) updateData.status = issueData.issueStatus as 'Not started' | 'In review' | 'In progress' | 'Closed' | 'Paused';
+      
+      // Map statusId to status if provided (based on API response)
+      if (issueData.statusId) {
+        const statusMap: { [key: number]: string } = {
+          1: 'Not started',    // NOT_STARTED
+          2: 'In progress',    // IN_PROGRESS
+          3: 'In review',      // IN_REVIEW
+          4: 'Closed',         // CLOSED
+          5: 'Paused'          // PAUSED
+        };
+        updateData.status = statusMap[issueData.statusId] as 'Not started' | 'In review' | 'In progress' | 'Closed' | 'Paused';
+      }
 
       dispatch(updateIssue(updateData));
       
@@ -334,6 +587,8 @@ export const useIssue = () => {
     getIssuesByBuildingIdAndStatus,
     getIssuesByBuildingIdAndPriority,
     getIssueById,
+    updateIssueDetails,
+    updateIssueStatus,
     editIssue,
     getIssueStatusList,
     clearIssueError,

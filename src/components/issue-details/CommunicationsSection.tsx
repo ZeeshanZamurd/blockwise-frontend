@@ -21,11 +21,10 @@ const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, 
   const [emailSearchTerm, setEmailSearchTerm] = useState('');
   const [selectedEmailId, setSelectedEmailId] = useState('');
 
-  // Get emails linked to this issue
+  // Use API communications data if available, otherwise fallback to context emails
   const issue = issues.find(i => i.id === issueId);
-  const linkedEmails = emails.filter(email => 
-    issue?.linkedEmailIds?.includes(email.id) || []
-  );
+  const linkedEmails = communications.length > 0 ? communications : 
+    emails.filter(email => issue?.linkedEmailIds?.includes(email.id) || []);
 
   const filteredEmails = emails.filter(email =>
     email.id.toLowerCase().includes(emailSearchTerm.toLowerCase()) ||
@@ -147,7 +146,19 @@ const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, 
       <CardContent>
         <div className="space-y-3">
           {linkedEmails.length > 0 ? (
-            linkedEmails.map((email, index) => {
+            linkedEmails.map((communication, index) => {
+              // Handle both API communication format and context email format
+              const isApiFormat = communication.messageId;
+              const email = isApiFormat ? {
+                id: communication.messageId,
+                subject: communication.subject,
+                from: communication.fromEmail,
+                to: communication.toEmail,
+                body: communication.bodyText,
+                summary: communication.summary,
+                date: communication.messageId // Use messageId as date fallback
+              } : communication;
+              
               // For demo purposes, mark first email as new
               const isNewEmail = index === 0;
               return (
@@ -165,11 +176,23 @@ const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, 
                       )}
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground mb-2">{email.aiSummary || 'Email linked to this issue'}</p>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    {email.summary || email.aiSummary || 'Email linked to this issue'}
+                  </p>
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>From: {email.from}</span>
-                    <span>{new Date(email.date).toLocaleDateString()}</span>
+                    <span>To: {email.to || 'N/A'}</span>
                   </div>
+                  {isApiFormat && communication.bodyText && (
+                    <details className="mt-2">
+                      <summary className="text-xs text-blue-600 cursor-pointer hover:text-blue-800">
+                        View full message
+                      </summary>
+                      <div className="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-700 max-h-32 overflow-y-auto">
+                        {communication.bodyText}
+                      </div>
+                    </details>
+                  )}
                 </div>
               );
             })

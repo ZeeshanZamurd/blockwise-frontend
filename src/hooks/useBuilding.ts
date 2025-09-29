@@ -25,12 +25,16 @@ export const useBuilding = () => {
   const { building, isLoading, error } = useSelector((state: RootState) => state.building);
 
   const fetchBuildingDetails = useCallback(async () => {
+    console.log('fetchBuildingDetails called');
     try {
       dispatch(setLoading(true));
       dispatch(clearError());
       
+      console.log('Making API call to: /api/building/detail');
       const response = await api.get('/api/building/detail');
       const responseData = response.data;
+      
+      console.log('Building API response received:', responseData);
       
       // Check if the API response indicates success
       if (responseData.success === false) {
