@@ -1,5 +1,5 @@
 import { useSelector, useDispatch } from 'react-redux';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { RootState, AppDispatch } from '../store/store';
 import { setLoading, setError, clearError, setBuilding, clearBuilding } from '../store/buildingSlice';
 import api from '../lib/api';
@@ -54,6 +54,14 @@ export const useBuilding = () => {
       dispatch(setLoading(false));
     }
   }, [dispatch]);
+
+  // Auto-fetch building details when hook is used and no building data exists
+  useEffect(() => {
+    if (!building && !isLoading) {
+      console.log('useBuilding: Auto-fetching building details');
+      fetchBuildingDetails();
+    }
+  }, [building, isLoading, fetchBuildingDetails]);
 
   const clearBuildingData = () => {
     dispatch(clearBuilding());

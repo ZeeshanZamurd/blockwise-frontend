@@ -33,7 +33,7 @@ const EnhancedIssueLog = ({ emptyDataMode = false }: EnhancedIssueLogProps) => {
   });
   const { issues, updateIssue } = useIssues();
   const { fetchIssues, getIssueById, getIssuesByBuildingIdAndPriority, getIssuesByBuildingIdAndStatus, isLoading: isIssuesLoading } = useIssue();
-  const { building } = useBuilding();
+  const { building, fetchBuildingDetails } = useBuilding();
 
   // Get "last visit" timestamp for new issues grouping
   const [lastVisit] = useState(() => {
@@ -48,30 +48,20 @@ const EnhancedIssueLog = ({ emptyDataMode = false }: EnhancedIssueLogProps) => {
     };
   }, []);
 
-  // Initial fetch issues when building data is available (only if no priority filter is set)
+  // Simple fetch when building data is available
   useEffect(() => {
-    console.log('EnhancedIssueLog initial useEffect triggered:', {
+    console.log('EnhancedIssueLog useEffect triggered:', {
       buildingId: building?.buildingId,
       issuesLength: issues.length,
-      filterPriority: filterPriority,
-      building: building
+      isIssuesLoading: isIssuesLoading
     });
     
-    // Only fetch if we have building data, no issues yet, and both filters are 'all'
-    // This prevents infinite API calls and conflicts with filtering
-    if (building?.buildingId && issues.length === 0 && !isIssuesLoading && filterPriority === 'all' && filterStatus === 'live') {
-      console.log('Initial fetch: Fetching all issues for building:', building.buildingId);
+    // Only fetch if we have building data, no issues, and not loading
+    if (building?.buildingId && issues.length === 0 && !isIssuesLoading) {
+      console.log('Fetching issues for building:', building.buildingId);
       fetchIssues(building.buildingId);
-    } else {
-      console.log('Not doing initial fetch. Reasons:', {
-        noBuildingId: !building?.buildingId,
-        hasIssues: issues.length > 0,
-        isLoading: isIssuesLoading,
-        priorityFilterNotAll: filterPriority !== 'all',
-        statusFilterNotLive: filterStatus !== 'live'
-      });
     }
-  }, [building?.buildingId, issues.length, isIssuesLoading, filterPriority, filterStatus, fetchIssues]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [building?.buildingId, issues.length, isIssuesLoading, fetchIssues]);
 
   // Handle priority filter changes
   useEffect(() => {
@@ -260,6 +250,14 @@ const EnhancedIssueLog = ({ emptyDataMode = false }: EnhancedIssueLogProps) => {
         <div>
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Building Issues</h2>
           <p className="text-sm md:text-base text-gray-600">Track and manage building issues and tasks</p>
+          {/* Debug information */}
+          <div className="mt-2 text-xs text-gray-500">
+            Building ID: {building?.buildingId || 'Not available'} | 
+            Issues: {issues.length} | 
+            Loading: {isIssuesLoading ? 'Yes' : 'No'} |
+            Status Filter: {filterStatus} |
+            Priority Filter: {filterPriority}
+          </div>
           {filterStatus === 'overdue' && (
             <div className="mt-2">
               <Badge className="bg-red-100 text-red-800">
@@ -268,10 +266,46 @@ const EnhancedIssueLog = ({ emptyDataMode = false }: EnhancedIssueLogProps) => {
             </div>
           )}
         </div>
-        <Button className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto" onClick={() => setShowCreateForm(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Create Issue
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              if (building?.buildingId) {
+                console.log('Manual refresh triggered for building:', building.buildingId);
+                fetchIssues(building.buildingId);
+              }
+            }}
+            className="w-full sm:w-auto"
+            disabled={isIssuesLoading}
+          >
+            {isIssuesLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                Loading...
+              </>
+            ) : (
+              <>
+                <Search className="h-4 w-4 mr-2" />
+                Refresh Issues
+              </>
+            )}
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              console.log('Manual building fetch triggered');
+              fetchBuildingDetails();
+            }}
+            className="w-full sm:w-auto"
+          >
+            <Search className="h-4 w-4 mr-2" />
+            Fetch Building
+          </Button>
+          <Button className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto" onClick={() => setShowCreateForm(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Issue
+          </Button>
+        </div>
       </div>
 
       {/* Search and Filter Bar */}

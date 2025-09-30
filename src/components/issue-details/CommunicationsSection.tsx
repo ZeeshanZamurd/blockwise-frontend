@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { FileText, Mail, Plus, Link } from 'lucide-react';
 import { useEmails } from '@/contexts/EmailsContext';
 import { useIssues } from '@/contexts/IssuesContext';
+import { useNavigate } from 'react-router-dom';
 
 interface CommunicationsSectionProps {
   issueId: string;
@@ -17,12 +18,16 @@ interface CommunicationsSectionProps {
 const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, communications = [] }) => {
   const { emails, linkEmailToIssue } = useEmails();
   const { issues, linkIssueToEmail } = useIssues();
+  const navigate = useNavigate();
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
   const [emailSearchTerm, setEmailSearchTerm] = useState('');
   const [selectedEmailId, setSelectedEmailId] = useState('');
 
+  // Get the current issue to check if it has an emailId
+  const currentIssue = issues.find(i => i.id === issueId);
+  const issueEmailId = currentIssue?.emailId;
+
   // Use API communications data if available, otherwise fallback to context emails
-  const issue = issues.find(i => i.id === issueId);
   const linkedEmails = communications.length > 0 ? communications : 
     emails.filter(email => issue?.linkedEmailIds?.includes(email.id) || []);
 
@@ -39,6 +44,9 @@ const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, 
       setIsLinkDialogOpen(false);
       setSelectedEmailId('');
       setEmailSearchTerm('');
+      
+      // Navigate to email tab
+      navigate('/emails');
     }
   };
 
@@ -48,6 +56,9 @@ const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, 
       linkEmailToIssue(emailId, issueId);
       linkIssueToEmail(issueId, emailId);
       setEmailSearchTerm('');
+      
+      // Navigate to email tab
+      navigate('/emails');
     }
   };
 
@@ -83,15 +94,22 @@ const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, 
                     Search by Email ID or details
                   </label>
                   <Input
-                    placeholder="Search emails or enter Email ID..."
-                    value={emailSearchTerm}
+                    placeholder={issueEmailId ? `Pre-filled: ${issueEmailId}` : "Search emails or enter Email ID..."}
+                    value={issueEmailId ? issueEmailId : emailSearchTerm}
                     onChange={(e) => setEmailSearchTerm(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && emailSearchTerm.startsWith('EML-')) {
-                        handleEmailIdInput(emailSearchTerm);
+                      if (e.key === 'Enter' && (emailSearchTerm.startsWith('EML-') || issueEmailId)) {
+                        handleEmailIdInput(emailSearchTerm || issueEmailId || '');
                       }
                     }}
+                    disabled={!!issueEmailId}
+                    className={issueEmailId ? 'bg-gray-100' : ''}
                   />
+                  {issueEmailId && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      This issue is already linked to email: {issueEmailId}
+                    </p>
+                  )}
                 </div>
                 
                 {emailSearchTerm && !emailSearchTerm.startsWith('EML-') && (
@@ -120,11 +138,19 @@ const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, 
                 
                 <div className="flex space-x-2">
                   <Button 
-                    onClick={handleLinkEmail} 
-                    disabled={!selectedEmailId}
+                    onClick={() => {
+                      if (issueEmailId) {
+                        // If issue has emailId, link it directly
+                        handleEmailIdInput(issueEmailId);
+                      } else {
+                        // Otherwise use the selected email
+                        handleLinkEmail();
+                      }
+                    }}
+                    disabled={!selectedEmailId && !issueEmailId}
                     className="flex-1"
                   >
-                    Link Email
+                    {issueEmailId ? 'Link Pre-filled Email' : 'Link Email'}
                   </Button>
                   <Button 
                     variant="outline" 
@@ -189,7 +215,7 @@ const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, 
                         View full message
                       </summary>
                       <div className="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-700 max-h-32 overflow-y-auto">
-                        {communication.bodyText}
+                        {communication.summary}
                       </div>
                     </details>
                   )}

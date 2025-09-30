@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { MapPin, User, Phone, Mail, Key, FileText, Edit, Plus, Upload, X, Building, Info, Copy } from 'lucide-react';
+import { MapPin, User, Phone, Mail, Key, FileText, Edit, Plus, Upload, X, Building, Info, Copy, Users, Home } from 'lucide-react';
+import { useBuilding } from '@/hooks/useBuilding';
 
 interface EditableField {
   id: string;
@@ -27,69 +28,97 @@ interface EditableBlockDetailsProps {
 }
 
 const EditableBlockDetails = ({ emptyDataMode = false }: EditableBlockDetailsProps) => {
-  const uniqueEmail = "alto-apartments-j4k9@blocwise.com";
+  const { building, isLoading } = useBuilding();
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(uniqueEmail);
+    if (building?.uniqueEmail) {
+      navigator.clipboard.writeText(building.uniqueEmail);
+    }
   };
 
-  // Always show the functional interface
-  const [sections, setSections] = useState<EditableSection[]>([
-    {
-      id: 'address',
-      title: 'Block Address',
-      icon: MapPin,
-      fields: [
-        { id: 'address1', label: 'Address Line 1', value: '8 Sylvan Hill', type: 'text' },
-        { id: 'address2', label: 'Address Line 2', value: 'London, SE19 2QF', type: 'text' }
-      ]
-    },
-    {
-      id: 'managing-agent',
-      title: 'Managing Agent',
-      icon: User,
-      fields: [
-        { id: 'company', label: 'Company', value: 'Encore Estate Services', type: 'text' },
-        { id: 'manager', label: 'Building Manager', value: 'Rob Cox', type: 'text' },
-        { id: 'phone', label: 'Phone', value: '0207 426 4970', type: 'phone' },
-        { id: 'email', label: 'Email', value: 'Rob.Cox@encoregroup.co.uk', type: 'email' }
-      ]
-    },
-    {
-      id: 'directors',
-      title: 'Directors',
-      icon: User,
-      fields: [
-        { id: 'zeeshan', label: 'Zeeshan', value: 'zeeshan.uk@gmail.com', type: 'email' },
-        { id: 'chris', label: 'Chris', value: 'christopherallanson@gmail.com', type: 'email' },
-        { id: 'mei', label: 'Mei', value: 'mei.lim@reachfoundation.org.uk', type: 'email' },
-        { id: 'jonny', label: 'Jonny', value: 'jonnyzimber@gmail.com', type: 'email' },
-        { id: 'shared-inbox', label: 'Shared Inbox', value: 'altosylvanhill@gmail.com', type: 'email' }
-      ]
-    },
-    {
-      id: 'building-codes',
-      title: 'Building Codes / Lock Boxes',
-      icon: Key,
-      fields: [
-        { id: 'side-gates', label: 'Side gates', value: '1066', type: 'code' },
-        { id: 'pedestrian-gate', label: 'Pedestrian gate', value: '1769', type: 'code' }
-      ]
-    },
-    {
-      id: 'building-plans',
-      title: 'Building Plans',
-      icon: FileText,
-      fields: [],
-      documents: [
-        { name: 'Floor Plan' },
-        { name: 'Building and Ground Map' }
-      ]
-    }
-  ]);
+  // Generate sections based on real building data
+  const generateSections = (): EditableSection[] => {
+    if (!building) return [];
 
+    const sections: EditableSection[] = [
+      {
+        id: 'building-info',
+        title: 'Building Information',
+        icon: Building,
+        fields: [
+          { id: 'building-name', label: 'Building Name', value: building.buildingName || '-', type: 'text' },
+          { id: 'building-id', label: 'Building ID', value: building.buildingId?.toString() || '-', type: 'text' },
+          { id: 'number-of-flats', label: 'Number of Flats', value: building.numberOfFlats?.toString() || '-', type: 'text' }
+        ]
+      },
+      {
+        id: 'address',
+        title: 'Building Address',
+        icon: MapPin,
+        fields: [
+          { id: 'address', label: 'Address', value: building.buildingAddress || '-', type: 'text' }
+        ]
+      },
+      {
+        id: 'directors',
+        title: 'Directors',
+        icon: Users,
+        fields: building.users?.map((user, index) => ({
+          id: `director-${user.id}`,
+          label: `${user.firstName} ${user.lastName}`,
+          value: user.email || '-',
+          type: 'email' as const
+        })) || []
+      }
+    ];
+
+    // Add additional sections for missing data
+    sections.push(
+      {
+        id: 'managing-agent',
+        title: 'Managing Agent',
+        icon: User,
+        fields: [
+          { id: 'company', label: 'Company', value: '-', type: 'text' },
+          { id: 'manager', label: 'Building Manager', value: '-', type: 'text' },
+          { id: 'phone', label: 'Phone', value: '-', type: 'phone' },
+          { id: 'email', label: 'Email', value: '-', type: 'email' }
+        ]
+      },
+      {
+        id: 'building-codes',
+        title: 'Building Codes / Lock Boxes',
+        icon: Key,
+        fields: [
+          { id: 'main-gate', label: 'Main Gate Code', value: '-', type: 'code' },
+          { id: 'side-gate', label: 'Side Gate Code', value: '-', type: 'code' },
+          { id: 'emergency', label: 'Emergency Code', value: '-', type: 'code' }
+        ]
+      },
+      {
+        id: 'building-plans',
+        title: 'Building Plans & Documents',
+        icon: FileText,
+        fields: [],
+        documents: [
+          { name: 'Floor Plan' },
+          { name: 'Building Layout' },
+          { name: 'Emergency Procedures' }
+        ]
+      }
+    );
+
+    return sections;
+  };
+
+  const [sections, setSections] = useState<EditableSection[]>(generateSections());
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [editingField, setEditingField] = useState<string | null>(null);
+
+  // Update sections when building data changes
+  useEffect(() => {
+    setSections(generateSections());
+  }, [building]);
 
   const updateField = (sectionId: string, fieldId: string, newValue: string) => {
     setSections(sections.map(section => 
@@ -154,6 +183,35 @@ const EditableBlockDetails = ({ emptyDataMode = false }: EditableBlockDetailsPro
     setSections([...sections, newSection]);
   };
 
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading building details...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show empty state if no building data
+  if (!building) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Building Data</h3>
+            <p className="text-gray-600">Building details are not available.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between">
@@ -168,16 +226,20 @@ const EditableBlockDetails = ({ emptyDataMode = false }: EditableBlockDetailsPro
             <div className="flex items-center justify-between">
               <div>
                 <strong>Building Email:</strong>
-                <div className="text-sm font-mono">{uniqueEmail}</div>
+                <div className="text-sm font-mono">
+                  {building?.uniqueEmail || '-'}
+                </div>
               </div>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="sm" onClick={copyToClipboard}>
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Copy email address</TooltipContent>
-              </Tooltip>
+              {building?.uniqueEmail && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="sm" onClick={copyToClipboard}>
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Copy email address</TooltipContent>
+                </Tooltip>
+              )}
             </div>
           </AlertDescription>
         </Alert>
@@ -284,6 +346,7 @@ const EditableBlockDetails = ({ emptyDataMode = false }: EditableBlockDetailsPro
                                 <div className="flex justify-between">
                                   <span className="font-medium text-gray-700">{field.label}:</span>
                                   <span className={`${
+                                    field.value === '-' ? 'text-gray-400 italic' :
                                     field.type === 'email' ? 'text-blue-600' : 
                                     field.type === 'code' ? 'font-mono bg-gray-100 px-2 py-1 rounded' : 
                                     ''

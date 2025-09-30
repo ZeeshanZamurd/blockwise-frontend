@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Search, Mail, MailOpen, Paperclip, Calendar, AlertTriangle, CheckCircle, Clock, Plus, Eye, Edit, Link, Copy } from 'lucide-react';
 import { useIssues } from '@/contexts/IssuesContext';
 import { useEmails } from '@/contexts/EmailsContext';
+import { useEmail, Email } from '@/hooks/useEmail';
 import { toast } from 'sonner';
 
 interface EnhancedCommunicationsPanelProps {
@@ -46,7 +47,10 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
   const [searchParams] = useSearchParams();
   const { addIssue, updateIssue, issues } = useIssues();
   const { emails, updateEmail, linkEmailToIssue } = useEmails();
-  const [selectedEmail, setSelectedEmail] = useState<any>(null);
+  const { fetchEmails } = useEmail();
+  const [apiEmails, setApiEmails] = useState<Email[]>([]);
+  const [isLoadingEmails, setIsLoadingEmails] = useState(false);
+  const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [isEditingIssue, setIsEditingIssue] = useState(false);
@@ -65,6 +69,23 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
       setActiveTab('review');
     }
   }, [searchParams]);
+
+  // Fetch emails when component mounts
+  useEffect(() => {
+    const loadEmails = async () => {
+      setIsLoadingEmails(true);
+      const result = await fetchEmails();
+      if (result.success) {
+        setApiEmails(result.emails);
+      } else {
+        console.error('Failed to fetch emails:', result.error);
+        toast.error('Failed to load emails');
+      }
+      setIsLoadingEmails(false);
+    };
+
+    loadEmails();
+  }, [fetchEmails]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -88,24 +109,24 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
   };
 
   const getFilteredEmails = () => {
-    let filtered = emails;
+    let filtered = apiEmails;
     
     // Apply tab filter
     switch (activeTab) {
       case 'review':
-        filtered = emails.filter(email => email.status === 'Needs Review');
+        filtered = apiEmails.filter(email => email.issueCreationStatus === null);
         break;
       case 'all':
       default:
-        filtered = emails.filter(email => email.status !== 'Needs Review');
+        filtered = apiEmails.filter(email => email.issueCreationStatus !== null);
         break;
     }
     
     // Apply search filter
     return filtered.filter(email =>
       email.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      email.from.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      email.body.toLowerCase().includes(searchTerm.toLowerCase())
+      email.fromEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      email.bodyText.toLowerCase().includes(searchTerm.toLowerCase())
     );
   };
 
@@ -114,21 +135,21 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
   // Set default values when email is selected
   useEffect(() => {
     if (selectedEmail) {
-      if (selectedEmail.status === 'Needs Review') {
+      if (selectedEmail.issueCreationStatus === null) {
         // For emails needing review, start with empty fields
         setEditableIssue('');
         setEditableSummary('');
       } else {
         // For completed emails, show AI-generated content
-        setEditableIssue(selectedEmail.priority === 'High' ? 'Urgent Building Safety Issue' : 'Standard Building Maintenance');
-        setEditableSummary(selectedEmail.aiSummary || 'AI-generated summary of the email content and required actions.');
+        setEditableIssue(selectedEmail.associatedIssues.length > 0 ? selectedEmail.associatedIssues[0].issueName : 'Standard Building Maintenance');
+        setEditableSummary(selectedEmail.summary || 'AI-generated summary of the email content and required actions.');
       }
       setShowLogMultiple(false);
       setIsLinkingEmail(false);
       setSelectedIssueToLink('');
       
       // Hide banner when any email is viewed
-      if (selectedEmail.status === 'Needs Review') {
+      if (selectedEmail.issueCreationStatus === null) {
         setShowBanner(false);
       }
     }
@@ -220,7 +241,7 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
         <p className="text-muted-foreground">Manage building-related communications</p>
         
         {/* Show attention banner if there are emails needing review and banner is not dismissed */}
-        {emails.filter(e => e.status === 'Needs Review').length > 0 && showBanner && (
+        {apiEmails.filter(e => e.issueCreationStatus === null).length > 0 && showBanner && (
           <div className="mt-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-300 p-4 rounded-lg shadow-md">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
@@ -229,7 +250,7 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
                 </div>
                 <div>
                   <p className="text-orange-900 font-bold text-lg">
-                    {emails.filter(e => e.status === 'Needs Review').length} Email{emails.filter(e => e.status === 'Needs Review').length > 1 ? 's' : ''} Need{emails.filter(e => e.status === 'Needs Review').length === 1 ? 's' : ''} Immediate Review
+                    {apiEmails.filter(e => e.issueCreationStatus === null).length} Email{apiEmails.filter(e => e.issueCreationStatus === null).length > 1 ? 's' : ''} Need{apiEmails.filter(e => e.issueCreationStatus === null).length === 1 ? 's' : ''} Immediate Review
                   </p>
                   <p className="text-orange-700 text-sm">
                     Critical emails require manual review to ensure proper issue logging and response
@@ -271,9 +292,9 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
                   <TabsTrigger value="all">Emails</TabsTrigger>
                   <TabsTrigger value="review">
                     Need Review
-                    {emails.filter(e => e.status === 'Needs Review').length > 0 && (
+                    {apiEmails.filter(e => e.issueCreationStatus === null).length > 0 && (
                       <Badge variant="outline" className="ml-1 bg-orange-50 text-orange-700">
-                        {emails.filter(e => e.status === 'Needs Review').length}
+                        {apiEmails.filter(e => e.issueCreationStatus === null).length}
                       </Badge>
                     )}
                   </TabsTrigger>
@@ -291,23 +312,29 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
             </CardHeader>
             <CardContent className="p-0">
               <div className="space-y-1">
-                {filteredEmails.map((email) => (
-                  <div
-                    key={email.id}
+                {isLoadingEmails ? (
+                  <div className="p-4 text-center">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                    <p className="text-sm text-gray-600">Loading emails...</p>
+                  </div>
+                ) : (
+                  filteredEmails.map((email) => (
+                    <div
+                      key={email.messageId}
                     onClick={() => setSelectedEmail(email)}
                     className={`p-4 cursor-pointer border-b border-border hover:bg-muted/50 transition-colors ${
-                      selectedEmail?.id === email.id ? 'bg-primary/5 border-l-4 border-l-primary' : ''
+                        selectedEmail?.messageId === email.messageId ? 'bg-primary/5 border-l-4 border-l-primary' : ''
                     }`}
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center space-x-2">
-                        {email.status === 'Unread' ? (
+                          {email.issueCreationStatus === null ? (
                           <Mail className="h-4 w-4 text-primary" />
                         ) : (
                           <MailOpen className="h-4 w-4 text-muted-foreground" />
                         )}
-                        <span className={`text-sm ${email.status === 'Unread' ? 'font-semibold' : 'text-foreground'}`}>
-                          {email.from}
+                          <span className={`text-sm ${email.issueCreationStatus === null ? 'font-semibold' : 'text-foreground'}`}>
+                            {email.fromEmail}
                         </span>
                         <Button
                           variant="ghost"
@@ -315,33 +342,34 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
                           className="h-6 w-6 p-0"
                           onClick={(e) => {
                             e.stopPropagation();
-                            copyEmailId(email.id);
+                              copyEmailId(email.messageId);
                           }}
                         >
                           <Copy className="h-3 w-3" />
                         </Button>
-                        {email.status === 'Unread' && <div className="w-2 h-2 bg-primary rounded-full"></div>}
-                        {email.status === 'Needs Review' && (
+                          {email.issueCreationStatus === null && <div className="w-2 h-2 bg-primary rounded-full"></div>}
+                          {email.issueCreationStatus === null && (
                           <Badge variant="outline" className="bg-orange-50 text-orange-700 text-xs">
                             Review
                           </Badge>
                         )}
                       </div>
                       <div className="flex items-center space-x-1">
-                        <span className="text-xs text-muted-foreground">{formatDate(email.date)}</span>
-                      </div>
+                          <span className="text-xs text-muted-foreground">{email.messageId.substring(0, 8)}...</span>
+                        </div>
                     </div>
                     <div className="mb-2">
-                      <span className="text-xs text-muted-foreground">ID: {email.id}</span>
+                        <span className="text-xs text-muted-foreground">ID: {email.messageId}</span>
                     </div>
-                    <h4 className={`text-sm mb-1 ${email.status === 'Unread' ? 'font-semibold' : 'text-foreground'}`}>
+                      <h4 className={`text-sm mb-1 ${email.issueCreationStatus === null ? 'font-semibold' : 'text-foreground'}`}>
                       {email.subject}
                     </h4>
                     <p className="text-xs text-muted-foreground line-clamp-2">
-                      {email.body.substring(0, 100)}...
+                        {email.bodyText.substring(0, 100)}...
                     </p>
                   </div>
-                ))}
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
@@ -355,20 +383,20 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold">{selectedEmail.subject}</h3>
-                    <Badge className={getPriorityColor(selectedEmail.priority)}>
-                      {selectedEmail.priority}
+                    <Badge className={getPriorityColor(selectedEmail.associatedIssues.length > 0 ? selectedEmail.associatedIssues[0].issuePriority : 'Medium')}>
+                      {selectedEmail.associatedIssues.length > 0 ? selectedEmail.associatedIssues[0].issuePriority : 'Medium'}
                     </Badge>
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    <p>ID: {selectedEmail.id}</p>
-                    <p>From: {selectedEmail.from}</p>
-                    <p>Date: {new Date(selectedEmail.date).toLocaleString()}</p>
+                    <p>ID: {selectedEmail.messageId}</p>
+                    <p>From: {selectedEmail.fromEmail}</p>
+                    <p>To: {selectedEmail.toEmail}</p>
                   </div>
                 </CardHeader>
                 <Separator />
                 <CardContent className="pt-4">
                   <div className="prose prose-sm max-w-none">
-                    {selectedEmail.body.split('\n').map((paragraph, index) => (
+                    {selectedEmail.bodyText.split('\n').map((paragraph, index) => (
                       <p key={index} className="mb-3 text-foreground leading-relaxed">
                         {paragraph}
                       </p>
@@ -401,18 +429,18 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
                    <div>
                      <div className="flex items-center justify-between mb-2">
                        <h4 className="font-medium text-foreground">Status</h4>
-                       <Badge className={selectedEmail.status === 'Needs Review' ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'}>
-                         {selectedEmail.status === 'Needs Review' ? 'Needs Review' : 'Issue Created'}
-                       </Badge>
-                     </div>
-                     <Badge className={getPriorityColor(selectedEmail.priority)}>
-                       {selectedEmail.priority} Priority
+                         <Badge className={selectedEmail.issueCreationStatus === null ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'}>
+                           {selectedEmail.issueCreationStatus === null ? 'Needs Review' : 'Issue Created'}
+                         </Badge>
+                       </div>
+                       <Badge className={getPriorityColor(selectedEmail.associatedIssues.length > 0 ? selectedEmail.associatedIssues[0].issuePriority : 'Medium')}>
+                         {selectedEmail.associatedIssues.length > 0 ? selectedEmail.associatedIssues[0].issuePriority : 'Medium'} Priority
                      </Badge>
                    </div>
 
                    <Separator />
 
-                   {selectedEmail.status === 'Needs Review' ? (
+                   {selectedEmail.issueCreationStatus === null ? (
                      /* Need Review Email - Manual Creation */
                      <div>
                        <h4 className="font-medium text-foreground mb-3">Manual Issue Creation</h4>
@@ -569,21 +597,24 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
                                </span>
                              </div>
                              <p className="text-sm text-green-700">
-                               {selectedEmail.aiSummary}
+                               {selectedEmail.summary}
                              </p>
                            </div>
                            
-                           {selectedEmail.linkedIssueIds && selectedEmail.linkedIssueIds.length > 0 && (
+                           {selectedEmail.associatedIssues && selectedEmail.associatedIssues.length > 0 && (
                              <div>
-                               <h5 className="text-sm font-medium text-foreground mb-2">Linked Issues</h5>
+                               <h5 className="text-sm font-medium text-foreground mb-2">Associated Issues</h5>
                                <div className="space-y-1">
-                                 {selectedEmail.linkedIssueIds.map((issueId) => (
-                                   <div key={issueId} className="flex items-center space-x-2 p-2 bg-primary/5 rounded text-sm">
+                                 {selectedEmail.associatedIssues.map((issue) => (
+                                   <div key={issue.id} className="flex items-center space-x-2 p-2 bg-primary/5 rounded text-sm">
                                      <AlertTriangle className="h-4 w-4 text-primary" />
-                                     <span className="text-primary">{issueId}</span>
-                                     <Button variant="ghost" size="sm" className="ml-auto p-1 h-6">
-                                       <Eye className="h-3 w-3" />
-                                     </Button>
+                                     <div className="flex-1">
+                                       <span className="text-primary font-medium">{issue.issueName}</span>
+                                       <p className="text-xs text-gray-600">{issue.issueDesc}</p>
+                                     </div>
+                                     <Badge className={getPriorityColor(issue.issuePriority)}>
+                                       {issue.issuePriority}
+                                     </Badge>
                                    </div>
                                  ))}
                                </div>
