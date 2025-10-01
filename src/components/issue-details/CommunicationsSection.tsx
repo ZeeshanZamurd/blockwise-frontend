@@ -29,7 +29,7 @@ const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, 
 
   // Use API communications data if available, otherwise fallback to context emails
   const linkedEmails = communications.length > 0 ? communications : 
-    emails.filter(email => issue?.linkedEmailIds?.includes(email.id) || []);
+    emails.filter(email => currentIssue?.linkedEmailIds?.includes(email.id) || []);
 
   const filteredEmails = emails.filter(email =>
     email.id.toLowerCase().includes(emailSearchTerm.toLowerCase()) ||
