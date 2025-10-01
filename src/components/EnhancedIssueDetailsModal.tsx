@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { AlertTriangle, Share } from 'lucide-react';
+import { AlertTriangle, Share, Edit, Save, X } from 'lucide-react';
 import IssueDetailsCard from './issue-details/IssueDetailsCard';
 import SubTasks from './issue-details/SubTasks';
 import DirectorComments from './issue-details/DirectorComments';
@@ -47,13 +47,69 @@ interface EnhancedIssueDetailsModalProps {
 
 const EnhancedIssueDetailsModal: React.FC<EnhancedIssueDetailsModalProps> = ({ issue, onClose }) => {
   const { issues, updateIssue } = useIssues();
-  const { getIssueById, updateIssueStatus } = useIssue();
+  const { getIssueById, updateIssueStatus, updateIssueDetails } = useIssue();
   const { building } = useBuilding();
   const [detailedIssue, setDetailedIssue] = useState<Issue | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const hasFetchedRef = useRef<string | null>(null);
   
   const currentIssue = issues.find(i => i.id === issue.id) ?? issue;
+
+  // Initialize edited title when issue changes
+  useEffect(() => {
+    const title = (currentIssue as any).issueName || (currentIssue as any).title || '';
+    setEditedTitle(title);
+  }, [currentIssue]);
+
+  const handleTitleEdit = async () => {
+    if (isEditingTitle) {
+      // Save the edited title via API
+      setIsSaving(true);
+      try {
+        const result = await updateIssueDetails(issue.id, {
+          issueName: editedTitle
+        });
+        
+        if (result.success) {
+          // Update local state
+          updateIssue(issue.id, { title: editedTitle });
+          setIsEditingTitle(false);
+          console.log('Title updated successfully');
+          // Refetch detailed issue data
+          await handleIssueUpdate();
+        } else {
+          console.error('Failed to update title:', result.error);
+          // Revert to original title
+          setEditedTitle((displayIssue as any).issueName || (displayIssue as any).title || '');
+        }
+      } catch (error) {
+        console.error('Error updating title:', error);
+        // Revert to original title
+        setEditedTitle((displayIssue as any).issueName || (displayIssue as any).title || '');
+      } finally {
+        setIsSaving(false);
+      }
+    } else {
+      // Start editing
+      setIsEditingTitle(true);
+    }
+  };
+
+  const handleIssueUpdate = async () => {
+    // Refetch detailed issue data when child component updates
+    console.log('Issue updated, refetching detailed data...');
+    const result = await getIssueById(issue.id);
+    
+    if (result.success) {
+      setDetailedIssue(result.issue);
+      console.log('Detailed issue data refreshed:', result.issue);
+    } else {
+      console.error('Failed to refresh detailed issue:', result.error);
+    }
+  };
 
   // Fetch detailed issue data when modal opens
   useEffect(() => {
@@ -119,11 +175,61 @@ const EnhancedIssueDetailsModal: React.FC<EnhancedIssueDetailsModalProps> = ({ i
         </DialogDescription>
         <DialogHeader className="p-4 md:p-6 pb-0 flex-shrink-0">
           <DialogTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="flex items-center space-x-3 min-w-0">
+            <div className="flex items-center space-x-3 min-w-0 flex-1">
               <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0" />
-              <span className="text-base md:text-lg truncate">
-                {(displayIssue as any).issueName || (displayIssue as any).title}
-              </span>
+              {isEditingTitle ? (
+                <div className="flex items-center space-x-2 flex-1 min-w-0">
+                  <input
+                    value={editedTitle}
+                    onChange={(e) => setEditedTitle(e.target.value)}
+                    className="text-base md:text-lg font-semibold bg-transparent border-b border-gray-300 focus:border-blue-500 focus:outline-none flex-1 min-w-0"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleTitleEdit();
+                      } else if (e.key === 'Escape') {
+                        handleCancelEdit();
+                      }
+                    }}
+                    autoFocus
+                  />
+                  <Button 
+                    onClick={handleTitleEdit} 
+                    variant="outline" 
+                    size="sm"
+                    disabled={isSaving}
+                    className="flex-shrink-0"
+                  >
+                    {isSaving ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
+                  </Button>
+                  <Button 
+                    onClick={handleCancelEdit} 
+                    variant="outline" 
+                    size="sm"
+                    disabled={isSaving}
+                    className="flex-shrink-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2 flex-1 min-w-0">
+                  <Button 
+                    onClick={handleTitleEdit} 
+                    variant="ghost" 
+                    size="sm"
+                    className="p-1 h-auto flex-shrink-0"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <span className="text-base md:text-lg truncate flex-1">
+                    {(displayIssue as any).issueName || (displayIssue as any).title}
+                  </span>
+                </div>
+              )}
               {(() => {
                 const lastVisit = localStorage.getItem('issues_last_visit') ? new Date(localStorage.getItem('issues_last_visit')!) : new Date(Date.now() - 24 * 60 * 60 * 1000);
                 const issueDate = (displayIssue as any).createdDate ? new Date((displayIssue as any).createdDate) : new Date((displayIssue as any).dateCreated);
@@ -168,7 +274,7 @@ const EnhancedIssueDetailsModal: React.FC<EnhancedIssueDetailsModalProps> = ({ i
           <ScrollArea className="h-full">
             <div className="space-y-4 md:space-y-6 p-4 md:p-6 pt-0">
             {/* Issue Details */}
-            <IssueDetailsCard issue={displayIssue} />
+            <IssueDetailsCard issue={displayIssue} onIssueUpdate={handleIssueUpdate} />
 
             {/* Communications Section */}
             <CommunicationsSection 
@@ -177,7 +283,11 @@ const EnhancedIssueDetailsModal: React.FC<EnhancedIssueDetailsModalProps> = ({ i
             />
 
             {/* Director Comments */}
-            <DirectorComments directorComments={(displayIssue as any).directorComments || []} />
+            <DirectorComments 
+              directorComments={(displayIssue as any).directorComments || []} 
+              issueId={issue.id}
+              onCommentAdded={handleIssueUpdate}
+            />
 
             {/* Two Column Layout - Stack on mobile */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">

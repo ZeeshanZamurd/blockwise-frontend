@@ -5,9 +5,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { User, Send, AtSign } from 'lucide-react';
+import { useComment } from '@/hooks/useComment';
+import { toast } from 'sonner';
 
 interface DirectorCommentsProps {
   directorComments?: DirectorComment[];
+  issueId?: string | number;
+  onCommentAdded?: () => void; // Callback to notify parent of new comment
 }
 
 interface DirectorComment {
@@ -22,9 +26,15 @@ interface DirectorComment {
   isPrivate?: boolean;
 }
 
-const DirectorComments: React.FC<DirectorCommentsProps> = ({ directorComments = [] }) => {
+const DirectorComments: React.FC<DirectorCommentsProps> = ({ 
+  directorComments = [], 
+  issueId, 
+  onCommentAdded 
+}) => {
+  const { postComment } = useComment();
   const [newComment, setNewComment] = useState('');
   const [localComments, setLocalComments] = useState<DirectorComment[]>([]);
+  const [isPostingComment, setIsPostingComment] = useState(false);
   
   const defaultComments: DirectorComment[] = [
     {
@@ -46,25 +56,62 @@ const DirectorComments: React.FC<DirectorCommentsProps> = ({ directorComments = 
   // Use API director comments if available, otherwise fallback to default
   const allComments = directorComments.length > 0 ? [...directorComments, ...localComments] : [...defaultComments, ...localComments];
 
-  const addComment = () => {
+  const addComment = async () => {
     if (!newComment.trim()) return;
     
-    const comment: DirectorComment = {
-      id: Date.now(),
-      author: 'Current Director',
-      date: new Date().toLocaleString('en-GB', { 
-        day: '2-digit', 
-        month: '2-digit', 
-        year: 'numeric', 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      }),
-      comment: newComment,
-      isPrivate: false
-    };
+    if (!issueId) {
+      toast.error('Issue ID is required to post a comment');
+      return;
+    }
     
-    setLocalComments([...localComments, comment]);
-    setNewComment('');
+    setIsPostingComment(true);
+    
+    try {
+      // For now, using a hardcoded directorId - in a real app, this would come from user context
+      const directorId = 9; // This should come from user authentication context
+      
+      const result = await postComment({
+        issueId: typeof issueId === 'string' ? parseInt(issueId) : issueId,
+        directorId: directorId,
+        comment: newComment.trim()
+      });
+      
+      if (result.success) {
+        // Add the comment to local state immediately for better UX
+        const comment: DirectorComment = {
+          id: result.comment.id || Date.now(),
+          directorName: result.comment.directorName || 'Current Director',
+          directorUsername: result.comment.directorUsername || '',
+          comment: result.comment.comment,
+          createdDate: result.comment.createdDate || new Date().toISOString(),
+          author: result.comment.directorName || 'Current Director',
+          date: result.comment.createdDate || new Date().toLocaleString('en-GB', { 
+            day: '2-digit', 
+            month: '2-digit', 
+            year: 'numeric', 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          }),
+          isPrivate: false
+        };
+        
+        setLocalComments([...localComments, comment]);
+        setNewComment('');
+        toast.success('Comment posted successfully');
+        
+        // Notify parent component
+        if (onCommentAdded) {
+          onCommentAdded();
+        }
+      } else {
+        toast.error(`Failed to post comment: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error posting comment:', error);
+      toast.error('Error posting comment');
+    } finally {
+      setIsPostingComment(false);
+    }
   };
 
   return (
@@ -79,9 +126,23 @@ const DirectorComments: React.FC<DirectorCommentsProps> = ({ directorComments = 
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             className="flex-1"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && e.ctrlKey) {
+                addComment();
+              }
+            }}
+            disabled={isPostingComment}
           />
-          <Button onClick={addComment} size="sm">
-            <Send className="h-4 w-4" />
+          <Button 
+            onClick={addComment} 
+            size="sm"
+            disabled={isPostingComment || !newComment.trim()}
+          >
+            {isPostingComment ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
           </Button>
         </div>
         <p className="text-xs text-gray-500 mb-4">

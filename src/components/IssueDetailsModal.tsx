@@ -15,6 +15,7 @@ interface IssueDetailsModalProps {
 }
 
 const IssueDetailsModal: React.FC<IssueDetailsModalProps> = ({ issue, onClose }) => {
+  console.log('Issue Details Modal', issue);
   // Mock audit history data
   const auditHistory = [
     {
