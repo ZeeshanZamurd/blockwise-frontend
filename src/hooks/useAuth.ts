@@ -149,14 +149,9 @@ export const useAuth = () => {
     }
   };
 
-  const logout = async () => {
-    try {
-      await api.post('/auth/logout');
-    } catch (error) {
-      // Ignore logout API errors
-    } finally {
-      dispatch(logoutAction());
-    }
+  const logout = () => {
+    // Simply remove token from frontend - no API call needed
+    dispatch(logoutAction());
   };
 
   const clearAuthError = () => {

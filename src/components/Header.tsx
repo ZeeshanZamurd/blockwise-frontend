@@ -4,6 +4,7 @@ import { Building2, Bell, Settings, LogOut, UserPlus, Eye, Database, FileX } fro
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 interface HeaderProps {
   emptyDataMode?: boolean;
@@ -12,9 +13,15 @@ interface HeaderProps {
 
 const Header = ({ emptyDataMode = false, onToggleEmptyMode }: HeaderProps) => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const handleViewOnboarding = () => {
     navigate('/onboarding');
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/auth'); // Redirect to login page after logout
   };
 
   return (
@@ -73,7 +80,7 @@ const Header = ({ emptyDataMode = false, onToggleEmptyMode }: HeaderProps) => {
             <Avatar>
               <AvatarFallback>RD</AvatarFallback>
             </Avatar>
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
