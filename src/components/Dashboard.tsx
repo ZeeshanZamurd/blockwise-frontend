@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,34 +9,77 @@ import { AlertTriangle, Calendar, FileText, CheckCircle, Clock, Users, PoundSter
 import EnhancedIssueDetailsModal from './EnhancedIssueDetailsModal';
 import EmailProcessing from './EmailProcessing';
 import ExpiryBanner from './ExpiryBanner';
+import { useIssues, Issue } from '@/contexts/IssuesContext';
+import { useIssue } from '@/hooks/useIssue';
+import { useBuilding } from '@/hooks/useBuilding';
 
 import { useNavigate } from 'react-router-dom';
 
 interface DashboardProps {
   emptyDataMode?: boolean;
-  userData?: any;
+  userData?: {
+    uniqueEmail?: string;
+    [key: string]: unknown;
+  };
 }
 
 const Dashboard = ({ emptyDataMode = false, userData }: DashboardProps) => {
   const navigate = useNavigate();
-  const [selectedIssue, setSelectedIssue] = useState(null);
+  const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
   const [selectedTab, setSelectedTab] = useState('all');
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
+  
+  // Use hooks for real data
+  const { issues, updateIssue } = useIssues();
+  const { fetchIssues, getIssueById, getIssuesByBuildingIdAndPriority, isLoading: isIssuesLoading } = useIssue();
+  const { building } = useBuilding();
 
-  // Top-level KPIs - updated to include Require Review
+  // Fetch issues when component mounts
+  useEffect(() => {
+    console.log('Dashboard useEffect triggered:', {
+      buildingId: building?.buildingId,
+      issuesLength: issues.length,
+      isIssuesLoading: isIssuesLoading,
+      hasAttemptedFetch: hasAttemptedFetch
+    });
+    
+    // Only fetch if we have building data, no issues, not loading, and haven't attempted fetch yet
+    if (building?.buildingId && issues.length === 0 && !isIssuesLoading && !hasAttemptedFetch) {
+      console.log('Dashboard: Fetching issues for building:', building.buildingId);
+      setHasAttemptedFetch(true);
+      fetchIssues(building.buildingId);
+    }
+  }, [building?.buildingId, issues.length, isIssuesLoading, hasAttemptedFetch, fetchIssues]);
+
+  // Calculate real KPI values from issues data
+  const openIssuesCount = issues.filter(issue => 
+    issue.status !== 'Closed'
+  ).length;
+  
+  const highPriorityCount = issues.filter(issue => 
+    issue.priority === 'High' || issue.priority === 'Urgent'
+  ).length;
+  
+  const overdueCount = issues.filter(issue => {
+    // Simple overdue logic - you can enhance this based on your requirements
+    return issue.status !== 'Closed';
+  }).length;
+
+  // Top-level KPIs - updated to use real data
   const kpis = [
     { 
       title: 'Recent Activity', 
-      value: emptyDataMode ? '0' : '47', 
+      value: emptyDataMode ? '0' : issues.length.toString(), 
       icon: Activity, 
       color: 'text-blue-600', 
       bgColor: 'bg-blue-50', 
-      description: emptyDataMode ? 'Ready to process emails' : 'Emails processed and issues generated',
+      description: emptyDataMode ? 'Ready to process emails' : 'Total issues tracked',
       onClick: () => navigate('/recent-activity')
     },
     { 
       title: 'Open Issues', 
-      value: emptyDataMode ? '0' : '12', 
+      value: emptyDataMode ? '0' : openIssuesCount.toString(), 
       icon: AlertTriangle, 
       color: 'text-red-600', 
       bgColor: 'bg-red-50', 
@@ -44,13 +87,13 @@ const Dashboard = ({ emptyDataMode = false, userData }: DashboardProps) => {
       onClick: () => navigate('/dashboard?section=building-management&tab=tasks&status=live')
     },
     { 
-      title: 'Overdue', 
-      value: emptyDataMode ? '0' : '5', 
+      title: 'High Priority', 
+      value: emptyDataMode ? '0' : highPriorityCount.toString(), 
       icon: Clock, 
       color: 'text-red-600', 
       bgColor: 'bg-red-50', 
-      description: emptyDataMode ? 'No overdue tasks' : 'Tasks and maintenance past due date',
-      onClick: () => navigate('/dashboard?section=building-management&tab=tasks&overdue=true')
+      description: emptyDataMode ? 'No high priority issues' : 'High priority issues requiring immediate attention',
+      onClick: () => navigate('/dashboard?section=building-management&tab=tasks&priority=high')
     },
     { 
       title: 'Require Review', 
@@ -236,23 +279,37 @@ const Dashboard = ({ emptyDataMode = false, userData }: DashboardProps) => {
   ];
 
   const getFilteredIssues = () => {
-    const issueData = emptyDataMode ? [] : [];
+    const issueData = emptyDataMode ? [] : issues;
     let filtered;
+    
     switch (selectedTab) {
       case 'high':
-        filtered = issueData.filter(issue => issue.isHighPriority);
+        // Filter for high priority issues
+        filtered = issueData.filter(issue => 
+          issue.priority === 'High' || issue.priority === 'Urgent'
+        );
         break;
-      case 'week':
-        filtered = issueData.filter(issue => issue.isThisWeek);
+      case 'week': {
+        // Filter for issues created this week
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        filtered = issueData.filter(issue => 
+          new Date(issue.dateCreated) > oneWeekAgo
+        );
         break;
+      }
       default:
         filtered = issueData;
         break;
     }
     
     // Sort: new since last visit at top
-    const newSinceVisit = filtered.filter(issue => new Date(issue.date) > lastVisit);
-    const regular = filtered.filter(issue => new Date(issue.date) <= lastVisit);
+    const newSinceVisit = filtered.filter(issue => 
+      new Date(issue.dateCreated) > lastVisit
+    );
+    const regular = filtered.filter(issue => 
+      new Date(issue.dateCreated) <= lastVisit
+    );
     
     // Limit to 3 issues on dashboard
     return [...newSinceVisit, ...regular].slice(0, 3);
@@ -296,13 +353,39 @@ const Dashboard = ({ emptyDataMode = false, userData }: DashboardProps) => {
     }
   };
 
-  const handleIssueClick = (issue) => {
+  const handleIssueClick = async (issue: Issue) => {
     console.log('Issue clicked:', issue);
+    // Call API to get detailed issue data
+    const result = await getIssueById(issue.id);
+    
+    if (result.success) {
+      console.log('Issue Details API Response:', result.issue);
+      // TODO: Use the detailed issue data to populate the modal
+    } else {
+      console.error('Failed to fetch issue details:', result.error);
+    }
+    
     setSelectedIssue(issue);
   };
 
   const handleReviewEmailsClick = () => {
     navigate('/dashboard?section=communications&filter=review');
+  };
+
+  // Handle tab changes with API calls
+  const handleTabChange = (tab: string) => {
+    setSelectedTab(tab);
+    
+    if (building?.buildingId) {
+      if (tab === 'high') {
+        console.log('Dashboard: Fetching high priority issues for building:', building.buildingId);
+        getIssuesByBuildingIdAndPriority(building.buildingId, 'high');
+      } else if (tab === 'all') {
+        console.log('Dashboard: Fetching all issues for building:', building.buildingId);
+        fetchIssues(building.buildingId);
+      }
+      // 'week' tab uses client-side filtering
+    }
   };
 
   // Get expiring documents (within 3 months)
@@ -485,7 +568,7 @@ const Dashboard = ({ emptyDataMode = false, userData }: DashboardProps) => {
             <p className="text-sm text-gray-600">Track and manage building issues</p>
           </CardHeader>
           <CardContent>
-            <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
+            <Tabs value={selectedTab} onValueChange={handleTabChange} className="w-full">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="all">All</TabsTrigger>
                 <TabsTrigger value="high">High Priority</TabsTrigger>
@@ -494,7 +577,13 @@ const Dashboard = ({ emptyDataMode = false, userData }: DashboardProps) => {
               
               <TabsContent value={selectedTab} className="mt-4">
                 <div className="space-y-4">
-                  {getFilteredIssues().length === 0 ? (
+                  {/* Loading State */}
+                  {isIssuesLoading ? (
+                    <div className="flex items-center justify-center space-x-3 py-8">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                      <p className="text-gray-600">Loading issues...</p>
+                    </div>
+                  ) : getFilteredIssues().length === 0 ? (
                     <div className="text-center py-8">
                       <AlertTriangle className="h-12 w-12 text-gray-400 mx-auto mb-3" />
                       <p className="text-gray-500 text-sm mb-3">{emptyDataMode ? 'No issues logged yet' : 'No issues for this filter'}</p>
@@ -508,7 +597,7 @@ const Dashboard = ({ emptyDataMode = false, userData }: DashboardProps) => {
                     </div>
                   ) : (
                     getFilteredIssues().map((issue) => {
-                    const isNewSinceVisit = new Date(issue.date) > lastVisit;
+                    const isNewSinceVisit = new Date(issue.dateCreated) > lastVisit;
                     return (
                         <div 
                         key={issue.id} 

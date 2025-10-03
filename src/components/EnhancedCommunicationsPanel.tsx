@@ -114,10 +114,12 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
     // Apply tab filter
     switch (activeTab) {
       case 'review':
+        // Show only emails that need review (issueCreationStatus === null)
         filtered = apiEmails.filter(email => email.issueCreationStatus === null);
         break;
       case 'all':
       default:
+        // Show only emails that have been processed (issueCreationStatus !== null)
         filtered = apiEmails.filter(email => email.issueCreationStatus !== null);
         break;
     }
@@ -285,8 +287,8 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
       <div className="flex h-[calc(100vh-200px)] gap-4">
         {/* Left Panel - Email List */}
         <div className="w-1/3">
-          <Card className="h-full">
-            <CardHeader className="pb-3">
+          <Card className="h-full flex flex-col">
+            <CardHeader className="pb-3 flex-shrink-0">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mb-4">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="all">Emails</TabsTrigger>
@@ -310,8 +312,8 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
                 />
               </div>
             </CardHeader>
-            <CardContent className="p-0">
-              <div className="space-y-1">
+            <CardContent className="p-0 flex-1 overflow-hidden">
+              <div className="h-full overflow-y-auto">
                 {isLoadingEmails ? (
                   <div className="p-4 text-center">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
@@ -327,19 +329,19 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
                     }`}
                   >
                     <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 min-w-0 flex-1">
                           {email.issueCreationStatus === null ? (
-                          <Mail className="h-4 w-4 text-primary" />
+                          <Mail className="h-4 w-4 text-primary flex-shrink-0" />
                         ) : (
-                          <MailOpen className="h-4 w-4 text-muted-foreground" />
+                          <MailOpen className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                         )}
-                          <span className={`text-sm ${email.issueCreationStatus === null ? 'font-semibold' : 'text-foreground'}`}>
+                          <span className={`text-sm truncate ${email.issueCreationStatus === null ? 'font-semibold' : 'text-foreground'}`}>
                             {email.fromEmail}
                         </span>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-6 w-6 p-0"
+                          className="h-6 w-6 p-0 flex-shrink-0"
                           onClick={(e) => {
                             e.stopPropagation();
                               copyEmailId(email.messageId);
@@ -347,24 +349,24 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
                         >
                           <Copy className="h-3 w-3" />
                         </Button>
-                          {email.issueCreationStatus === null && <div className="w-2 h-2 bg-primary rounded-full"></div>}
+                          {email.issueCreationStatus === null && <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0"></div>}
                           {email.issueCreationStatus === null && (
-                          <Badge variant="outline" className="bg-orange-50 text-orange-700 text-xs">
+                          <Badge variant="outline" className="bg-orange-50 text-orange-700 text-xs flex-shrink-0">
                             Review
                           </Badge>
                         )}
                       </div>
-                      <div className="flex items-center space-x-1">
+                      <div className="flex items-center space-x-1 flex-shrink-0">
                           <span className="text-xs text-muted-foreground">{email.messageId.substring(0, 8)}...</span>
                         </div>
                     </div>
                     <div className="mb-2">
-                        <span className="text-xs text-muted-foreground">ID: {email.messageId}</span>
+                        <span className="text-xs text-muted-foreground break-all">ID: {email.messageId}</span>
                     </div>
-                      <h4 className={`text-sm mb-1 ${email.issueCreationStatus === null ? 'font-semibold' : 'text-foreground'}`}>
+                      <h4 className={`text-sm mb-1 line-clamp-2 ${email.issueCreationStatus === null ? 'font-semibold' : 'text-foreground'}`}>
                       {email.subject}
                     </h4>
-                    <p className="text-xs text-muted-foreground line-clamp-2">
+                    <p className="text-xs text-muted-foreground line-clamp-2 break-words">
                         {email.bodyText.substring(0, 100)}...
                     </p>
                   </div>

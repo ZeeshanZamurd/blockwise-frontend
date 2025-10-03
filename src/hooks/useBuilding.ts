@@ -2,6 +2,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useCallback, useEffect, useState } from 'react';
 import { RootState, AppDispatch } from '../store/store';
 import { setLoading, setError, clearError, setBuilding, clearBuilding } from '../store/buildingSlice';
+import { logout as logoutAction } from '../store/authSlice';
 import api from '../lib/api';
 
 interface ApiError {
@@ -49,6 +50,20 @@ export const useBuilding = () => {
       dispatch(setBuilding(responseData.data));
       return { success: true, building: responseData.data };
     } catch (error: unknown) {
+      // Check if it's a 403 error (token expired)
+      if (error && typeof error === 'object' && 'response' in error) {
+        const apiError = error as ApiError;
+        if (apiError.response?.status === 403) {
+          console.log('Building API returned 403 - token expired, logging out user');
+          // Clear auth and building data
+          dispatch(logoutAction());
+          dispatch(clearBuilding());
+          // Redirect to login page
+          window.location.href = '/auth';
+          return { success: false, error: 'Token expired' };
+        }
+      }
+      
       const errorMessage = getErrorMessage(error, 'Failed to fetch building details');
       dispatch(setError(errorMessage));
       return { success: false, error: errorMessage };
