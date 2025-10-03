@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { store } from '../store/store';
+import { clearBuilding } from '../store/buildingSlice';
 
 // Use direct API URL for both development and production
 const API_BASE_URL = 'http://51.20.85.220:8080';
@@ -100,6 +102,8 @@ api.interceptors.response.use(
     // Only logout for genuine authentication errors, not for other 401/403 errors
     if (isAuthError) {
       console.log('Authentication error detected - logging out user');
+      // Clear Redux state
+      store.dispatch(clearBuilding());
       // Clear Redux Persist storage
       localStorage.removeItem('persist:root');
       // Clear any direct token storage

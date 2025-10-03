@@ -1,6 +1,3 @@
-import { useSelector, useDispatch } from 'react-redux';
-import { useCallback } from 'react';
-import { RootState, AppDispatch } from '../store/store';
 import api from '../lib/api';
 
 interface Comment {
@@ -36,9 +33,7 @@ const getErrorMessage = (error: unknown, defaultMessage: string): string => {
 };
 
 export const useComment = () => {
-  const dispatch = useDispatch<AppDispatch>();
-
-  const postComment = useCallback(async (commentData: PostCommentData) => {
+  const postComment = async (commentData: PostCommentData) => {
     try {
       console.log('Posting comment:', commentData);
       
@@ -58,7 +53,7 @@ export const useComment = () => {
       console.error('Error posting comment:', error);
       return { success: false, error: errorMessage };
     }
-  }, []);
+  };
 
   return {
     postComment,

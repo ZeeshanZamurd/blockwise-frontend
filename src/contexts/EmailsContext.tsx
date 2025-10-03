@@ -42,7 +42,7 @@ export const EmailsProvider = ({ children }: EmailsProviderProps) => {
   const [emails, setEmails] = useState<Email[]>([
     {
       id: 'EML-2024-001',
-      subject: 'Water leak in flat 3B ceiling - urgent repair needed',
+      subject: 'Water 22leak in flat 3B ceiling - urgent repair needed',
       from: 'resident.3b@buildingmail.com',
       to: 'management@property.com',
       date: '2024-01-15T09:30:00Z',

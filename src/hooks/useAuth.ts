@@ -1,6 +1,7 @@
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../store/store';
 import { setLoading, setError, clearError, setAuth, logout as logoutAction } from '../store/authSlice';
+import { clearBuilding } from '../store/buildingSlice';
 import api from '../lib/api';
 
 interface ApiError {
@@ -150,8 +151,10 @@ export const useAuth = () => {
   };
 
   const logout = () => {
-    // Simply remove token from frontend - no API call needed
+    // Clear auth data
     dispatch(logoutAction());
+    // Clear building data to prevent showing previous account's data
+    dispatch(clearBuilding());
   };
 
   const clearAuthError = () => {

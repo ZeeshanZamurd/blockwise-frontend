@@ -28,8 +28,12 @@ const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, 
   const issueEmailId = currentIssue?.emailId;
 
   // Use API communications data if available, otherwise fallback to context emails
+  // Only show context emails if the issue explicitly has linkedEmailIds (not for manually created issues)
+  // Also check if issue was created from email (has emailId) vs manually created
   const linkedEmails = communications.length > 0 ? communications : 
-    emails.filter(email => currentIssue?.linkedEmailIds?.includes(email.id) || []);
+    (currentIssue?.linkedEmailIds && currentIssue.linkedEmailIds.length > 0) 
+      ? emails.filter(email => currentIssue.linkedEmailIds?.includes(email.id))
+      : [];
 
   const filteredEmails = emails.filter(email =>
     email.id.toLowerCase().includes(emailSearchTerm.toLowerCase()) ||

@@ -12,66 +12,6 @@ const CommunicationsPanel = () => {
   const [filterCategory, setFilterCategory] = useState('all');
 
   const communications = [
-    {
-      id: 1,
-      subject: 'Monthly Maintenance Report - June 2024',
-      from: 'Sarah Johnson, Managing Agent',
-      category: 'Reports',
-      date: '2024-06-27',
-      time: '14:30',
-      hasAttachment: true,
-      isStarred: true,
-      preview: 'Please find attached the monthly maintenance report covering all building activities...',
-      status: 'unread'
-    },
-    {
-      id: 2,
-      subject: 'Fire Safety Inspection - Action Required',
-      from: 'Fire Safety Compliance Ltd',
-      category: 'Compliance',
-      date: '2024-06-26',
-      time: '09:15',
-      hasAttachment: true,
-      isStarred: false,
-      preview: 'Following our inspection on 24th June, we have identified several items requiring attention...',
-      status: 'read'
-    },
-    {
-      id: 3,
-      subject: 'Elevator Service Completion Notice',
-      from: 'Thames Valley Lifts',
-      category: 'Maintenance',
-      date: '2024-06-25',
-      time: '16:45',
-      hasAttachment: false,
-      isStarred: false,
-      preview: 'We have completed the scheduled maintenance on Elevator #1. All systems are operational...',
-      status: 'read'
-    },
-    {
-      id: 4,
-      subject: 'Insurance Policy Renewal Reminder',
-      from: 'Metro Insurance Brokers',
-      category: 'Administration',
-      date: '2024-06-24',
-      time: '11:20',
-      hasAttachment: true,
-      isStarred: false,
-      preview: 'Your building insurance policy is due for renewal on 31st July 2024...',
-      status: 'read'
-    },
-    {
-      id: 5,
-      subject: 'Roof Leak Investigation Update',
-      from: 'BuildTech Contractors',
-      category: 'Repairs',
-      date: '2024-06-23',
-      time: '13:10',
-      hasAttachment: true,
-      isStarred: true,
-      preview: 'We have investigated the reported leak in Block A and identified the source...',
-      status: 'unread'
-    }
   ];
 
   const getCategoryColor = (category: string) => {

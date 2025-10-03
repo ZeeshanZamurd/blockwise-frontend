@@ -12,73 +12,7 @@ const IssueLog = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterPriority, setFilterPriority] = useState('all');
 
-  const issues = [
-    {
-      id: 'ISS-001',
-      title: 'Elevator #1 Maintenance Overdue',
-      description: 'Annual service inspection is 2 weeks overdue. Last service was completed in May 2023.',
-      category: 'Maintenance',
-      priority: 'High',
-      status: 'Open',
-      assignedTo: 'Thames Valley Lifts',
-      createdDate: '2024-06-15',
-      dueDate: '2024-06-30',
-      relatedCommunications: 3,
-      lastUpdate: '2024-06-25'
-    },
-    {
-      id: 'ISS-002',
-      title: 'Fire Safety Certificate Renewal',
-      description: 'Building fire safety certificate expires next month. Need to schedule inspection.',
-      category: 'Compliance',
-      priority: 'High',
-      status: 'In Progress',
-      assignedTo: 'Fire Safety Compliance Ltd',
-      createdDate: '2024-06-10',
-      dueDate: '2024-07-15',
-      relatedCommunications: 5,
-      lastUpdate: '2024-06-26'
-    },
-    {
-      id: 'ISS-003',
-      title: 'Roof Leak in Block A, Flat 12',
-      description: 'Water damage reported in ceiling of Flat 12. Investigation required to identify source.',
-      category: 'Repairs',
-      priority: 'Medium',
-      status: 'Open',
-      assignedTo: 'BuildTech Contractors',
-      createdDate: '2024-06-20',
-      dueDate: '2024-07-05',
-      relatedCommunications: 2,
-      lastUpdate: '2024-06-23'
-    },
-    {
-      id: 'ISS-004',
-      title: 'Annual Insurance Policy Review',
-      description: 'Review current insurance coverage and compare quotes from alternative providers.',
-      category: 'Administration',
-      priority: 'Low',
-      status: 'Pending',
-      assignedTo: 'Metro Insurance Brokers',
-      createdDate: '2024-06-05',
-      dueDate: '2024-07-31',
-      relatedCommunications: 1,
-      lastUpdate: '2024-06-22'
-    },
-    {
-      id: 'ISS-005',
-      title: 'Communal Garden Maintenance',
-      description: 'Quarterly landscaping and garden maintenance completed successfully.',
-      category: 'Maintenance',
-      priority: 'Medium',
-      status: 'Completed',
-      assignedTo: 'Green Spaces Ltd',
-      createdDate: '2024-05-15',
-      dueDate: '2024-06-15',
-      relatedCommunications: 4,
-      lastUpdate: '2024-06-15'
-    }
-  ];
+  const issues = [ ];
 
   const getPriorityColor = (priority: string) => {
     switch (priority.toLowerCase()) {

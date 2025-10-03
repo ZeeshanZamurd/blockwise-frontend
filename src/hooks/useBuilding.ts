@@ -23,6 +23,7 @@ const getErrorMessage = (error: unknown, defaultMessage: string): string => {
 export const useBuilding = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { building, isLoading, error } = useSelector((state: RootState) => state.building);
+  const { token } = useSelector((state: RootState) => state.auth);
 
   const fetchBuildingDetails = useCallback(async () => {
     console.log('fetchBuildingDetails called');
@@ -55,13 +56,19 @@ export const useBuilding = () => {
     }
   }, [dispatch]);
 
-  // Auto-fetch building details when hook is used and no building data exists
+  // Fetch building details when hook is used and no building data exists
   useEffect(() => {
-    if (!building && !isLoading) {
-      console.log('useBuilding: Auto-fetching building details');
+    console.log('useBuilding: Checking if should fetch building details', { 
+      token: !!token, 
+      isLoading, 
+      hasBuilding: !!building 
+    });
+    // Only fetch if we have a token, not loading, and no building data
+    if (token && !isLoading && !building) {
+      console.log('useBuilding: Fetching building details');
       fetchBuildingDetails();
     }
-  }, [building, isLoading, fetchBuildingDetails]);
+  }, [token, isLoading, building]); // Depend on token, loading state, and building data
 
   const clearBuildingData = () => {
     dispatch(clearBuilding());
@@ -71,11 +78,18 @@ export const useBuilding = () => {
     dispatch(clearError());
   };
 
+  const forceRefresh = () => {
+    console.log('Force refresh building details');
+    dispatch(clearBuilding()); // Clear existing data first
+    fetchBuildingDetails(); // Then fetch fresh data
+  };
+
   return {
     building,
     isLoading,
     error,
     fetchBuildingDetails,
+    forceRefresh,
     clearBuildingData,
     clearBuildingError,
   };

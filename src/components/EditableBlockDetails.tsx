@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { MapPin, User, Phone, Mail, Key, FileText, Edit, Plus, Upload, X, Building, Info, Copy, Users, Home } from 'lucide-react';
+import { MapPin, User, Phone, Mail, Key, FileText, Edit, Plus, Upload, X, Building, Info, Copy, Users, Home, RefreshCw } from 'lucide-react';
 import { useBuilding } from '@/hooks/useBuilding';
 
 interface EditableField {
@@ -28,7 +28,7 @@ interface EditableBlockDetailsProps {
 }
 
 const EditableBlockDetails = ({ emptyDataMode = false }: EditableBlockDetailsProps) => {
-  const { building, isLoading } = useBuilding();
+  const { building, isLoading, forceRefresh } = useBuilding();
 
   const copyToClipboard = () => {
     if (building?.uniqueEmail) {
@@ -111,14 +111,23 @@ const EditableBlockDetails = ({ emptyDataMode = false }: EditableBlockDetailsPro
     return sections;
   };
 
-  const [sections, setSections] = useState<EditableSection[]>(generateSections());
+  const [sections, setSections] = useState<EditableSection[]>([]);
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [editingField, setEditingField] = useState<string | null>(null);
 
   // Update sections when building data changes
   useEffect(() => {
-    setSections(generateSections());
-  }, [building]);
+    console.log('Building data changed, regenerating sections:', building);
+    if (building) {
+      setSections(generateSections());
+    } else {
+      // Clear sections when building data is null (logout scenario)
+      setSections([]);
+    }
+    // Reset editing states when building changes
+    setEditingSection(null);
+    setEditingField(null);
+  }, [building?.buildingId, building?.buildingName, building?.buildingAddress, building?.numberOfFlats, building?.uniqueEmail, building?.users]);
 
   const updateField = (sectionId: string, fieldId: string, newValue: string) => {
     setSections(sections.map(section => 
@@ -218,6 +227,29 @@ const EditableBlockDetails = ({ emptyDataMode = false }: EditableBlockDetailsPro
         <div>
           <h2 className="text-3xl font-bold text-foreground mb-2">Block Details</h2>
           <p className="text-muted-foreground">Comprehensive building information and management details</p>
+        </div>
+        
+        <div className="flex gap-2 mt-4 md:mt-0">
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              console.log('Manual refresh triggered for building details');
+              forceRefresh();
+            }}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                Refreshing...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh Data
+              </>
+            )}
+          </Button>
         </div>
         
         <Alert className="md:max-w-md mt-4 md:mt-0">

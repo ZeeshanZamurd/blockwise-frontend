@@ -27,6 +27,7 @@ const EnhancedIssueLog = ({ emptyDataMode = false }: EnhancedIssueLogProps) => {
   const [filterTimeframe, setFilterTimeframe] = useState('all');
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
   const [viewedIssues, setViewedIssues] = useState<Set<string>>(() => {
     const stored = localStorage.getItem('issues_viewed_ids');
     return stored ? new Set(JSON.parse(stored)) : new Set();
@@ -53,15 +54,17 @@ const EnhancedIssueLog = ({ emptyDataMode = false }: EnhancedIssueLogProps) => {
     console.log('EnhancedIssueLog useEffect triggered:', {
       buildingId: building?.buildingId,
       issuesLength: issues.length,
-      isIssuesLoading: isIssuesLoading
+      isIssuesLoading: isIssuesLoading,
+      hasAttemptedFetch: hasAttemptedFetch
     });
     
-    // Only fetch if we have building data, no issues, and not loading
-    if (building?.buildingId && issues.length === 0 && !isIssuesLoading) {
+    // Only fetch if we have building data, no issues, not loading, and haven't attempted fetch yet
+    if (building?.buildingId && issues.length === 0 && !isIssuesLoading && !hasAttemptedFetch) {
       console.log('Fetching issues for building:', building.buildingId);
+      setHasAttemptedFetch(true);
       fetchIssues(building.buildingId);
     }
-  }, [building?.buildingId, issues.length, isIssuesLoading, fetchIssues]);
+  }, [building?.buildingId, issues.length, isIssuesLoading, hasAttemptedFetch, fetchIssues]);
 
   // Handle priority filter changes
   useEffect(() => {
@@ -272,6 +275,7 @@ const EnhancedIssueLog = ({ emptyDataMode = false }: EnhancedIssueLogProps) => {
             onClick={() => {
               if (building?.buildingId) {
                 console.log('Manual refresh triggered for building:', building.buildingId);
+                setHasAttemptedFetch(false); // Reset flag to allow fresh fetch
                 fetchIssues(building.buildingId);
               }
             }}

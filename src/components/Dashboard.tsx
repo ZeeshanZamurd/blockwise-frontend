@@ -70,62 +70,7 @@ const Dashboard = ({ emptyDataMode = false, userData }: DashboardProps) => {
   });
 
   // Enhanced Live Issues data with required fields for modal - limited to 3 for dashboard
-  const liveIssues = [
-    { 
-      id: 1, 
-      title: 'Elevator maintenance overdue', 
-      category: 'Maintenance', 
-      priority: 'High', 
-      status: 'Not started',
-      date: '2024-06-25', 
-      summary: 'Annual maintenance certificate expired. Service due immediately for compliance.',
-      lastUpdate: 'Contractor confirmed availability for next week',
-      lastUpdateDate: '2024-06-26',
-      lastUpdateBy: 'Managing Agent',
-      lastUpdateMethod: 'email',
-      assignedTo: 'Thames Valley Lifts',
-      dueDate: '2024-07-01',
-      daysAgo: 1,
-      isHighPriority: true,
-      isThisWeek: true
-    },
-    { 
-      id: 2, 
-      title: 'Roof leak in Block A', 
-      category: 'Repairs', 
-      priority: 'High', 
-      status: 'In progress', 
-      date: '2024-06-24', 
-      summary: 'Water ingress reported by multiple residents. Contractor assessment scheduled.',
-      lastUpdate: 'Assessment completed, quote pending',
-      lastUpdateDate: '2024-06-27',
-      lastUpdateBy: 'Contractor',
-      lastUpdateMethod: 'call',
-      assignedTo: 'Roof Repair Specialists',
-      dueDate: '2024-06-30',
-      daysAgo: 0,
-      isHighPriority: true,
-      isThisWeek: true
-    },
-    { 
-      id: 3, 
-      title: 'Fire alarm system check', 
-      category: 'Safety', 
-      priority: 'Medium', 
-      status: 'Not started', 
-      date: '2024-06-23', 
-      summary: 'Quarterly fire alarm test due. Coordinate with fire safety contractor.',
-      lastUpdate: 'Initial notification sent to residents',
-      lastUpdateDate: '2024-06-25',
-      lastUpdateBy: 'Managing Agent',
-      lastUpdateMethod: 'email',
-      assignedTo: 'Fire Safety Systems',
-      dueDate: '2024-07-05',
-      daysAgo: 2,
-      isHighPriority: false,
-      isThisWeek: true
-    }
-  ];
+  const liveIssues = [];
 
   // Emails requiring review
   const emailsRequiringReview = [
@@ -291,7 +236,7 @@ const Dashboard = ({ emptyDataMode = false, userData }: DashboardProps) => {
   ];
 
   const getFilteredIssues = () => {
-    const issueData = emptyDataMode ? [] : liveIssues;
+    const issueData = emptyDataMode ? [] : [];
     let filtered;
     switch (selectedTab) {
       case 'high':

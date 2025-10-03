@@ -98,6 +98,12 @@ const EnhancedIssueDetailsModal: React.FC<EnhancedIssueDetailsModalProps> = ({ i
     }
   };
 
+  const handleCancelEdit = () => {
+    // Cancel editing and revert to original title
+    setIsEditingTitle(false);
+    setEditedTitle((displayIssue as any).issueName || (displayIssue as any).title || '');
+  };
+
   const handleIssueUpdate = async () => {
     // Refetch detailed issue data when child component updates
     console.log('Issue updated, refetching detailed data...');
