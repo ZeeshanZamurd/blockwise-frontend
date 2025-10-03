@@ -1,5 +1,5 @@
 import { useSelector, useDispatch } from 'react-redux';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { RootState, AppDispatch } from '../store/store';
 import { setLoading, setError, clearError, setBuilding, clearBuilding } from '../store/buildingSlice';
 import api from '../lib/api';
@@ -24,6 +24,7 @@ export const useBuilding = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { building, isLoading, error } = useSelector((state: RootState) => state.building);
   const { token } = useSelector((state: RootState) => state.auth);
+  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
 
   const fetchBuildingDetails = useCallback(async () => {
     console.log('fetchBuildingDetails called');
@@ -61,14 +62,16 @@ export const useBuilding = () => {
     console.log('useBuilding: Checking if should fetch building details', { 
       token: !!token, 
       isLoading, 
-      hasBuilding: !!building 
+      hasBuilding: !!building,
+      hasAttemptedFetch
     });
-    // Only fetch if we have a token, not loading, and no building data
-    if (token && !isLoading && !building) {
+    // Only fetch if we have a token, not loading, no building data, and haven't attempted fetch yet
+    if (token && !isLoading && !building && !hasAttemptedFetch) {
       console.log('useBuilding: Fetching building details');
+      setHasAttemptedFetch(true);
       fetchBuildingDetails();
     }
-  }, [token, isLoading, building]); // Depend on token, loading state, and building data
+  }, [token, isLoading, building, hasAttemptedFetch]); // Depend on token, loading state, building data, and fetch attempt flag
 
   const clearBuildingData = () => {
     dispatch(clearBuilding());
@@ -80,6 +83,7 @@ export const useBuilding = () => {
 
   const forceRefresh = () => {
     console.log('Force refresh building details');
+    setHasAttemptedFetch(false); // Reset the attempt flag
     dispatch(clearBuilding()); // Clear existing data first
     fetchBuildingDetails(); // Then fetch fresh data
   };
