@@ -37,20 +37,20 @@ const DirectorComments: React.FC<DirectorCommentsProps> = ({
   const [isPostingComment, setIsPostingComment] = useState(false);
   
   const defaultComments: DirectorComment[] = [
-    {
-      id: 1,
-      author: 'Sarah Wilson (Director)',
-      date: '2024-06-26 10:15',
-      comment: 'This is critical for building safety compliance. @mike.thompson should we review our maintenance contract terms?',
-      isPrivate: false
-    },
-    {
-      id: 2,
-      author: 'Mike Thompson (Director)',
-      date: '2024-06-26 18:30',
-      comment: '@sarah.wilson Agreed. I\'ll check the contract terms tomorrow. We should also consider a backup contractor for emergencies.',
-      isPrivate: false
-    }
+    // {
+    //   id: 1,
+    //   author: 'Sarah Wilson (Director)',
+    //   date: '2024-06-26 10:15',
+    //   comment: 'This is critical for building safety compliance. @mike.thompson should we review our maintenance contract terms?',
+    //   isPrivate: false
+    // },
+    // {
+    //   id: 2,
+    //   author: 'Mike Thompson (Director)',
+    //   date: '2024-06-26 18:30',
+    //   comment: '@sarah.wilson Agreed. I\'ll check the contract terms tomorrow. We should also consider a backup contractor for emergencies.',
+    //   isPrivate: false
+    // }
   ];
 
   // Use API director comments if available, otherwise fallback to default
