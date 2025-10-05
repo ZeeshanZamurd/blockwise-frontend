@@ -1,11 +1,14 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { User, Send, AtSign } from 'lucide-react';
 import { useComment } from '@/hooks/useComment';
+import { useDirector } from '@/hooks/useDirector';
+import { useBuilding } from '@/hooks/useBuilding';
+import MentionPopup from './MentionPopup';
 import { toast } from 'sonner';
 
 interface DirectorCommentsProps {
@@ -26,15 +29,57 @@ interface DirectorComment {
   isPrivate?: boolean;
 }
 
+interface Director {
+  id: number;
+  firstName: string;
+  lastName: string;
+  username: string;
+  email: string;
+  roleName: string;
+}
+
 const DirectorComments: React.FC<DirectorCommentsProps> = ({ 
   directorComments = [], 
   issueId, 
   onCommentAdded 
 }) => {
   const { postComment } = useComment();
+  const { getDirectorsByBuildingId, isLoading: isLoadingDirectors } = useDirector();
+  const { building } = useBuilding();
   const [newComment, setNewComment] = useState('');
   const [localComments, setLocalComments] = useState<DirectorComment[]>([]);
   const [isPostingComment, setIsPostingComment] = useState(false);
+  
+  // Mention functionality state
+  const [directors, setDirectors] = useState<Director[]>([]);
+  const [showMentionPopup, setShowMentionPopup] = useState(false);
+  const [mentionPosition, setMentionPosition] = useState({ top: 0, left: 0 });
+  const [mentionSearchTerm, setMentionSearchTerm] = useState('');
+  const [mentionStartIndex, setMentionStartIndex] = useState(-1);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  
+  // Clear local comments when API comments are available to prevent duplication
+  useEffect(() => {
+    if (directorComments.length > 0) {
+      setLocalComments([]);
+    }
+  }, [directorComments.length]);
+  
+  // Fetch directors when component mounts
+  useEffect(() => {
+    const fetchDirectors = async () => {
+      if (building?.buildingId) {
+        const result = await getDirectorsByBuildingId(building.buildingId);
+        if (result.success) {
+          setDirectors(result.directors);
+        } else {
+          console.error('Failed to fetch directors:', result.error);
+        }
+      }
+    };
+    
+    fetchDirectors();
+  }, [building?.buildingId, getDirectorsByBuildingId]);
   
   const defaultComments: DirectorComment[] = [
     // {
@@ -54,7 +99,73 @@ const DirectorComments: React.FC<DirectorCommentsProps> = ({
   ];
 
   // Use API director comments if available, otherwise fallback to default
-  const allComments = directorComments.length > 0 ? [...directorComments, ...localComments] : [...defaultComments, ...localComments];
+  // Only use localComments if there are no API comments to avoid duplication
+  const allComments = directorComments.length > 0 ? directorComments : [...defaultComments, ...localComments];
+
+  // Handle mention functionality
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    const cursorPosition = e.target.selectionStart;
+    
+    setNewComment(value);
+    
+    // Check for @ mention
+    const textBeforeCursor = value.substring(0, cursorPosition);
+    const atIndex = textBeforeCursor.lastIndexOf('@');
+    
+    if (atIndex !== -1) {
+      const textAfterAt = textBeforeCursor.substring(atIndex + 1);
+      const hasSpaceAfterAt = textAfterAt.includes(' ');
+      
+      if (!hasSpaceAfterAt) {
+        // Show mention popup
+        setMentionStartIndex(atIndex);
+        setMentionSearchTerm(textAfterAt);
+        setShowMentionPopup(true);
+        
+        // Calculate popup position
+        if (textareaRef.current) {
+          const rect = textareaRef.current.getBoundingClientRect();
+          setMentionPosition({
+            top: rect.bottom + window.scrollY,
+            left: rect.left + window.scrollX
+          });
+        }
+      } else {
+        setShowMentionPopup(false);
+      }
+    } else {
+      setShowMentionPopup(false);
+    }
+  };
+
+  const handleSelectDirector = (director: Director) => {
+    if (mentionStartIndex !== -1) {
+      const beforeMention = newComment.substring(0, mentionStartIndex);
+      const afterMention = newComment.substring(mentionStartIndex + 1 + mentionSearchTerm.length);
+      const mentionText = `@${director.username}`;
+      
+      setNewComment(beforeMention + mentionText + afterMention);
+      setShowMentionPopup(false);
+      setMentionStartIndex(-1);
+      setMentionSearchTerm('');
+      
+      // Focus back to textarea
+      if (textareaRef.current) {
+        const newCursorPosition = beforeMention.length + mentionText.length;
+        setTimeout(() => {
+          textareaRef.current?.setSelectionRange(newCursorPosition, newCursorPosition);
+          textareaRef.current?.focus();
+        }, 0);
+      }
+    }
+  };
+
+  const handleCloseMentionPopup = () => {
+    setShowMentionPopup(false);
+    setMentionStartIndex(-1);
+    setMentionSearchTerm('');
+  };
 
   const addComment = async () => {
     if (!newComment.trim()) return;
@@ -122,13 +233,17 @@ const DirectorComments: React.FC<DirectorCommentsProps> = ({
       <CardContent>
         <div className="flex items-start space-x-2 mb-4">
           <Textarea
+            ref={textareaRef}
             placeholder="Add a comment... Use @username to mention other directors"
             value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
+            onChange={handleTextareaChange}
             className="flex-1"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && e.ctrlKey) {
                 addComment();
+              }
+              if (e.key === 'Escape') {
+                handleCloseMentionPopup();
               }
             }}
             disabled={isPostingComment}
@@ -201,6 +316,17 @@ const DirectorComments: React.FC<DirectorCommentsProps> = ({
             );
           })}
         </div>
+        
+        {/* Mention Popup */}
+        {showMentionPopup && (
+          <MentionPopup
+            directors={directors}
+            onSelectDirector={handleSelectDirector}
+            onClose={handleCloseMentionPopup}
+            position={mentionPosition}
+            searchTerm={mentionSearchTerm}
+          />
+        )}
       </CardContent>
     </Card>
   );

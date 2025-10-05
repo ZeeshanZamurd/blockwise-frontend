@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,63 +8,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, Users, FileText, Video, Archive } from 'lucide-react';
-
-interface Meeting {
-  id: string;
-  title: string;
-  type: 'AGM' | 'Board Meeting' | 'Committee Meeting' | 'General Meeting';
-  date: string;
-  time: string;
-  attendees: string[];
-  status: 'Scheduled' | 'Completed' | 'Cancelled';
-  transcript?: string;
-  videoUrl?: string;
-  notes?: string;
-}
-
-const mockMeetings: Meeting[] = [
-  {
-    id: '1',
-    title: 'Annual General Meeting 2024',
-    type: 'AGM',
-    date: '2024-03-15',
-    time: '10:00 AM',
-    attendees: ['John Smith (Chair)', 'Sarah Johnson', 'Michael Brown', 'Emily Davis'],
-    status: 'Completed',
-    transcript: 'Meeting commenced at 10:00 AM. Chair welcomed all attendees and presented the annual report...',
-    videoUrl: 'https://example.com/meeting-recording',
-    notes: 'Key decisions made regarding building maintenance budget and upcoming repairs.'
-  },
-  {
-    id: '2',
-    title: 'Emergency Board Meeting - Roof Repairs',
-    type: 'Board Meeting',
-    date: '2024-02-20',
-    time: '7:00 PM',
-    attendees: ['John Smith (Chair)', 'Sarah Johnson', 'Michael Brown'],
-    status: 'Completed',
-    transcript: 'Emergency meeting called to discuss urgent roof repairs following recent storm damage...',
-    notes: 'Unanimous decision to proceed with emergency repairs. Insurance claim to be filed.'
-  },
-  {
-    id: '3',
-    title: 'Quarterly Committee Meeting',
-    type: 'Committee Meeting',
-    date: '2024-04-10',
-    time: '6:30 PM',
-    attendees: ['Sarah Johnson', 'Michael Brown', 'Emily Davis', 'Robert Wilson'],
-    status: 'Scheduled'
-  }
-];
+import { Calendar, Users, FileText, Video, Archive, Loader2 } from 'lucide-react';
+import { useMeeting, Meeting } from '@/hooks/useMeeting';
+import { toast } from 'sonner';
 
 interface MeetingsSectionProps {
   emptyDataMode?: boolean;
 }
 
 const MeetingsSection = ({ emptyDataMode }: MeetingsSectionProps) => {
+  const { meetings, isLoading, error, fetchMeetings, createMeeting } = useMeeting();
   const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
-  const [clickedMeetingId, setClickedMeetingId] = useState<string | null>(null);
+  const [clickedMeetingId, setClickedMeetingId] = useState<number | null>(null);
   const [newMeetingData, setNewMeetingData] = useState({
     title: '',
     type: '',
@@ -75,6 +30,21 @@ const MeetingsSection = ({ emptyDataMode }: MeetingsSectionProps) => {
     notes: '',
     addToCalendar: false
   });
+
+  // Fetch meetings when component mounts
+  useEffect(() => {
+    const loadMeetings = async () => {
+      const result = await fetchMeetings();
+      if (!result.success) {
+        console.error('Failed to fetch meetings:', result.error);
+        toast.error('Failed to load meetings');
+      }
+    };
+
+    if (!emptyDataMode) {
+      loadMeetings();
+    }
+  }, [emptyDataMode, fetchMeetings]);
 
   if (emptyDataMode) {
     return (
@@ -99,58 +69,62 @@ const MeetingsSection = ({ emptyDataMode }: MeetingsSectionProps) => {
       </div>
     );
   }
-  const [meetings, setMeetings] = useState<Meeting[]>(mockMeetings);
 
-  const handleScheduleMeeting = () => {
+  const handleScheduleMeeting = async () => {
     if (newMeetingData.title && newMeetingData.type && newMeetingData.date && newMeetingData.time) {
-      const newMeeting: Meeting = {
-        id: (meetings.length + 1).toString(),
+      const meetingData = {
         title: newMeetingData.title,
-        type: newMeetingData.type as Meeting['type'],
+        type: newMeetingData.type,
         date: newMeetingData.date,
         time: newMeetingData.time,
         attendees: newMeetingData.attendees.split('\n').filter(name => name.trim()),
         status: 'Scheduled',
-        notes: newMeetingData.notes
+        notes: newMeetingData.notes,
+        transcript: null,
+        videoUrl: null
       };
 
-      setMeetings(prev => [...prev, newMeeting]);
+      const result = await createMeeting(meetingData);
+      
+      if (result.success) {
+        toast.success('Meeting scheduled successfully!');
+        
+        // Add to calendar if checkbox is checked
+        if (newMeetingData.addToCalendar) {
+          const calendarEvent = {
+            id: Date.now(),
+            title: newMeetingData.title,
+            date: newMeetingData.date,
+            time: newMeetingData.time,
+            type: 'meeting',
+            location: newMeetingData.location,
+            description: newMeetingData.notes,
+            contact: 'Meeting Organizer'
+          };
 
-      // Add to calendar if checkbox is checked
-      if (newMeetingData.addToCalendar) {
-        const calendarEvent = {
-          id: Date.now(),
-          title: newMeetingData.title,
-          date: newMeetingData.date,
-          time: newMeetingData.time,
-          type: 'meeting',
-          location: newMeetingData.location,
-          description: newMeetingData.notes,
-          contact: 'Meeting Organizer'
-        };
+          // Store in localStorage for calendar component
+          const existingEvents = JSON.parse(localStorage.getItem('calendarEvents') || '[]');
+          existingEvents.push(calendarEvent);
+          localStorage.setItem('calendarEvents', JSON.stringify(existingEvents));
 
-        // Store in localStorage for calendar component
-        const existingEvents = JSON.parse(localStorage.getItem('calendarEvents') || '[]');
-        existingEvents.push(calendarEvent);
-        localStorage.setItem('calendarEvents', JSON.stringify(existingEvents));
+          // Dispatch custom event to notify calendar component
+          window.dispatchEvent(new CustomEvent('calendarEventAdded', { detail: calendarEvent }));
+        }
 
-        // Dispatch custom event to notify calendar component
-        window.dispatchEvent(new CustomEvent('calendarEventAdded', { detail: calendarEvent }));
+        // Reset form
+        setNewMeetingData({
+          title: '',
+          type: '',
+          date: '',
+          time: '',
+          location: '',
+          attendees: '',
+          notes: '',
+          addToCalendar: false
+        });
+      } else {
+        toast.error('Failed to schedule meeting');
       }
-
-      // Reset form
-      setNewMeetingData({
-        title: '',
-        type: '',
-        date: '',
-        time: '',
-        location: '',
-        attendees: '',
-        notes: '',
-        addToCalendar: false
-      });
-
-      // Close dialog (you would need to add state for this)
     }
   };
 
@@ -166,6 +140,53 @@ const MeetingsSection = ({ emptyDataMode }: MeetingsSectionProps) => {
         return <Badge>{status}</Badge>;
     }
   };
+
+  const formatDate = (date: string | null) => {
+    if (!date) return 'TBD';
+    return new Date(date).toLocaleDateString();
+  };
+
+  const formatTime = (time: string | null) => {
+    if (!time) return 'TBD';
+    return time;
+  };
+
+  const formatAttendees = (attendees: string[] | null) => {
+    if (!attendees || attendees.length === 0) return 'TBD';
+    return attendees.join(', ');
+  };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-gray-900">Meetings & AGMs</h1>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading meetings...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-gray-900">Meetings & AGMs</h1>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">Error loading meetings: {error}</p>
+            <Button onClick={() => fetchMeetings()}>Retry</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -313,11 +334,11 @@ const MeetingsSection = ({ emptyDataMode }: MeetingsSectionProps) => {
                           <div className="flex items-center gap-4 text-sm text-gray-600 mt-2">
                             <div className="flex items-center gap-1">
                               <Calendar className="h-4 w-4" />
-                              {meeting.date} at {meeting.time}
+                              {formatDate(meeting.date)} at {formatTime(meeting.time)}
                             </div>
                             <div className="flex items-center gap-1">
                               <Users className="h-4 w-4" />
-                              {meeting.attendees.length} attendees
+                              {meeting.attendees ? meeting.attendees.length : 0} attendees
                             </div>
                           </div>
                         </div>
@@ -359,20 +380,24 @@ const MeetingsSection = ({ emptyDataMode }: MeetingsSectionProps) => {
                           <h3 className="font-semibold mb-2">Meeting Details</h3>
                           <div className="space-y-1 text-sm">
                             <p><strong>Type:</strong> {selectedMeeting.type}</p>
-                            <p><strong>Date:</strong> {selectedMeeting.date}</p>
-                            <p><strong>Time:</strong> {selectedMeeting.time}</p>
+                            <p><strong>Date:</strong> {formatDate(selectedMeeting.date)}</p>
+                            <p><strong>Time:</strong> {formatTime(selectedMeeting.time)}</p>
                             <p><strong>Status:</strong> {selectedMeeting.status}</p>
                           </div>
                         </div>
                         <div>
                           <h3 className="font-semibold mb-2">Attendees</h3>
                           <div className="space-y-1">
-                            {selectedMeeting.attendees.map((attendee, index) => (
-                              <div key={index} className="flex items-center gap-2 text-sm">
-                                <Users className="h-3 w-3" />
-                                {attendee}
-                              </div>
-                            ))}
+                            {selectedMeeting.attendees && selectedMeeting.attendees.length > 0 ? (
+                              selectedMeeting.attendees.map((attendee, index) => (
+                                <div key={index} className="flex items-center gap-2 text-sm">
+                                  <Users className="h-3 w-3" />
+                                  {attendee}
+                                </div>
+                              ))
+                            ) : (
+                              <p className="text-sm text-gray-500">No attendees specified</p>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -424,13 +449,16 @@ const MeetingsSection = ({ emptyDataMode }: MeetingsSectionProps) => {
 
         <TabsContent value="agm">
           <div className="grid gap-4">
-            {meetings.filter(m => m.type === 'AGM').map((meeting) => (
+            {meetings.filter(m => m.type.toLowerCase().includes('agm')).map((meeting) => (
               <Card key={meeting.id}>
                 <CardHeader>
                   <CardTitle>{meeting.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-gray-600">{meeting.date} at {meeting.time}</p>
+                  <p className="text-sm text-gray-600">{formatDate(meeting.date)} at {formatTime(meeting.time)}</p>
+                  <div className="mt-2">
+                    {getStatusBadge(meeting.status)}
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -439,13 +467,16 @@ const MeetingsSection = ({ emptyDataMode }: MeetingsSectionProps) => {
 
         <TabsContent value="board">
           <div className="grid gap-4">
-            {meetings.filter(m => m.type === 'Board Meeting').map((meeting) => (
+            {meetings.filter(m => m.type.toLowerCase().includes('board') || m.type.toLowerCase().includes('meeting')).map((meeting) => (
               <Card key={meeting.id}>
                 <CardHeader>
                   <CardTitle>{meeting.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-gray-600">{meeting.date} at {meeting.time}</p>
+                  <p className="text-sm text-gray-600">{formatDate(meeting.date)} at {formatTime(meeting.time)}</p>
+                  <div className="mt-2">
+                    {getStatusBadge(meeting.status)}
+                  </div>
                 </CardContent>
               </Card>
             ))}

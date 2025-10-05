@@ -6,6 +6,7 @@ import authReducer from './authSlice';
 import rolesReducer from './rolesSlice';
 import issuesReducer from './issuesSlice';
 import buildingReducer from './buildingSlice';
+import meetingsReducer from './meetingsSlice';
 
 const persistConfig = {
   key: 'root',
@@ -18,6 +19,7 @@ const rootReducer = combineReducers({
   roles: rolesReducer,
   issues: issuesReducer,
   building: buildingReducer,
+  meetings: meetingsReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

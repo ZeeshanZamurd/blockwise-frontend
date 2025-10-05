@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Mail, MailOpen, Paperclip, Calendar, AlertTriangle, CheckCircle, Clock, Plus, Eye, Edit, Link, Copy } from 'lucide-react';
+import { Search, Mail, MailOpen, Paperclip, Calendar, AlertTriangle, CheckCircle, Clock, Plus, Eye, Edit, Link, Copy, X } from 'lucide-react';
 import { useIssues } from '@/contexts/IssuesContext';
 import { useEmails } from '@/contexts/EmailsContext';
 import { useEmail, Email } from '@/hooks/useEmail';
@@ -20,6 +20,79 @@ interface EnhancedCommunicationsPanelProps {
 }
 
 const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPanelProps) => {
+  const [searchParams] = useSearchParams();
+  const { addIssue, updateIssue, issues } = useIssues();
+  const { emails, updateEmail, linkEmailToIssue } = useEmails();
+  const { fetchEmails } = useEmail();
+  const [apiEmails, setApiEmails] = useState<Email[]>([]);
+  const [isLoadingEmails, setIsLoadingEmails] = useState(false);
+  const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('all');
+  const [isEditingIssue, setIsEditingIssue] = useState(false);
+  const [editableIssue, setEditableIssue] = useState('');
+  const [editableSummary, setEditableSummary] = useState('');
+  const [newIssues, setNewIssues] = useState([{ title: '', summary: '' }]);
+  const [showLogMultiple, setShowLogMultiple] = useState(false);
+  const [isLinkingEmail, setIsLinkingEmail] = useState(false);
+  const [selectedIssueToLink, setSelectedIssueToLink] = useState('');
+  const [showBanner, setShowBanner] = useState(true);
+
+  // Handle URL filter parameter
+  useEffect(() => {
+    const filter = searchParams.get('filter');
+    const emailId = searchParams.get('emailId');
+    
+    if (filter === 'review') {
+      setActiveTab('review');
+    }
+    
+    // If emailId is provided, filter to that specific email
+    if (emailId) {
+      console.log('EmailId filter applied:', emailId);
+    }
+  }, [searchParams]);
+
+  // Fetch emails when component mounts
+  useEffect(() => {
+    const loadEmails = async () => {
+      setIsLoadingEmails(true);
+      const result = await fetchEmails();
+      if (result.success) {
+        setApiEmails(result.emails);
+      } else {
+        console.error('Failed to fetch emails:', result.error);
+        toast.error('Failed to load emails');
+      }
+      setIsLoadingEmails(false);
+    };
+
+    loadEmails();
+  }, [fetchEmails]);
+
+  // Set default values when email is selected
+  useEffect(() => {
+    if (selectedEmail) {
+      if (selectedEmail.issueCreationStatus === null) {
+        // For emails needing review, start with empty fields
+        setEditableIssue('');
+        setEditableSummary('');
+      } else {
+        // For completed emails, show AI-generated content
+        setEditableIssue(selectedEmail.associatedIssues.length > 0 ? selectedEmail.associatedIssues[0].issueName : 'Standard Building Maintenance');
+        setEditableSummary(selectedEmail.summary || 'AI-generated summary of the email content and required actions.');
+      }
+      setShowLogMultiple(false);
+      setIsLinkingEmail(false);
+      setSelectedIssueToLink('');
+      
+      // Hide banner when any email is viewed
+      if (selectedEmail.issueCreationStatus === null) {
+        setShowBanner(false);
+      }
+    }
+  }, [selectedEmail]);
+
   if (emptyDataMode) {
     return (
       <div className="p-6 space-y-6">
@@ -43,49 +116,6 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
       </div>
     );
   }
-  
-  const [searchParams] = useSearchParams();
-  const { addIssue, updateIssue, issues } = useIssues();
-  const { emails, updateEmail, linkEmailToIssue } = useEmails();
-  const { fetchEmails } = useEmail();
-  const [apiEmails, setApiEmails] = useState<Email[]>([]);
-  const [isLoadingEmails, setIsLoadingEmails] = useState(false);
-  const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('all');
-  const [isEditingIssue, setIsEditingIssue] = useState(false);
-  const [editableIssue, setEditableIssue] = useState('');
-  const [editableSummary, setEditableSummary] = useState('');
-  const [newIssues, setNewIssues] = useState([{ title: '', summary: '' }]);
-  const [showLogMultiple, setShowLogMultiple] = useState(false);
-  const [isLinkingEmail, setIsLinkingEmail] = useState(false);
-  const [selectedIssueToLink, setSelectedIssueToLink] = useState('');
-  const [showBanner, setShowBanner] = useState(true);
-
-  // Handle URL filter parameter
-  useEffect(() => {
-    const filter = searchParams.get('filter');
-    if (filter === 'review') {
-      setActiveTab('review');
-    }
-  }, [searchParams]);
-
-  // Fetch emails when component mounts
-  useEffect(() => {
-    const loadEmails = async () => {
-      setIsLoadingEmails(true);
-      const result = await fetchEmails();
-      if (result.success) {
-        setApiEmails(result.emails);
-      } else {
-        console.error('Failed to fetch emails:', result.error);
-        toast.error('Failed to load emails');
-      }
-      setIsLoadingEmails(false);
-    };
-
-    loadEmails();
-  }, [fetchEmails]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -111,16 +141,23 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
   const getFilteredEmails = () => {
     let filtered = apiEmails;
     
+    // Apply emailId filter if provided in URL
+    const emailId = searchParams.get('emailId');
+    if (emailId) {
+      filtered = filtered.filter(email => email.messageId === emailId);
+      console.log('Filtering by emailId:', emailId, 'Found emails:', filtered.length);
+    }
+    
     // Apply tab filter
     switch (activeTab) {
       case 'review':
         // Show only emails that need review (issueCreationStatus === null)
-        filtered = apiEmails.filter(email => email.issueCreationStatus === null);
+        filtered = filtered.filter(email => email.issueCreationStatus === null);
         break;
       case 'all':
       default:
         // Show only emails that have been processed (issueCreationStatus !== null)
-        filtered = apiEmails.filter(email => email.issueCreationStatus !== null);
+        filtered = filtered.filter(email => email.issueCreationStatus !== null);
         break;
     }
     
@@ -133,29 +170,6 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
   };
 
   const filteredEmails = getFilteredEmails();
-
-  // Set default values when email is selected
-  useEffect(() => {
-    if (selectedEmail) {
-      if (selectedEmail.issueCreationStatus === null) {
-        // For emails needing review, start with empty fields
-        setEditableIssue('');
-        setEditableSummary('');
-      } else {
-        // For completed emails, show AI-generated content
-        setEditableIssue(selectedEmail.associatedIssues.length > 0 ? selectedEmail.associatedIssues[0].issueName : 'Standard Building Maintenance');
-        setEditableSummary(selectedEmail.summary || 'AI-generated summary of the email content and required actions.');
-      }
-      setShowLogMultiple(false);
-      setIsLinkingEmail(false);
-      setSelectedIssueToLink('');
-      
-      // Hide banner when any email is viewed
-      if (selectedEmail.issueCreationStatus === null) {
-        setShowBanner(false);
-      }
-    }
-  }, [selectedEmail]);
 
   const handleSaveEdit = () => {
     if (editableIssue.trim() && editableSummary.trim()) {
@@ -302,6 +316,37 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
+              
+              {/* EmailId Filter Indicator */}
+              {searchParams.get('emailId') && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Mail className="h-4 w-4 text-blue-600 mr-2" />
+                      <span className="text-sm text-blue-800">
+                        Filtered by Email ID: <code className="bg-blue-100 px-1 rounded text-xs">{searchParams.get('emailId')}</code>
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        // Remove emailId from URL
+                        const newSearchParams = new URLSearchParams(searchParams);
+                        newSearchParams.delete('emailId');
+                        const newUrl = `${window.location.pathname}?${newSearchParams.toString()}`;
+                        window.history.replaceState({}, '', newUrl);
+                        // Force re-render by updating search params
+                        window.location.reload();
+                      }}
+                      className="h-6 w-6 p-0 hover:bg-blue-200"
+                    >
+                      <X className="h-3 w-3 text-blue-600" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+              
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input

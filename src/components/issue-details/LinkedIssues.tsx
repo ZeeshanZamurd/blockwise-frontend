@@ -20,13 +20,29 @@ const LinkedIssues: React.FC<LinkedIssuesProps> = ({ issueId, linkedIssues = [] 
   const [issueSearchTerm, setIssueSearchTerm] = useState('');
   const [selectedIssueId, setSelectedIssueId] = useState('');
 
+  // Debug logging
+  console.log('LinkedIssues component:', {
+    issueId,
+    linkedIssuesFromProps: linkedIssues,
+    linkedIssuesLength: linkedIssues.length,
+    contextIssuesLength: issues.length
+  });
+
   // Use API linked issues data if available, otherwise fallback to context issues
-  const currentIssue = issues.find(i => i.id === issueId);
+  const currentIssue = issues.find(i => i.id === issueId || i.id === parseInt(issueId));
   const linkedIssuesList = linkedIssues.length > 0 ? linkedIssues : 
-    issues.filter(issue => currentIssue?.linkedIssueIds?.includes(issue.id) || []);
+    (currentIssue?.linkedIssueIds ? 
+      issues.filter(issue => currentIssue.linkedIssueIds.includes(issue.id) || currentIssue.linkedIssueIds.includes(issue.id.toString())) : 
+      []);
+
+  console.log('LinkedIssues processed:', {
+    currentIssue,
+    linkedIssuesList,
+    linkedIssuesListLength: linkedIssuesList.length
+  });
 
   const filteredIssues = issues.filter(issue =>
-    issue.id !== issueId && (
+    issue.id !== issueId && issue.id !== parseInt(issueId) && (
       issue.id.toLowerCase().includes(issueSearchTerm.toLowerCase()) ||
       issue.title.toLowerCase().includes(issueSearchTerm.toLowerCase()) ||
       issue.summary.toLowerCase().includes(issueSearchTerm.toLowerCase())
@@ -45,8 +61,8 @@ const LinkedIssues: React.FC<LinkedIssuesProps> = ({ issueId, linkedIssues = [] 
   };
 
   const handleIssueIdInput = (inputIssueId: string) => {
-    const issue = issues.find(i => i.id === inputIssueId);
-    if (issue && issue.id !== issueId) {
+    const issue = issues.find(i => i.id === inputIssueId || i.id === parseInt(inputIssueId));
+    if (issue && issue.id !== issueId && issue.id !== parseInt(issueId)) {
       linkIssueToIssue(issueId, inputIssueId);
       linkIssueToIssue(inputIssueId, issueId);
       setIssueSearchTerm('');

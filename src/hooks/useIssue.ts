@@ -46,6 +46,8 @@ export const useIssue = () => {
       // Map API response to match our Issue interface
       const mappedIssues: Issue[] = responseData.data.map((apiIssue: {
         id: number;
+        buildingId: number;
+        emailId: number | null;
         issueName: string;
         issueDesc: string;
         issueCategory: string;
@@ -62,6 +64,7 @@ export const useIssue = () => {
                 apiIssue.issueStatus === 'IN_REVIEW' ? 'In review' :
                 apiIssue.issueStatus === 'CLOSED' ? 'Closed' :
                 apiIssue.issueStatus === 'PAUSED' ? 'Paused' : 'Not started',
+        emailId: apiIssue.emailId, // Add emailId mapping
         dateCreated: new Date().toISOString(), // API doesn't provide creation date
         lastUpdated: new Date().toISOString(), // API doesn't provide update date
         assignedTo: null,
@@ -118,9 +121,9 @@ export const useIssue = () => {
         status: (responseData.data.issueStatus || 'Not started') as 'Not started' | 'In review' | 'In progress' | 'Closed' | 'Paused',
         priority: responseData.data.issuePriority as 'Low' | 'Medium' | 'High' | 'Urgent',
         category: responseData.data.issueCategory,
+        emailId: responseData.data.emailId, // Add emailId mapping
         dateCreated: new Date().toISOString(),
         buildingId: responseData.data.buildingId,
-        emailId: responseData.data.emailId
       };
       
       dispatch(addIssue(newIssue));
@@ -209,6 +212,8 @@ export const useIssue = () => {
       // Map API response to match our Issue interface
       const mappedIssues: Issue[] = responseData.data.map((apiIssue: {
         id: number;
+        buildingId: number;
+        emailId: number | null;
         issueName: string;
         issueDesc: string;
         issueCategory: string;
@@ -225,6 +230,7 @@ export const useIssue = () => {
                 apiIssue.issueStatus === 'IN_REVIEW' ? 'In review' :
                 apiIssue.issueStatus === 'CLOSED' ? 'Closed' :
                 apiIssue.issueStatus === 'PAUSED' ? 'Paused' : 'Not started',
+        emailId: apiIssue.emailId, // Add emailId mapping
         dateCreated: new Date().toISOString(),
         lastUpdated: new Date().toISOString(),
         assignedTo: null,
@@ -277,6 +283,8 @@ export const useIssue = () => {
       // Map API response to match our Issue interface
       const mappedIssues: Issue[] = responseData.data.map((apiIssue: {
         id: number;
+        buildingId: number;
+        emailId: number | null;
         issueName: string;
         issueDesc: string;
         issueCategory: string;
@@ -293,6 +301,7 @@ export const useIssue = () => {
                 apiIssue.issueStatus === 'IN_REVIEW' ? 'In review' :
                 apiIssue.issueStatus === 'CLOSED' ? 'Closed' :
                 apiIssue.issueStatus === 'PAUSED' ? 'Paused' : 'Not started',
+        emailId: apiIssue.emailId, // Add emailId mapping
         dateCreated: new Date().toISOString(),
         lastUpdated: new Date().toISOString(),
         assignedTo: null,
@@ -441,6 +450,8 @@ export const useIssue = () => {
             // Map API response to match our Issue interface
             const mappedIssues: Issue[] = refreshData.data.map((apiIssue: {
               id: number;
+              buildingId: number;
+              emailId: number | null;
               issueName: string;
               issueDesc: string;
               issueCategory: string;
@@ -457,7 +468,8 @@ export const useIssue = () => {
                       apiIssue.issueStatus === 'IN_REVIEW' ? 'In review' :
                       apiIssue.issueStatus === 'CLOSED' ? 'Closed' :
                       apiIssue.issueStatus === 'PAUSED' ? 'Paused' : 'Not started',
-              dateCreated: new Date().toISOString(),
+              emailId: apiIssue.emailId, // Add emailId mapping
+        dateCreated: new Date().toISOString(),
               lastUpdated: new Date().toISOString(),
               assignedTo: null,
               reporter: null,

@@ -12,7 +12,23 @@ import { useNavigate } from 'react-router-dom';
 
 interface CommunicationsSectionProps {
   issueId: string;
-  communications?: any[];
+  communications?: Array<{
+    // API format
+    messageId?: string;
+    subject?: string;
+    fromEmail?: string;
+    toEmail?: string;
+    bodyText?: string;
+    summary?: string;
+    // Context format
+    id?: string;
+    from?: string;
+    to?: string;
+    body?: string;
+    date?: string;
+    status?: string;
+    aiSummary?: string;
+  }>;
 }
 
 const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, communications = [] }) => {
@@ -50,7 +66,7 @@ const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, 
       setEmailSearchTerm('');
       
       // Navigate to email tab
-      navigate('/emails');
+      navigate('/dashboard?section=building-management&tab=emails');
     }
   };
 
@@ -80,93 +96,133 @@ const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, 
             </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>Link Email to Issue</DialogTitle>
+                <DialogTitle>
+                  {issueEmailId ? 'View Linked Email' : 'Link Email to Issue'}
+                </DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                  <div className="text-sm text-blue-800">
-                    <p className="font-medium mb-2">How to find Email ID:</p>
-                    <ul className="space-y-1 text-xs">
-                      <li>• Email IDs look like this: <code className="bg-blue-100 px-1 rounded">EML-xxxx-xxx</code></li>
-                      <li>• Found in the email section under the email subject heading</li>
-                      <li>• If an email isn't showing up, forward it to your unique blocwise building email address found in the "Building info" area</li>
-                    </ul>
+                {issueEmailId ? (
+                  // If issue has emailId, show view email content
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                    <div className="text-sm text-green-800">
+                      <p className="font-medium mb-2">Email Already Linked</p>
+                      <p className="text-xs">
+                        This issue is linked to email: <code className="bg-green-100 px-1 rounded">{issueEmailId}</code>
+                      </p>
+                      <p className="text-xs mt-2">
+                        Click "View Email" to see the email content and navigate to the emails section.
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    Search by Email ID or details
-                  </label>
-                  <Input
-                    placeholder={issueEmailId ? `Pre-filled: ${issueEmailId}` : "Search emails or enter Email ID..."}
-                    value={issueEmailId ? issueEmailId : emailSearchTerm}
-                    onChange={(e) => setEmailSearchTerm(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && (emailSearchTerm.startsWith('EML-') || issueEmailId)) {
-                        handleEmailIdInput(emailSearchTerm || issueEmailId || '');
-                      }
-                    }}
-                    disabled={!!issueEmailId}
-                    className={issueEmailId ? 'bg-gray-100' : ''}
-                  />
-                  {issueEmailId && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      This issue is already linked to email: {issueEmailId}
-                    </p>
-                  )}
-                </div>
-                
-                {emailSearchTerm && !emailSearchTerm.startsWith('EML-') && (
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">
-                      Select Email
-                    </label>
-                    <Select value={selectedEmailId} onValueChange={setSelectedEmailId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select an email..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {filteredEmails.slice(0, 10).map((email) => (
-                          <SelectItem key={email.id} value={email.id}>
-                            <div className="flex flex-col">
-                              <span className="font-medium">{email.id}</span>
-                              <span className="text-xs text-muted-foreground">{email.subject}</span>
-                              <span className="text-xs text-muted-foreground">From: {email.from}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                ) : (
+                  // If no emailId, show linking instructions
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                    <div className="text-sm text-blue-800">
+                      <p className="font-medium mb-2">How to find Email ID:</p>
+                      <ul className="space-y-1 text-xs">
+                        <li>• Email IDs look like this: <code className="bg-blue-100 px-1 rounded">EML-xxxx-xxx</code></li>
+                        <li>• Found in the email section under the email subject heading</li>
+                        <li>• If an email isn't showing up, forward it to your unique blocwise building email address found in the "Building info" area</li>
+                      </ul>
+                    </div>
                   </div>
                 )}
                 
+                {!issueEmailId && (
+                  <>
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">
+                        Search by Email ID or details
+                      </label>
+                      <Input
+                        placeholder="Search emails or enter Email ID..."
+                        value={emailSearchTerm}
+                        onChange={(e) => setEmailSearchTerm(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && emailSearchTerm.startsWith('EML-')) {
+                            handleEmailIdInput(emailSearchTerm);
+                          }
+                        }}
+                      />
+                    </div>
+                    
+                    {emailSearchTerm && !emailSearchTerm.startsWith('EML-') && (
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">
+                          Select Email
+                        </label>
+                        <Select value={selectedEmailId} onValueChange={setSelectedEmailId}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select an email..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {filteredEmails.slice(0, 10).map((email) => (
+                              <SelectItem key={email.id} value={email.id}>
+                                <div className="flex flex-col">
+                                  <span className="font-medium">{email.id}</span>
+                                  <span className="text-xs text-muted-foreground">{email.subject}</span>
+                                  <span className="text-xs text-muted-foreground">From: {email.from}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </>
+                )}
+                
                 <div className="flex space-x-2">
-                  <Button 
-                    onClick={() => {
-                      if (issueEmailId) {
-                        // If issue has emailId, link it directly
-                        handleEmailIdInput(issueEmailId);
-                      } else {
-                        // Otherwise use the selected email
-                        handleLinkEmail();
-                      }
-                    }}
-                    disabled={!selectedEmailId && !issueEmailId}
-                    className="flex-1"
-                  >
-                    {issueEmailId ? 'Link Pre-filled Email' : 'Link Email'}
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => {
-                      setIsLinkDialogOpen(false);
-                      setSelectedEmailId('');
-                      setEmailSearchTerm('');
-                    }}
-                    className="flex-1"
-                  >
-                    Cancel
-                  </Button>
+                  {issueEmailId ? (
+                    // If issue has emailId, show View Email button
+                    <>
+                      <Button 
+                        onClick={() => {
+                          console.log('View Email clicked!');
+                          console.log('issueEmailId:', issueEmailId);
+                          console.log('currentIssue:', currentIssue);
+                          // Navigate to emails tab and call API to get emails by emailId
+                          navigate(`/dashboard?section=building-management&tab=emails&emailId=${issueEmailId}`);
+                          // TODO: Call API to get emails by emailId
+                          console.log('Getting emails for emailId:', issueEmailId);
+                        }}
+                        className="flex-1"
+                      >
+                        View Email
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          setIsLinkDialogOpen(false);
+                        }}
+                        className="flex-1"
+                      >
+                        Close
+                      </Button>
+                    </>
+                  ) : (
+                    // If no emailId, show normal linking buttons
+                    <>
+                      <Button 
+                        onClick={handleLinkEmail}
+                        disabled={!selectedEmailId}
+                        className="flex-1"
+                      >
+                        Link Email
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          setIsLinkDialogOpen(false);
+                          setSelectedEmailId('');
+                          setEmailSearchTerm('');
+                        }}
+                        className="flex-1"
+                      >
+                        Cancel
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             </DialogContent>
