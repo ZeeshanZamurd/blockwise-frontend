@@ -12,7 +12,7 @@ interface Comment {
 
 interface PostCommentData {
   issueId: number;
-  directorId: number;
+  // directorId: number;
   comment: string;
 }
 

@@ -179,11 +179,10 @@ const DirectorComments: React.FC<DirectorCommentsProps> = ({
     
     try {
       // For now, using a hardcoded directorId - in a real app, this would come from user context
-      const directorId = 9; // This should come from user authentication context
+ // This should come from user authentication context
       
       const result = await postComment({
         issueId: typeof issueId === 'string' ? parseInt(issueId) : issueId,
-        directorId: directorId,
         comment: newComment.trim()
       });
       

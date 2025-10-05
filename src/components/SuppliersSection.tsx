@@ -1,16 +1,37 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Phone, Mail, MapPin, Star, Calendar, FileText, Plus, Grid, List, Users } from 'lucide-react';
+import { Phone, Mail, MapPin, Star, Calendar, FileText, Plus, Grid, List, Users, Loader2 } from 'lucide-react';
+import { useSupplier, Supplier } from '@/hooks/useSupplier';
+import { toast } from 'sonner';
 
 interface SuppliersSectionProps {
   emptyDataMode?: boolean;
 }
 
 const SuppliersSection = ({ emptyDataMode }: SuppliersSectionProps) => {
+  const { suppliers, isLoading, error, fetchSuppliers, forceRefresh } = useSupplier();
+  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+
+  // Fetch suppliers when component mounts
+  useEffect(() => {
+    const loadSuppliers = async () => {
+      const result = await fetchSuppliers();
+      if (!result.success) {
+        console.error('Failed to fetch suppliers:', result.error);
+        toast.error('Failed to load suppliers');
+      }
+    };
+
+    if (!emptyDataMode) {
+      loadSuppliers();
+    }
+  }, [emptyDataMode, fetchSuppliers]);
+
   if (emptyDataMode) {
     return (
       <div className="p-6 space-y-6">
@@ -34,130 +55,44 @@ const SuppliersSection = ({ emptyDataMode }: SuppliersSectionProps) => {
       </div>
     );
   }
-  const [selectedSupplier, setSelectedSupplier] = useState<any>(null);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
-  const suppliers = [
-    {
-      id: 1,
-      name: 'Thames Valley Lifts',
-      category: 'Boiler and Heat Management',
-      contact: 'Mark Thompson',
-      phone: '0208 123 4567',
-      email: 'mark@thamesvalleylifts.co.uk',
-      address: '45 Industrial Estate, Kingston, KT2 7NH',
-      rating: 4.8,
-      lastService: '2024-05-15',
-      nextService: '2024-11-15',
-      status: 'Active',
-      services: ['Annual Boiler Service', 'Emergency Repairs', 'Safety Certificates'],
-      notes: 'Reliable service provider. Always punctual and professional.',
-      totalJobs: 12,
-      description: 'Specializes in commercial boiler maintenance and heating system management for residential buildings.'
-    },
-    {
-      id: 2,
-      name: 'Cier Gardening',
-      category: 'Gardeners',
-      contact: 'Sarah Chen',
-      phone: '0207 456 7890',
-      email: 'info@ciergardening.com',
-      address: '23 Green Lane, Croydon, CR0 4BX',
-      rating: 4.6,
-      lastService: '2024-06-20',
-      nextService: '2024-07-20',
-      status: 'Active',
-      services: ['Monthly Garden Maintenance', 'Hedge Trimming', 'Seasonal Planting'],
-      notes: 'Excellent attention to detail. Residents frequently compliment their work.',
-      totalJobs: 8,
-      description: 'Professional gardening service specializing in communal garden maintenance and landscaping.'
-    },
-    {
-      id: 3,
-      name: 'Jo Cleaners',
-      category: 'Cleaning Company',
-      contact: 'Joanna Smith',
-      phone: '0208 789 0123',
-      email: 'jo@jocleaners.co.uk',
-      address: '12 High Street, Wimbledon, SW19 1AB',
-      rating: 4.9,
-      lastService: '2024-06-25',
-      nextService: '2024-07-02',
-      status: 'Active',
-      services: ['Weekly Common Area Cleaning', 'Stairwell Deep Clean', 'Window Cleaning'],
-      notes: 'Outstanding service quality. Never missed a scheduled clean.',
-      totalJobs: 24,
-      description: 'Comprehensive cleaning services for residential buildings and commercial properties.'
-    },
-    {
-      id: 4,
-      name: 'Pearly Gates',
-      category: 'Gate Repair',
-      contact: 'David Wilson',
-      phone: '0207 234 5678',
-      email: 'repairs@pearlygates.co.uk',
-      address: '78 Workshop Road, Croydon, CR0 2EF',
-      rating: 4.4,
-      lastService: '2024-04-10',
-      nextService: 'On-call',
-      status: 'Active',
-      services: ['Gate Repairs', 'Access System Maintenance', 'Security Upgrades'],
-      notes: 'Quick response time for emergency repairs. Competitive pricing.',
-      totalJobs: 5,
-      description: 'Specialist in automated gate systems, repairs, and security access control for residential properties.'
-    },
-    {
-      id: 5,
-      name: 'JKC Japanese Knotweed Control',
-      category: 'Japanese Knotweed',
-      contact: 'Michael Brown',
-      phone: '0208 345 6789',
-      email: 'control@jkc-specialist.com',
-      address: '156 Commercial Drive, London, SE15 3QR',
-      rating: 4.7,
-      lastService: '2024-03-15',
-      nextService: '2024-09-15',
-      status: 'Active',
-      services: ['Knotweed Treatment', 'Site Surveys', 'Management Plans'],
-      notes: 'Certified specialists. Provide comprehensive treatment plans and guarantees.',
-      totalJobs: 3,
-      description: 'Certified Japanese Knotweed specialists providing treatment, surveys, and long-term management solutions.'
-    },
-    {
-      id: 6,
-      name: 'Clean Bin Solutions',
-      category: 'Bin Store Cleaning',
-      contact: 'Lisa Taylor',
-      phone: '0207 567 8901',
-      email: 'info@cleanbinsolutions.co.uk',
-      address: '89 Service Lane, Mitcham, CR4 1PQ',
-      rating: 4.5,
-      lastService: '2024-06-15',
-      nextService: '2024-07-15',
-      status: 'Active',
-      services: ['Bin Store Deep Clean', 'Disinfection', 'Odor Control'],
-      notes: 'Specialized service for bin store maintenance. Very thorough and hygienic approach.',
-      totalJobs: 6,
-      description: 'Specialized cleaning service for waste storage areas, focusing on hygiene and odor control.'
-    },
-    {
-      id: 7,
-      name: 'Crystal Clear Windows',
-      category: 'Window Cleaners',
-      contact: 'Robert Johnson',
-      phone: '0208 678 9012',
-      email: 'rob@crystalclearwindows.com',
-      address: '34 Tower Hill, London, SE19 3XY',
-      rating: 4.6,
-      lastService: '2024-06-12',
-      nextService: '2024-08-12',
-      status: 'Active',
-      services: ['External Window Cleaning', 'Gutter Cleaning', 'Pressure Washing'],
-      notes: 'Professional window cleaning service. Good value for money and reliable scheduling.',
-      totalJobs: 4,
-      description: 'Professional window cleaning service for residential and commercial buildings, including high-rise work.'
-    }
-  ];
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Suppliers</h2>
+            <p className="text-gray-600">Building contractors and service providers</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading suppliers...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Suppliers</h2>
+            <p className="text-gray-600">Building contractors and service providers</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">Error loading suppliers: {error}</p>
+            <Button onClick={() => forceRefresh()}>Retry</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const getCategoryColor = (category: string) => {
     const colors: { [key: string]: string } = {

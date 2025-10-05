@@ -7,6 +7,7 @@ import rolesReducer from './rolesSlice';
 import issuesReducer from './issuesSlice';
 import buildingReducer from './buildingSlice';
 import meetingsReducer from './meetingsSlice';
+import suppliersReducer from './suppliersSlice';
 
 const persistConfig = {
   key: 'root',
@@ -20,6 +21,7 @@ const rootReducer = combineReducers({
   issues: issuesReducer,
   building: buildingReducer,
   meetings: meetingsReducer,
+  suppliers: suppliersReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
