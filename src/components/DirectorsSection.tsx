@@ -1,56 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, Calendar, UserPlus, UserMinus, Plus, User } from 'lucide-react';
+import { Users, Calendar, UserPlus, UserMinus, Plus, User, Loader2 } from 'lucide-react';
+import { useDirector } from '@/hooks/useDirector';
+import { useBuilding } from '@/hooks/useBuilding';
+import { toast } from 'sonner';
 
 interface Director {
-  id: string;
-  name: string;
-  position: string;
-  joinedDate: string;
+  id: number;
+  firstName: string;
+  lastName: string;
+  username: string;
   email: string;
-  phone?: string;
-  status: 'Active' | 'Inactive';
+  roleName: string;
 }
-
-const mockDirectors: Director[] = [
-  {
-    id: '1',
-    name: 'John Smith',
-    position: 'Chairman',
-    joinedDate: '2020-03-15',
-    email: 'john.smith@building.com',
-    phone: '+44 7123 456789',
-    status: 'Active'
-  },
-  {
-    id: '2',
-    name: 'Sarah Johnson',
-    position: 'Vice Chairman',
-    joinedDate: '2021-06-20',
-    email: 'sarah.johnson@building.com',
-    phone: '+44 7987 654321',
-    status: 'Active'
-  },
-  {
-    id: '3',
-    name: 'Michael Brown',
-    position: 'Treasurer',
-    joinedDate: '2019-11-10',
-    email: 'michael.brown@building.com',
-    status: 'Active'
-  },
-  {
-    id: '4',
-    name: 'Emily Davis',
-    position: 'Secretary',
-    joinedDate: '2022-01-08',
-    email: 'emily.davis@building.com',
-    phone: '+44 7555 123456',
-    status: 'Active'
-  }
-];
 
 interface DirectorsSectionProps {
   emptyDataMode?: boolean;
@@ -58,7 +22,64 @@ interface DirectorsSectionProps {
 }
 
 const DirectorsSection = ({ emptyDataMode, userData }: DirectorsSectionProps) => {
-  const [directors] = useState<Director[]>(mockDirectors);
+  const { getDirectorsByBuildingId, isLoading } = useDirector();
+  const { building } = useBuilding();
+  const [directors, setDirectors] = useState<Director[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch directors when component mounts
+  useEffect(() => {
+    const loadDirectors = async () => {
+      if (!building?.buildingId) return;
+      
+      const result = await getDirectorsByBuildingId(building.buildingId);
+      if (result.success) {
+        setDirectors(result.directors || []);
+        setError(null);
+      } else {
+        setError(result.error || 'Failed to load directors');
+        toast.error('Failed to load directors');
+      }
+    };
+
+    if (!emptyDataMode) {
+      loadDirectors();
+    }
+  }, [emptyDataMode, building?.buildingId, getDirectorsByBuildingId]);
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-gray-900">Board Directors</h1>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="flex items-center space-x-2">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <span>Loading directors...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-gray-900">Board Directors</h1>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">Error loading directors: {error}</p>
+            <Button onClick={() => window.location.reload()}>Retry</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (emptyDataMode && userData) {
     // Show the registered user as the first director
@@ -137,23 +158,6 @@ const DirectorsSection = ({ emptyDataMode, userData }: DirectorsSectionProps) =>
     );
   }
 
-  const formatJoinDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    const years = Math.floor(diffDays / 365);
-    const months = Math.floor((diffDays % 365) / 30);
-    
-    if (years > 0) {
-      return `${years} year${years > 1 ? 's' : ''} ${months > 0 ? `${months} month${months > 1 ? 's' : ''}` : ''}`;
-    } else if (months > 0) {
-      return `${months} month${months > 1 ? 's' : ''}`;
-    } else {
-      return `${diffDays} day${diffDays > 1 ? 's' : ''}`;
-    }
-  };
-
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -164,49 +168,50 @@ const DirectorsSection = ({ emptyDataMode, userData }: DirectorsSectionProps) =>
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {directors.map((director) => (
-          <Card key={director.id} className="hover:shadow-md transition-shadow">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="text-lg">{director.name}</CardTitle>
-                  <p className="text-sm text-gray-600 font-medium">{director.position}</p>
+      {directors.length > 0 ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          {directors.map((director) => (
+            <Card key={director.id} className="hover:shadow-md transition-shadow">
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-lg">{director.firstName} {director.lastName}</CardTitle>
+                    <p className="text-sm text-gray-600 font-medium">{director.roleName}</p>
+                  </div>
+                  <Badge className="bg-green-100 text-green-700">
+                    Active
+                  </Badge>
                 </div>
-                <Badge 
-                  variant={director.status === 'Active' ? 'default' : 'secondary'}
-                  className={director.status === 'Active' ? 'bg-green-100 text-green-700' : ''}
-                >
-                  {director.status}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm text-gray-600">Email: {director.email}</p>
-                  {director.phone && (
-                    <p className="text-sm text-gray-600">Phone: {director.phone}</p>
-                  )}
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm text-gray-600">Email: {director.email}</p>
+                    <p className="text-sm text-gray-600">Username: {director.username}</p>
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <Button variant="outline" size="sm">Edit</Button>
+                    <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                      <UserMinus className="h-3 w-3 mr-1" />
+                      Remove
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Calendar className="h-4 w-4" />
-                  <span>Joined {new Date(director.joinedDate).toLocaleDateString('en-GB')}</span>
-                  <span className="text-gray-400">•</span>
-                  <span>Tenure: {formatJoinDate(director.joinedDate)}</span>
-                </div>
-                <div className="flex gap-2 pt-2">
-                  <Button variant="outline" size="sm">Edit</Button>
-                  <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                    <UserMinus className="h-3 w-3 mr-1" />
-                    Remove
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-12">
+          <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No Directors Found</h3>
+          <p className="text-gray-600 mb-4">No directors have been added to this building yet.</p>
+          <Button>
+            <UserPlus className="h-4 w-4 mr-2" />
+            Add First Director
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
