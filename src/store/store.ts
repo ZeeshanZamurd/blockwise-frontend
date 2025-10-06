@@ -8,6 +8,7 @@ import issuesReducer from './issuesSlice';
 import buildingReducer from './buildingSlice';
 import meetingsReducer from './meetingsSlice';
 import suppliersReducer from './suppliersSlice';
+import calendarReducer from './calendarSlice';
 
 const persistConfig = {
   key: 'root',
@@ -22,6 +23,7 @@ const rootReducer = combineReducers({
   building: buildingReducer,
   meetings: meetingsReducer,
   suppliers: suppliersReducer,
+  calendar: calendarReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

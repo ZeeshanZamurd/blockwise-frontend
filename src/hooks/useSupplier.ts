@@ -62,14 +62,20 @@ export const useSupplier = () => {
       
       console.log('Suppliers API response:', responseData);
       
-      if (responseData.success === false) {
+      // Handle direct array response (no wrapper object)
+      let suppliersData;
+      if (Array.isArray(responseData)) {
+        suppliersData = responseData;
+      } else if (responseData.success === false) {
         const errorMessage = responseData.message || 'Failed to fetch suppliers';
         dispatch(setError(errorMessage));
         return { success: false, error: errorMessage };
+      } else {
+        suppliersData = responseData.data || responseData;
       }
       
-      dispatch(setSuppliers(responseData.data));
-      return { success: true, suppliers: responseData.data };
+      dispatch(setSuppliers(suppliersData));
+      return { success: true, suppliers: suppliersData };
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(error, 'Failed to fetch suppliers');
       console.error('Error fetching suppliers:', error);
@@ -85,16 +91,26 @@ export const useSupplier = () => {
       dispatch(setLoading(true));
       dispatch(clearError());
       
-      // For now, we'll add it locally since we don't have a create API
-      const newSupplier: Supplier = {
-        id: Date.now(), // Temporary ID
-        ...supplierData
-      };
+      console.log('Creating supplier with data:', supplierData);
       
+      const response = await api.post('/api/suppliers', supplierData);
+      const responseData = response.data;
+      
+      console.log('Create supplier API response:', responseData);
+      
+      if (responseData.success === false) {
+        const errorMessage = responseData.message || 'Failed to create supplier';
+        dispatch(setError(errorMessage));
+        return { success: false, error: errorMessage };
+      }
+      
+      // Handle direct object response or wrapped response
+      const newSupplier = responseData.data || responseData;
       dispatch(addSupplier(newSupplier));
       return { success: true, supplier: newSupplier };
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(error, 'Failed to create supplier');
+      console.error('Error creating supplier:', error);
       dispatch(setError(errorMessage));
       return { success: false, error: errorMessage };
     } finally {

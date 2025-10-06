@@ -4,8 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Phone, Mail, MapPin, Star, Calendar, FileText, Plus, Grid, List, Users, Loader2 } from 'lucide-react';
 import { useSupplier, Supplier } from '@/hooks/useSupplier';
+import { useBuilding } from '@/hooks/useBuilding';
 import { toast } from 'sonner';
 
 interface SuppliersSectionProps {
@@ -13,9 +17,29 @@ interface SuppliersSectionProps {
 }
 
 const SuppliersSection = ({ emptyDataMode }: SuppliersSectionProps) => {
-  const { suppliers, isLoading, error, fetchSuppliers, forceRefresh } = useSupplier();
+  const { suppliers, isLoading, error, fetchSuppliers, forceRefresh, createSupplier } = useSupplier();
+  const { building } = useBuilding();
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [newSupplier, setNewSupplier] = useState({
+    name: '',
+    category: '',
+    contact: '',
+    phone: '',
+    email: '',
+    address: '',
+    rating: 0,
+    lastService: '',
+    nextService: '',
+    status: 'Active',
+    services: [] as string[],
+    notes: '',
+    totalJobs: 0,
+    description: '',
+    buildingId: building?.buildingId || 0
+  });
 
   // Fetch suppliers when component mounts
   useEffect(() => {
@@ -31,6 +55,58 @@ const SuppliersSection = ({ emptyDataMode }: SuppliersSectionProps) => {
       loadSuppliers();
     }
   }, [emptyDataMode, fetchSuppliers]);
+
+  // Update buildingId when building changes
+  useEffect(() => {
+    if (building?.buildingId) {
+      setNewSupplier(prev => ({ ...prev, buildingId: building.buildingId }));
+    }
+  }, [building?.buildingId]);
+
+  const handleCreateSupplier = async () => {
+    if (!newSupplier.name || !newSupplier.category || !newSupplier.contact) {
+      toast.error('Please fill in required fields (Name, Category, Contact)');
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      const result = await createSupplier(newSupplier);
+      if (result.success) {
+        toast.success('Supplier created successfully!');
+        setShowAddDialog(false);
+        setNewSupplier({
+          name: '',
+          category: '',
+          contact: '',
+          phone: '',
+          email: '',
+          address: '',
+          rating: 0,
+          lastService: '',
+          nextService: '',
+          status: 'Active',
+          services: [],
+          notes: '',
+          totalJobs: 0,
+          description: '',
+          buildingId: building?.buildingId || 0
+        });
+      } else {
+        toast.error(result.error || 'Failed to create supplier');
+      }
+    } catch (error) {
+      console.error('Error creating supplier:', error);
+      toast.error('Failed to create supplier');
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleServiceChange = (value: string) => {
+    const services = value.split(',').map(s => s.trim()).filter(s => s);
+    setNewSupplier(prev => ({ ...prev, services }));
+  };
 
   if (emptyDataMode) {
     return (
@@ -127,7 +203,7 @@ const SuppliersSection = ({ emptyDataMode }: SuppliersSectionProps) => {
           <Button variant="outline" onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}>
             {viewMode === 'grid' ? <List className="h-4 w-4" /> : <Grid className="h-4 w-4" />}
           </Button>
-          <Button className="bg-blue-600 hover:bg-blue-700">
+          <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => setShowAddDialog(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Add Supplier
           </Button>
@@ -136,7 +212,7 @@ const SuppliersSection = ({ emptyDataMode }: SuppliersSectionProps) => {
 
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {suppliers.map((supplier) => (
+          {suppliers?.map((supplier) => (
             <Card key={supplier.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedSupplier(supplier)}>
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -189,7 +265,7 @@ const SuppliersSection = ({ emptyDataMode }: SuppliersSectionProps) => {
         </div>
       ) : (
         <div className="space-y-2">
-          {suppliers.map((supplier) => (
+          {suppliers?.map((supplier) => (
             <Card key={supplier.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedSupplier(supplier)}>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -351,6 +427,183 @@ const SuppliersSection = ({ emptyDataMode }: SuppliersSectionProps) => {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Add Supplier Dialog */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add New Supplier</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">Name *</label>
+                <Input
+                  value={newSupplier.name}
+                  onChange={(e) => setNewSupplier(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Supplier name"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Category *</label>
+                <Select value={newSupplier.category} onValueChange={(value) => setNewSupplier(prev => ({ ...prev, category: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Boiler and Heat Management">Boiler and Heat Management</SelectItem>
+                    <SelectItem value="Gardeners">Gardeners</SelectItem>
+                    <SelectItem value="Cleaning Company">Cleaning Company</SelectItem>
+                    <SelectItem value="Gate Repair">Gate Repair</SelectItem>
+                    <SelectItem value="Japanese Knotweed">Japanese Knotweed</SelectItem>
+                    <SelectItem value="Bin Store Cleaning">Bin Store Cleaning</SelectItem>
+                    <SelectItem value="Window Cleaners">Window Cleaners</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Contact Person *</label>
+                <Input
+                  value={newSupplier.contact}
+                  onChange={(e) => setNewSupplier(prev => ({ ...prev, contact: e.target.value }))}
+                  placeholder="Contact person name"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Phone</label>
+                <Input
+                  value={newSupplier.phone}
+                  onChange={(e) => setNewSupplier(prev => ({ ...prev, phone: e.target.value }))}
+                  placeholder="Phone number"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Email</label>
+                <Input
+                  type="email"
+                  value={newSupplier.email}
+                  onChange={(e) => setNewSupplier(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="Email address"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Status</label>
+                <Select value={newSupplier.status} onValueChange={(value) => setNewSupplier(prev => ({ ...prev, status: value }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Inactive">Inactive</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium">Address</label>
+              <Textarea
+                value={newSupplier.address}
+                onChange={(e) => setNewSupplier(prev => ({ ...prev, address: e.target.value }))}
+                placeholder="Full address"
+                rows={2}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="text-sm font-medium">Rating</label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="5"
+                  step="0.1"
+                  value={newSupplier.rating}
+                  onChange={(e) => setNewSupplier(prev => ({ ...prev, rating: parseFloat(e.target.value) || 0 }))}
+                  placeholder="0.0"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Total Jobs</label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={newSupplier.totalJobs}
+                  onChange={(e) => setNewSupplier(prev => ({ ...prev, totalJobs: parseInt(e.target.value) || 0 }))}
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Last Service Date</label>
+                <Input
+                  type="date"
+                  value={newSupplier.lastService}
+                  onChange={(e) => setNewSupplier(prev => ({ ...prev, lastService: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Next Service Date</label>
+              <Input
+                type="date"
+                value={newSupplier.nextService}
+                onChange={(e) => setNewSupplier(prev => ({ ...prev, nextService: e.target.value }))}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Services (comma-separated)</label>
+              <Input
+                value={newSupplier.services.join(', ')}
+                onChange={(e) => handleServiceChange(e.target.value)}
+                placeholder="Service 1, Service 2, Service 3"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Description</label>
+              <Textarea
+                value={newSupplier.description}
+                onChange={(e) => setNewSupplier(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Supplier description"
+                rows={3}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Notes</label>
+              <Textarea
+                value={newSupplier.notes}
+                onChange={(e) => setNewSupplier(prev => ({ ...prev, notes: e.target.value }))}
+                placeholder="Additional notes"
+                rows={2}
+              />
+            </div>
+
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleCreateSupplier} 
+                disabled={isCreating}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {isCreating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  'Create Supplier'
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

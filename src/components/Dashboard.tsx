@@ -311,8 +311,8 @@ const Dashboard = ({ emptyDataMode = false, userData }: DashboardProps) => {
       new Date(issue.dateCreated) <= lastVisit
     );
     
-    // Limit to 3 issues on dashboard
-    return [...newSinceVisit, ...regular].slice(0, 3);
+    // Limit to 5 issues on dashboard (changed from 3 to 5)
+    return [...newSinceVisit, ...regular].slice(0, 5);
   };
 
   const getPriorityColor = (priority: string) => {

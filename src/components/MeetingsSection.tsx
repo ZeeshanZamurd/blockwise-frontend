@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, Users, FileText, Video, Archive, Loader2 } from 'lucide-react';
-import { useMeeting, Meeting } from '@/hooks/useMeeting';
+import { useMeeting, Meeting, CreateMeetingData } from '@/hooks/useMeeting';
 import { toast } from 'sonner';
 
 interface MeetingsSectionProps {
@@ -17,34 +17,46 @@ interface MeetingsSectionProps {
 }
 
 const MeetingsSection = ({ emptyDataMode }: MeetingsSectionProps) => {
-  const { meetings, isLoading, error, fetchMeetings, createMeeting } = useMeeting();
+  const { meetings, isLoading, error, fetchMeetings, fetchMeetingTypes, createMeeting } = useMeeting();
   const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
   const [clickedMeetingId, setClickedMeetingId] = useState<number | null>(null);
-  const [newMeetingData, setNewMeetingData] = useState({
+  const [meetingTypes, setMeetingTypes] = useState<string[]>([]);
+  const [newMeetingData, setNewMeetingData] = useState<CreateMeetingData>({
     title: '',
     type: '',
     date: '',
     time: '',
-    location: '',
     attendees: '',
-    notes: '',
-    addToCalendar: false
+    status: 'Scheduled',
+    transcript: '',
+    videoUrl: '',
+    notes: ''
   });
 
-  // Fetch meetings when component mounts
+  // Fetch meetings and meeting types when component mounts
   useEffect(() => {
-    const loadMeetings = async () => {
-      const result = await fetchMeetings();
-      if (!result.success) {
-        console.error('Failed to fetch meetings:', result.error);
+    const loadData = async () => {
+      // Fetch meetings
+      const meetingsResult = await fetchMeetings();
+      if (!meetingsResult.success) {
+        console.error('Failed to fetch meetings:', meetingsResult.error);
         toast.error('Failed to load meetings');
+      }
+
+      // Fetch meeting types
+      const typesResult = await fetchMeetingTypes();
+      if (typesResult.success) {
+        setMeetingTypes(typesResult.meetingTypes);
+      } else {
+        console.error('Failed to fetch meeting types:', typesResult.error);
+        toast.error('Failed to load meeting types');
       }
     };
 
     if (!emptyDataMode) {
-      loadMeetings();
+      loadData();
     }
-  }, [emptyDataMode, fetchMeetings]);
+  }, [emptyDataMode, fetchMeetings, fetchMeetingTypes]);
 
   if (emptyDataMode) {
     return (
@@ -71,60 +83,58 @@ const MeetingsSection = ({ emptyDataMode }: MeetingsSectionProps) => {
   }
 
   const handleScheduleMeeting = async () => {
-    if (newMeetingData.title && newMeetingData.type && newMeetingData.date && newMeetingData.time) {
-      const meetingData = {
-        title: newMeetingData.title,
-        type: newMeetingData.type,
-        date: newMeetingData.date,
-        time: newMeetingData.time,
-        attendees: newMeetingData.attendees.split('\n').filter(name => name.trim()),
-        status: 'Scheduled',
-        notes: newMeetingData.notes,
-        transcript: null,
-        videoUrl: null
-      };
+    console.log('Form data before validation:', newMeetingData);
+    
+    if (!newMeetingData.title) {
+      toast.error('Please enter a meeting title');
+      return;
+    }
+    if (!newMeetingData.type) {
+      toast.error('Please select a meeting type');
+      return;
+    }
+    if (!newMeetingData.date) {
+      toast.error('Please select a meeting date');
+      return;
+    }
+    if (!newMeetingData.time) {
+      toast.error('Please select a meeting time');
+      return;
+    }
 
-      const result = await createMeeting(meetingData);
+    const meetingData: CreateMeetingData = {
+      title: newMeetingData.title,
+      type: newMeetingData.type,
+      date: newMeetingData.date,
+      time: newMeetingData.time,
+      attendees: newMeetingData.attendees,
+      status: newMeetingData.status,
+      transcript: newMeetingData.transcript || null,
+      videoUrl: newMeetingData.videoUrl || null,
+      notes: newMeetingData.notes || null
+    };
+
+    console.log('Meeting data being sent:', meetingData);
+
+    const result = await createMeeting(meetingData);
+    
+    if (result.success) {
+      toast.success('Meeting scheduled successfully!');
       
-      if (result.success) {
-        toast.success('Meeting scheduled successfully!');
-        
-        // Add to calendar if checkbox is checked
-        if (newMeetingData.addToCalendar) {
-          const calendarEvent = {
-            id: Date.now(),
-            title: newMeetingData.title,
-            date: newMeetingData.date,
-            time: newMeetingData.time,
-            type: 'meeting',
-            location: newMeetingData.location,
-            description: newMeetingData.notes,
-            contact: 'Meeting Organizer'
-          };
-
-          // Store in localStorage for calendar component
-          const existingEvents = JSON.parse(localStorage.getItem('calendarEvents') || '[]');
-          existingEvents.push(calendarEvent);
-          localStorage.setItem('calendarEvents', JSON.stringify(existingEvents));
-
-          // Dispatch custom event to notify calendar component
-          window.dispatchEvent(new CustomEvent('calendarEventAdded', { detail: calendarEvent }));
-        }
-
-        // Reset form
-        setNewMeetingData({
-          title: '',
-          type: '',
-          date: '',
-          time: '',
-          location: '',
-          attendees: '',
-          notes: '',
-          addToCalendar: false
-        });
-      } else {
-        toast.error('Failed to schedule meeting');
-      }
+      // Reset form
+      setNewMeetingData({
+        title: '',
+        type: '',
+        date: '',
+        time: '',
+        attendees: '',
+        status: 'Scheduled',
+        transcript: '',
+        videoUrl: '',
+        notes: ''
+      });
+    } else {
+      toast.error('Failed to schedule meeting');
     }
   };
 
@@ -218,10 +228,11 @@ const MeetingsSection = ({ emptyDataMode }: MeetingsSectionProps) => {
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="AGM">AGM</SelectItem>
-                      <SelectItem value="Board Meeting">Board Meeting</SelectItem>
-                      <SelectItem value="Committee Meeting">Committee Meeting</SelectItem>
-                      <SelectItem value="General Meeting">General Meeting</SelectItem>
+                      {meetingTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -249,20 +260,10 @@ const MeetingsSection = ({ emptyDataMode }: MeetingsSectionProps) => {
               </div>
 
               <div>
-                <Label htmlFor="meeting-location">Location</Label>
-                <Input 
-                  id="meeting-location" 
-                  placeholder="Meeting location"
-                  value={newMeetingData.location}
-                  onChange={(e) => setNewMeetingData(prev => ({ ...prev, location: e.target.value }))}
-                />
-              </div>
-
-              <div>
                 <Label htmlFor="meeting-attendees">Attendees</Label>
                 <Textarea 
                   id="meeting-attendees" 
-                  placeholder="Enter attendee names, one per line"
+                  placeholder="Enter attendee emails, separated by commas"
                   value={newMeetingData.attendees}
                   onChange={(e) => setNewMeetingData(prev => ({ ...prev, attendees: e.target.value }))}
                 />
@@ -282,17 +283,6 @@ const MeetingsSection = ({ emptyDataMode }: MeetingsSectionProps) => {
                 <Label htmlFor="meeting-documents">Upload Documents</Label>
                 <Input id="meeting-documents" type="file" multiple accept=".pdf,.doc,.docx" />
                 <p className="text-sm text-muted-foreground mt-1">Upload agenda, supporting documents, etc.</p>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <input 
-                  type="checkbox" 
-                  id="add-to-calendar" 
-                  className="rounded"
-                  checked={newMeetingData.addToCalendar}
-                  onChange={(e) => setNewMeetingData(prev => ({ ...prev, addToCalendar: e.target.checked }))}
-                />
-                <Label htmlFor="add-to-calendar">Add to building calendar</Label>
               </div>
 
               <div className="flex space-x-2">

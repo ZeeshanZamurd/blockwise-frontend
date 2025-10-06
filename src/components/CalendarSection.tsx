@@ -10,12 +10,32 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Calendar as CalendarIcon, Clock, MapPin, User, Mail, AlertTriangle, Phone, Repeat, CheckCircle } from 'lucide-react';
+import { useCalendar } from '@/hooks/useCalendar';
 
 interface CalendarSectionProps {
   emptyDataMode?: boolean;
 }
 
 const CalendarSection = ({ emptyDataMode }: CalendarSectionProps) => {
+  const { events, isLoading, error, fetchEvents, createEvent, forceRefresh } = useCalendar();
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [isAddEventOpen, setIsAddEventOpen] = useState(false);
+  
+  // Fetch calendar events when component mounts
+  useEffect(() => {
+    const loadEvents = async () => {
+      const result = await fetchEvents();
+      if (!result.success) {
+        console.error('Failed to fetch calendar events:', result.error);
+      }
+    };
+
+    if (!emptyDataMode) {
+      loadEvents();
+    }
+  }, [emptyDataMode, fetchEvents]);
+  
   if (emptyDataMode) {
     return (
       <div className="p-6 space-y-6">
@@ -39,160 +59,53 @@ const CalendarSection = ({ emptyDataMode }: CalendarSectionProps) => {
       </div>
     );
   }
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
-  const [isAddEventOpen, setIsAddEventOpen] = useState(false);
-  const [pendingEvents, setPendingEvents] = useState([
-    {
-      id: 1,
-      title: 'Boiler Maintenance Appointment',
-      date: '2024-07-05',
-      time: '10:00',
-      source: 'Email from BuildTech Contractors',
-      description: 'Annual boiler service and safety check'
-    },
-    {
-      id: 2,
-      title: 'AGM Meeting',
-      date: '2024-07-10',
-      time: '19:00',
-      source: 'Email from Managing Agent',
-      description: 'Annual General Meeting for all residents'
-    }
-  ]);
 
-  // Enhanced events with detailed information
-  const events = [
-    {
-      id: 1,
-      title: 'Cleaner - Common Areas',
-      date: '2024-07-01',
-      time: '09:00',
-      duration: '2 hours',
-      type: 'Cleaning',
-      location: 'Common areas, lobby, stairwells',
-      contact: 'Jo Cleaners',
-      contactPhone: '020 7123 4567',
-      contactEmail: 'jo@jocleaners.co.uk',
-      description: 'Weekly cleaning of communal spaces including mopping floors, dusting surfaces, and emptying bins',
-      schedule: 'Every Monday',
-      scheduleDetails: 'Weekly recurring appointment',
-      contractor: 'Jo Cleaners Ltd',
-      cost: '£120 per visit',
-      notes: 'Key holder access required. Please ensure lobby is clear of packages.'
-    },
-    {
-      id: 2,
-      title: 'Elevator Maintenance',
-      date: '2024-07-02',
-      time: '14:00',
-      duration: '4 hours',
-      type: 'Maintenance',
-      location: 'Elevator shaft, machine room',
-      contact: 'Thames Valley Lifts',
-      contactPhone: '01865 987 654',
-      contactEmail: 'service@thamesvalleylifts.com',
-      description: 'Quarterly elevator inspection and maintenance including safety systems check',
-      schedule: 'Every 3 months',
-      scheduleDetails: 'Quarterly maintenance - next due October 2024',
-      contractor: 'Thames Valley Lifts Ltd',
-      cost: '£450 per service',
-      notes: 'Elevator will be out of service during maintenance. Residents notified via email.'
-    },
-    {
-      id: 3,
-      title: 'Garden Maintenance',
-      date: '2024-07-05',
-      time: '08:30',
-      duration: '3 hours',
-      type: 'Gardening',
-      location: 'Communal gardens, front entrance',
-      contact: 'Cier Gardening',
-      contactPhone: '07812 345 678',
-      contactEmail: 'info@ciergardening.com',
-      description: 'Fortnightly garden maintenance including hedge trimming, weeding, and lawn care',
-      schedule: 'Every 2 weeks',
-      scheduleDetails: 'Bi-weekly on Fridays - weather permitting',
-      contractor: 'Cier Gardening Services',
-      cost: '£180 per visit',
-      notes: 'Weather dependent. Will reschedule if heavy rain forecast.'
-    },
-    {
-      id: 4,
-      title: 'Fire Safety Inspection',
-      date: '2024-07-08',
-      time: '11:00',
-      duration: '2 hours',
-      type: 'Safety',
-      location: 'Entire building - all floors',
-      contact: 'Fire Safety Compliance Ltd',
-      contactPhone: '020 8765 4321',
-      contactEmail: 'inspections@firesafety.co.uk',
-      description: 'Annual fire safety certificate inspection covering alarms, exits, and equipment',
-      schedule: 'Annually',
-      scheduleDetails: 'Annual inspection - certificate expires July 2025',
-      contractor: 'Fire Safety Compliance Ltd',
-      cost: '£350 annual inspection',
-      notes: 'Inspector will need access to all areas. Please inform residents.'
-    },
-    {
-      id: 5,
-      title: 'Window Cleaning',
-      date: '2024-07-12',
-      time: '09:00',
-      duration: '4 hours',
-      type: 'Cleaning',
-      location: 'All external windows',
-      contact: 'Crystal Clear Windows',
-      contactPhone: '07901 234 567',
-      contactEmail: 'bookings@crystalclear.co.uk',
-      description: 'Bi-monthly professional window cleaning service for all external windows',
-      schedule: 'Every 2 months',
-      scheduleDetails: 'Bi-monthly service - next due September 2024',
-      contractor: 'Crystal Clear Window Services',
-      cost: '£280 per visit',
-      notes: 'Weather dependent. Internal windows cleaned annually on request.'
-    },
-    {
-      id: 6,
-      title: 'Boiler Service',
-      date: '2024-07-15',
-      time: '10:00',
-      duration: '3 hours',
-      type: 'Maintenance',
-      location: 'Boiler room, basement',
-      contact: 'BuildTech Contractors',
-      contactPhone: '020 7456 7890',
-      contactEmail: 'service@buildtech.co.uk',
-      description: 'Annual boiler service and gas safety check for communal heating system',
-      schedule: 'Annually',
-      scheduleDetails: 'Annual service - gas safety certificate due',
-      contractor: 'BuildTech Contractors Ltd',
-      cost: '£520 annual service',
-      notes: 'Hot water may be disrupted during service. 24hr notice given to residents.'
-    },
-    {
-      id: 7,
-      title: 'CCTV System Check',
-      date: '2024-07-18',
-      time: '14:30',
-      duration: '1.5 hours',
-      type: 'Security',
-      location: 'All camera locations, control room',
-      contact: 'Secure Vision Systems',
-      contactPhone: '020 8123 9876',
-      contactEmail: 'maintenance@securevision.co.uk',
-      description: 'Quarterly CCTV system maintenance and recording equipment check',
-      schedule: 'Every 3 months',
-      scheduleDetails: 'Quarterly maintenance - system upgrade due 2025',
-      contractor: 'Secure Vision Systems Ltd',
-      cost: '£180 per service',
-      notes: 'Brief system downtime possible during testing.'
-    }
-  ];
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Calendar</h2>
+            <p className="text-gray-600">Building appointments and scheduled maintenance</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="flex items-center space-x-2">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span>Loading calendar events...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Calendar</h2>
+            <p className="text-gray-600">Building appointments and scheduled maintenance</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">Error loading calendar: {error}</p>
+            <Button onClick={() => forceRefresh()}>Retry</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const getEventTypeColor = (type: string) => {
     switch (type.toLowerCase()) {
+      case 'agm': return 'bg-purple-100 text-purple-800';
+      case 'general_meeting': return 'bg-blue-100 text-blue-800';
+      case 'board_meeting': return 'bg-green-100 text-green-800';
+      case 'committee_meeting': return 'bg-orange-100 text-orange-800';
       case 'cleaning': return 'bg-blue-100 text-blue-800';
       case 'maintenance': return 'bg-orange-100 text-orange-800';
       case 'safety': return 'bg-red-100 text-red-800';
@@ -205,14 +118,22 @@ const CalendarSection = ({ emptyDataMode }: CalendarSectionProps) => {
 
   const getEventsForDate = (date: Date) => {
     const dateStr = date.toISOString().split('T')[0];
-    return events.filter(event => event.date === dateStr);
+    return events?.filter(event => event.date === dateStr) || [];
   };
 
-  const confirmPendingEvent = (eventId: number) => {
-    const pendingEvent = pendingEvents.find(e => e.id === eventId);
-    if (pendingEvent) {
-      setPendingEvents(prev => prev.filter(e => e.id !== eventId));
-    }
+  const getTodayEvents = () => {
+    const today = new Date().toISOString().split('T')[0];
+    return events?.filter(event => event.date === today) || [];
+  };
+
+  const getUpcomingEvents = () => {
+    const today = new Date();
+    const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+    
+    return events?.filter(event => {
+      const eventDate = new Date(event.date);
+      return eventDate >= today && eventDate <= nextWeek;
+    }).slice(0, 4) || [];
   };
 
   const handleEventClick = (event: any) => {
@@ -286,65 +207,34 @@ const CalendarSection = ({ emptyDataMode }: CalendarSectionProps) => {
             <CalendarIcon className="h-5 w-5 text-primary" />
             <span>Notable Events This Month</span>
           </CardTitle>
-          <p className="text-sm text-gray-600">Important upcoming events and deadlines</p>
+          <p className="text-sm text-gray-600">Important upcoming meetings and events</p>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card 
-              className="p-4 hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-red-500"
-              onClick={() => handleEventClick(events.find(e => e.type === 'Safety'))}
-            >
-              <div className="flex items-center space-x-3">
-                <AlertTriangle className="h-5 w-5 text-red-500" />
-                <div>
-                  <h4 className="font-medium text-gray-900">Fire Safety Inspection</h4>
-                  <p className="text-sm text-gray-600">July 8th</p>
-                  <Badge className="bg-red-100 text-red-800 text-xs">Critical</Badge>
+            {events?.slice(0, 4).map((event, index) => (
+              <Card 
+                key={event.id}
+                className="p-4 hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-blue-500"
+                onClick={() => handleEventClick(event)}
+              >
+                <div className="flex items-center space-x-3">
+                  <CalendarIcon className="h-5 w-5 text-blue-500" />
+                  <div>
+                    <h4 className="font-medium text-gray-900">{event.title}</h4>
+                    <p className="text-sm text-gray-600">{new Date(event.date).toLocaleDateString()}</p>
+                    <Badge className={`text-xs ${getEventTypeColor(event.type)}`}>
+                      {event.type.replace('_', ' ')}
+                    </Badge>
+                  </div>
                 </div>
+              </Card>
+            ))}
+            {(!events || events.length === 0) && (
+              <div className="col-span-full text-center py-8 text-gray-500">
+                <CalendarIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No events scheduled this month</p>
               </div>
-            </Card>
-            
-            <Card 
-              className="p-4 hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-blue-500"
-              onClick={() => handleEventClick(events.find(e => e.title.includes('Boiler')))}
-            >
-              <div className="flex items-center space-x-3">
-                <CalendarIcon className="h-5 w-5 text-blue-500" />
-                <div>
-                  <h4 className="font-medium text-gray-900">Boiler Service</h4>
-                  <p className="text-sm text-gray-600">July 15th</p>
-                  <Badge className="bg-blue-100 text-blue-800 text-xs">Maintenance</Badge>
-                </div>
-              </div>
-            </Card>
-
-            <Card 
-              className="p-4 hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-green-500"
-              onClick={() => handleEventClick(events.find(e => e.title.includes('Window')))}
-            >
-              <div className="flex items-center space-x-3">
-                <CheckCircle className="h-5 w-5 text-green-500" />
-                <div>
-                  <h4 className="font-medium text-gray-900">Window Cleaning</h4>
-                  <p className="text-sm text-gray-600">July 12th</p>
-                  <Badge className="bg-green-100 text-green-800 text-xs">Scheduled</Badge>
-                </div>
-              </div>
-            </Card>
-
-            <Card 
-              className="p-4 hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-orange-500"
-              onClick={() => handleEventClick(events.find(e => e.title.includes('Elevator')))}
-            >
-              <div className="flex items-center space-x-3">
-                <Clock className="h-5 w-5 text-orange-500" />
-                <div>
-                  <h4 className="font-medium text-gray-900">Elevator Maintenance</h4>
-                  <p className="text-sm text-gray-600">July 2nd</p>
-                  <Badge className="bg-orange-100 text-orange-800 text-xs">Upcoming</Badge>
-                </div>
-              </div>
-            </Card>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -425,16 +315,24 @@ const CalendarSection = ({ emptyDataMode }: CalendarSectionProps) => {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {events.slice(0, 4).map((event) => (
+              {getUpcomingEvents().map((event) => (
                 <div 
                   key={event.id} 
                   className="p-2 bg-gray-50 rounded cursor-pointer hover:bg-gray-100 transition-colors"
                   onClick={() => handleEventClick(event)}
                 >
                   <p className="text-xs font-medium">{event.title}</p>
-                  <p className="text-xs text-gray-600">{event.date}</p>
+                  <p className="text-xs text-gray-600">{new Date(event.date).toLocaleDateString()}</p>
+                  <Badge className={`text-[10px] ${getEventTypeColor(event.type)}`}>
+                    {event.type.replace('_', ' ')}
+                  </Badge>
                 </div>
               ))}
+              {getUpcomingEvents().length === 0 && (
+                <div className="text-center py-4 text-gray-500">
+                  <p className="text-sm">No upcoming events</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -443,30 +341,30 @@ const CalendarSection = ({ emptyDataMode }: CalendarSectionProps) => {
         <Card className="xl:col-span-1">
           <CardHeader>
             <CardTitle>This Month Summary</CardTitle>
-            <p className="text-sm text-gray-600">July overview</p>
+            <p className="text-sm text-gray-600">Meeting overview</p>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Total Events</span>
-                <Badge className="bg-blue-100 text-blue-800">{events.length}</Badge>
+                <Badge className="bg-blue-100 text-blue-800">{events?.length || 0}</Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Maintenance</span>
-                <Badge className="bg-orange-100 text-orange-800">
-                  {events.filter(e => e.type === 'Maintenance').length}
+                <span className="text-sm text-gray-600">AGM Meetings</span>
+                <Badge className="bg-purple-100 text-purple-800">
+                  {events?.filter(e => e.type === 'AGM').length || 0}
                 </Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Cleaning</span>
+                <span className="text-sm text-gray-600">General Meetings</span>
                 <Badge className="bg-blue-100 text-blue-800">
-                  {events.filter(e => e.type === 'Cleaning').length}
+                  {events?.filter(e => e.type === 'GENERAL_MEETING').length || 0}
                 </Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Safety Checks</span>
-                <Badge className="bg-red-100 text-red-800">
-                  {events.filter(e => e.type === 'Safety').length}
+                <span className="text-sm text-gray-600">Board Meetings</span>
+                <Badge className="bg-green-100 text-green-800">
+                  {events?.filter(e => e.type === 'BOARD_MEETING').length || 0}
                 </Badge>
               </div>
             </div>
@@ -494,13 +392,14 @@ const CalendarSection = ({ emptyDataMode }: CalendarSectionProps) => {
             
             {/* Calendar grid */}
             {Array.from({ length: 35 }, (_, index) => {
-              // Generate a month view starting from July 1, 2024
-              const startDate = new Date(2024, 6, 1); // July 1, 2024
+              // Generate a month view starting from current month
+              const today = new Date();
+              const startDate = new Date(today.getFullYear(), today.getMonth(), 1);
               const startDay = startDate.getDay() === 0 ? 6 : startDate.getDay() - 1; // Convert Sunday=0 to Monday=0
-              const currentDate = new Date(2024, 6, 1 - startDay + index);
-              const isCurrentMonth = currentDate.getMonth() === 6; // July = 6
+              const currentDate = new Date(today.getFullYear(), today.getMonth(), 1 - startDay + index);
+              const isCurrentMonth = currentDate.getMonth() === today.getMonth();
               const dateStr = currentDate.toISOString().split('T')[0];
-              const dayEvents = events.filter(event => event.date === dateStr);
+              const dayEvents = events?.filter(event => event.date === dateStr) || [];
               
               return (
                 <div 
@@ -528,13 +427,13 @@ const CalendarSection = ({ emptyDataMode }: CalendarSectionProps) => {
                         onClick={() => handleEventClick(event)}
                       >
                         <div className="font-medium text-blue-900 leading-tight truncate">
-                          {event.time}
+                          {event.time || 'All Day'}
                         </div>
                         <div className="text-blue-700 leading-tight truncate">
                           {event.title}
                         </div>
                         <Badge className={`${getEventTypeColor(event.type)} text-[10px] px-1 py-0`}>
-                          {event.type}
+                          {event.type.replace('_', ' ')}
                         </Badge>
                       </div>
                     ))}
@@ -567,75 +466,63 @@ const CalendarSection = ({ emptyDataMode }: CalendarSectionProps) => {
                 <div>
                   <Label>Date & Time</Label>
                   <div className="text-sm text-gray-700 mt-1">
-                    {selectedEvent.date} at {selectedEvent.time}
+                    {new Date(selectedEvent.date).toLocaleDateString()} 
+                    {selectedEvent.time && ` at ${selectedEvent.time}`}
                   </div>
-                  <div className="text-xs text-gray-500">Duration: {selectedEvent.duration}</div>
+                  <div className="text-xs text-gray-500">
+                    Status: {selectedEvent.status}
+                  </div>
                 </div>
                 <div>
-                  <Label>Schedule</Label>
+                  <Label>Meeting Type</Label>
                   <div className="text-sm text-gray-700 mt-1 flex items-center space-x-1">
-                    <Repeat className="h-3 w-3" />
-                    <span>{selectedEvent.schedule}</span>
-                  </div>
-                  <div className="text-xs text-gray-500">{selectedEvent.scheduleDetails}</div>
-                </div>
-              </div>
-
-              {/* Location & Contact */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Location</Label>
-                  <div className="text-sm text-gray-700 mt-1 flex items-start space-x-1">
-                    <MapPin className="h-3 w-3 mt-0.5" />
-                    <span>{selectedEvent.location}</span>
-                  </div>
-                </div>
-                <div>
-                  <Label>Contact</Label>
-                  <div className="text-sm text-gray-700 mt-1 space-y-1">
-                    <div className="flex items-center space-x-1">
-                      <User className="h-3 w-3" />
-                      <span>{selectedEvent.contact}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Phone className="h-3 w-3" />
-                      <span>{selectedEvent.contactPhone}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Mail className="h-3 w-3" />
-                      <span>{selectedEvent.contactEmail}</span>
-                    </div>
+                    <CalendarIcon className="h-3 w-3" />
+                    <span>{selectedEvent.type.replace('_', ' ')}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Description */}
+              {/* Attendees */}
+              {selectedEvent.attendees && (
+                <div>
+                  <Label>Attendees</Label>
+                  <div className="text-sm text-gray-700 mt-1">
+                    {selectedEvent.attendees}
+                  </div>
+                </div>
+              )}
+
+              {/* Description/Notes */}
               <div>
-                <Label>Description</Label>
-                <p className="text-sm text-gray-700 mt-1">{selectedEvent.description}</p>
+                <Label>Notes</Label>
+                <p className="text-sm text-gray-700 mt-1 bg-yellow-50 p-2 rounded border border-yellow-200">
+                  {selectedEvent.notes || 'No notes available'}
+                </p>
               </div>
 
               {/* Additional Details */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Contractor</Label>
-                  <div className="text-sm text-gray-700 mt-1">{selectedEvent.contractor}</div>
-                </div>
-                <div>
-                  <Label>Cost</Label>
-                  <div className="text-sm text-gray-700 mt-1">{selectedEvent.cost}</div>
-                </div>
+                {selectedEvent.transcript && (
+                  <div>
+                    <Label>Transcript</Label>
+                    <div className="text-sm text-gray-700 mt-1">
+                      <a href={selectedEvent.transcript} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                        View Transcript
+                      </a>
+                    </div>
+                  </div>
+                )}
+                {selectedEvent.videoUrl && (
+                  <div>
+                    <Label>Video Recording</Label>
+                    <div className="text-sm text-gray-700 mt-1">
+                      <a href={selectedEvent.videoUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                        Watch Video
+                      </a>
+                    </div>
+                  </div>
+                )}
               </div>
-
-              {/* Notes */}
-              {selectedEvent.notes && (
-                <div>
-                  <Label>Notes</Label>
-                  <p className="text-sm text-gray-700 mt-1 bg-yellow-50 p-2 rounded border border-yellow-200">
-                    {selectedEvent.notes}
-                  </p>
-                </div>
-              )}
 
               <div className="flex space-x-2 pt-4">
                 <Button className="flex-1">Edit Appointment</Button>
