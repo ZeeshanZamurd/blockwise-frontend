@@ -424,10 +424,10 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
 
         {/* Middle Panel - Email Body */}
         <div className="w-1/3">
-          <Card className="h-full">
+          <Card className="h-full flex flex-col">
             {selectedEmail ? (
               <>
-                <CardHeader className="pb-3">
+                <CardHeader className="pb-3 flex-shrink-0">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold">{selectedEmail.subject}</h3>
                     <Badge className={getPriorityColor(selectedEmail.associatedIssues.length > 0 ? selectedEmail.associatedIssues[0].issuePriority : 'Medium')}>
@@ -440,14 +440,16 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
                     <p>To: {selectedEmail.toEmail}</p>
                   </div>
                 </CardHeader>
-                <Separator />
-                <CardContent className="pt-4">
-                  <div className="prose prose-sm max-w-none">
-                    {selectedEmail.bodyText.split('\n').map((paragraph, index) => (
-                      <p key={index} className="mb-3 text-foreground leading-relaxed">
-                        {paragraph}
-                      </p>
-                    ))}
+                <Separator className="flex-shrink-0" />
+                <CardContent className="pt-4 flex-1 overflow-hidden">
+                  <div className="h-full overflow-y-auto">
+                    <div className="prose prose-sm max-w-none">
+                      {selectedEmail.bodyText.split('\n').map((paragraph, index) => (
+                        <p key={index} className="mb-3 text-foreground leading-relaxed">
+                          {paragraph}
+                        </p>
+                      ))}
+                    </div>
                   </div>
                 </CardContent>
               </>
@@ -465,13 +467,13 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
 
         {/* Right Panel - AI Summary & Actions */}
         <div className="w-1/3">
-          <Card className="h-full">
+          <Card className="h-full flex flex-col">
             {selectedEmail ? (
               <>
-                <CardHeader>
+                <CardHeader className="flex-shrink-0">
                   <CardTitle className="text-lg">AI Summary & Issues Logged</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="flex-1 overflow-y-auto space-y-6">
                    {/* Status & Priority */}
                    <div>
                      <div className="flex items-center justify-between mb-2">

@@ -270,7 +270,7 @@ const EnhancedIssueLog = ({ emptyDataMode = false }: EnhancedIssueLogProps) => {
           )}
         </div>
         <div className="flex gap-2">
-          <Button 
+          {/* <Button 
             variant="outline" 
             onClick={() => {
               if (building?.buildingId) {
@@ -290,11 +290,11 @@ const EnhancedIssueLog = ({ emptyDataMode = false }: EnhancedIssueLogProps) => {
             ) : (
               <>
                 <Search className="h-4 w-4 mr-2" />
-                Refresh Issues
+                Refresh Issues22
               </>
             )}
-          </Button>
-          <Button 
+          </Button> */}
+          {/* <Button 
             variant="outline" 
             onClick={() => {
               console.log('Manual building fetch triggered');
@@ -304,7 +304,7 @@ const EnhancedIssueLog = ({ emptyDataMode = false }: EnhancedIssueLogProps) => {
           >
             <Search className="h-4 w-4 mr-2" />
             Fetch Building
-          </Button>
+          </Button> */}
           <Button className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto" onClick={() => setShowCreateForm(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Create Issue

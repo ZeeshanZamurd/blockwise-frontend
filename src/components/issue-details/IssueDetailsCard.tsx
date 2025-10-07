@@ -16,6 +16,29 @@ interface IssueDetailsCardProps {
 const IssueDetailsCard: React.FC<IssueDetailsCardProps> = ({ issue, onIssueUpdate }) => {
   console.log('Issue Details Card', issue);
   const { updateIssueDetails, getIssueById } = useIssue();
+
+  // Function to format date from ISO format to "M/D/YYYY, H:MM:SS AM/PM"
+  const formatDate = (dateString: string | undefined | null): string => {
+    if (!dateString) return '';
+    
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return dateString; // Return original if invalid
+      
+      return date.toLocaleString('en-US', {
+        month: 'numeric',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return dateString; // Return original if error
+    }
+  };
   const [isEditingUpdate, setIsEditingUpdate] = useState(false);
   const [editedUpdate, setEditedUpdate] = useState(issue.latestUpdate ?? issue.lastUpdate ?? '');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -180,8 +203,8 @@ const IssueDetailsCard: React.FC<IssueDetailsCardProps> = ({ issue, onIssueUpdat
           <div className="flex items-center space-x-4 text-sm text-gray-600">
             <span>Issue ID: {issue.id}</span>
             <span>Category: {issue.issueCategory || issue.category}</span>
-            <span>Created: {issue.createdDate || issue.dateCreated || issue.date}</span>
-            {issue.dueDate && <span>Due: {issue.dueDate}</span>}
+            <span>Created: {formatDate(issue.createdDate || issue.dateCreated || issue.date)}</span>
+            {issue.dueDate && <span>Due: {formatDate(issue.dueDate)}</span>}
           </div>
         </div>
       </CardHeader>
@@ -323,7 +346,7 @@ const IssueDetailsCard: React.FC<IssueDetailsCardProps> = ({ issue, onIssueUpdat
                   <span>by {issue.lastUpdateBy || 'User'}</span>
                 </div>
                 <span>
-                  {issue.lastUpdateDate ? new Date(issue.lastUpdateDate).toLocaleDateString() : 
+                  {issue.lastUpdateDate ? formatDate(issue.lastUpdateDate) : 
                    issue.daysAgo === 0 ? 'today' : `${issue.daysAgo || 0} day${(issue.daysAgo || 0) > 1 ? 's' : ''} ago`}
                 </span>
               </div>

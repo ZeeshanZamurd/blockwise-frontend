@@ -35,6 +35,7 @@ const SuppliersSection = ({ emptyDataMode }: SuppliersSectionProps) => {
     nextService: '',
     status: 'Active',
     services: [] as string[],
+    servicesInput: '',
     notes: '',
     totalJobs: 0,
     description: '',
@@ -87,6 +88,7 @@ const SuppliersSection = ({ emptyDataMode }: SuppliersSectionProps) => {
           nextService: '',
           status: 'Active',
           services: [],
+          servicesInput: '',
           notes: '',
           totalJobs: 0,
           description: '',
@@ -106,6 +108,16 @@ const SuppliersSection = ({ emptyDataMode }: SuppliersSectionProps) => {
   const handleServiceChange = (value: string) => {
     const services = value.split(',').map(s => s.trim()).filter(s => s);
     setNewSupplier(prev => ({ ...prev, services }));
+  };
+
+  const handleServiceInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setNewSupplier(prev => ({ ...prev, servicesInput: value }));
+  };
+
+  const handleServiceInputBlur = () => {
+    const services = newSupplier.servicesInput.split(',').map(s => s.trim()).filter(s => s);
+    setNewSupplier(prev => ({ ...prev, services, servicesInput: '' }));
   };
 
   if (emptyDataMode) {
@@ -556,10 +568,20 @@ const SuppliersSection = ({ emptyDataMode }: SuppliersSectionProps) => {
             <div>
               <label className="text-sm font-medium">Services (comma-separated)</label>
               <Input
-                value={newSupplier.services.join(', ')}
-                onChange={(e) => handleServiceChange(e.target.value)}
+                value={newSupplier.servicesInput}
+                onChange={handleServiceInputChange}
+                onBlur={handleServiceInputBlur}
                 placeholder="Service 1, Service 2, Service 3"
               />
+              {newSupplier.services.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {newSupplier.services.map((service, index) => (
+                    <Badge key={index} variant="outline" className="text-xs">
+                      {service}
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div>
