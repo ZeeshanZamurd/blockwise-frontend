@@ -98,17 +98,23 @@ export const useIssue = () => {
     issueDesc: string;
     issueCategory: string;
     issuePriority: string;
+    emailId?: number;
   }) => {
+    console.log('createIssue called with data:', issueData);
     try {
       dispatch(setLoading(true));
       dispatch(clearError());
       
+      console.log('Making API call to /issues with data:', issueData);
       const response = await api.post('/issues', issueData);
       const responseData = response.data;
+      
+      console.log('API response received:', responseData);
       
       // Check if the API response indicates success
       if (responseData.success === false) {
         const errorMessage = responseData.message || 'Failed to create issue';
+        console.log('API returned error:', errorMessage);
         dispatch(setError(errorMessage));
         return { success: false, error: errorMessage };
       }
@@ -127,9 +133,12 @@ export const useIssue = () => {
       };
       
       dispatch(addIssue(newIssue));
+      console.log('Issue created successfully, returning:', { success: true, issue: responseData.data });
       return { success: true, issue: responseData.data };
     } catch (error: unknown) {
+      console.error('Error in createIssue:', error);
       const errorMessage = getErrorMessage(error, 'Failed to create issue');
+      console.log('Error message:', errorMessage);
       dispatch(setError(errorMessage));
       return { success: false, error: errorMessage };
     } finally {

@@ -13,6 +13,8 @@ import { Search, Mail, MailOpen, Paperclip, Calendar, AlertTriangle, CheckCircle
 import { useIssues } from '@/contexts/IssuesContext';
 import { useEmails } from '@/contexts/EmailsContext';
 import { useEmail, Email } from '@/hooks/useEmail';
+import { useIssue } from '@/hooks/useIssue';
+import { useBuilding } from '@/hooks/useBuilding';
 import { toast } from 'sonner';
 
 interface EnhancedCommunicationsPanelProps {
@@ -24,6 +26,8 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
   const { addIssue, updateIssue, issues } = useIssues();
   const { emails, updateEmail, linkEmailToIssue } = useEmails();
   const { fetchEmails } = useEmail();
+  const { createIssue } = useIssue();
+  const { building } = useBuilding();
   const [apiEmails, setApiEmails] = useState<Email[]>([]);
   const [isLoadingEmails, setIsLoadingEmails] = useState(false);
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
@@ -171,77 +175,175 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
 
   const filteredEmails = getFilteredEmails();
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
+    console.log('handleSaveEdit called');
+    console.log('selectedEmail:', selectedEmail);
+    console.log('editableIssue:', editableIssue);
+    console.log('editableSummary:', editableSummary);
+    console.log('building:', building);
+    
     if (editableIssue.trim() && editableSummary.trim()) {
-      if (selectedEmail.status === 'Needs Review') {
-        // For review emails, create a new issue
-        addIssue({
-          title: editableIssue,
-          summary: editableSummary,
-          status: 'Not started',
-          priority: selectedEmail?.priority === 'High' ? 'High' : 'Medium',
-          emailId: selectedEmail?.id,
-          dateCreated: new Date().toISOString().split('T')[0],
-          category: 'General'
-        });
-        
-        // Update email status
-        updateEmail(selectedEmail.id, { 
-          status: 'Completed',
-          aiSummary: editableSummary
-        });
-        
-        toast.success('Issue logged successfully!');
+      // Check if email needs review (issueCreationStatus === null means it needs review)
+      if (selectedEmail.issueCreationStatus === null) {
+        console.log('Creating issue via API...');
+        // For review emails, create a new issue via API
+        try {
+          const issueData = {
+            buildingId: building?.buildingId || 0,
+            issueName: editableIssue,
+            issueDesc: editableSummary,
+            issueCategory: 'General',
+            issuePriority: selectedEmail?.priority === 'High' ? 'High' : 'Medium',
+            emailId: selectedEmail?.emailId || selectedEmail?.id || undefined
+          };
+          
+          console.log('Sending issue data:', issueData);
+          console.log('Email ID being sent:', selectedEmail?.emailId || selectedEmail?.id || 'undefined');
+          const result = await createIssue(issueData);
+          console.log('Create issue result:', result);
+          
+          if (result.success) {
+            // Update email status (only if we have an ID)
+            if (selectedEmail?.id || selectedEmail?.emailId) {
+              const emailId = selectedEmail?.emailId || selectedEmail?.id;
+              updateEmail(emailId.toString(), { 
+                status: 'Completed',
+                aiSummary: editableSummary
+              });
+            }
+            
+            toast.success('Issue logged successfully!');
+          } else {
+            toast.error(result.error || 'Failed to create issue');
+          }
+        } catch (error) {
+          console.error('Error creating issue:', error);
+          toast.error('Failed to create issue');
+        }
       } else {
-        // For completed emails, update the summary
-        updateEmail(selectedEmail.id, { 
-          aiSummary: editableSummary
-        });
+        console.log('Updating existing email summary...');
+        // For completed emails, update the summary (only if we have an ID)
+        if (selectedEmail?.id || selectedEmail?.emailId) {
+          const emailId = selectedEmail?.emailId || selectedEmail?.id;
+          updateEmail(emailId.toString(), { 
+            aiSummary: editableSummary
+          });
+        }
         toast.success('Issue updated successfully!');
       }
       
       setEditableIssue('');
       setEditableSummary('');
+    } else {
+      console.log('Missing required fields - editableIssue or editableSummary is empty');
+      toast.error('Please fill in both issue title and summary');
     }
   };
 
   const handleLinkToExistingIssue = () => {
-    if (selectedIssueToLink && selectedEmail) {
-      linkEmailToIssue(selectedEmail.id, selectedIssueToLink);
+    if (selectedIssueToLink && selectedEmail && (selectedEmail?.id || selectedEmail?.emailId)) {
+      const emailId = selectedEmail?.emailId || selectedEmail?.id;
+      linkEmailToIssue(emailId.toString(), selectedIssueToLink);
       toast.success(`Email linked to issue ${selectedIssueToLink}`);
       setIsLinkingEmail(false);
       setSelectedIssueToLink('');
     }
   };
 
+  console.log('selectedEmail ',selectedEmail)
+
   const handleAddNewIssue = () => {
-    setNewIssues([...newIssues, { title: '', summary: '' }]);
+    console.log('handleAddNewIssue called');
+    console.log('Current newIssues before adding:', newIssues);
+    const updatedIssues = [...newIssues, { title: '', summary: '' }];
+    console.log('New issues array after adding:', updatedIssues);
+    setNewIssues(updatedIssues);
   };
 
   const handleNewIssueChange = (index: number, field: 'title' | 'summary', value: string) => {
+    console.log(`handleNewIssueChange called - index: ${index}, field: ${field}, value: "${value}"`);
+    console.log('Current newIssues before change:', newIssues);
     const updated = [...newIssues];
     updated[index][field] = value;
+    console.log('Updated newIssues after change:', updated);
     setNewIssues(updated);
   };
 
-  const handleLogIssues = () => {
-    const validIssues = newIssues.filter(issue => issue.title.trim() && issue.summary.trim());
-    if (validIssues.length > 0) {
-      // Use the issues context to add issues
-      validIssues.forEach((issue) => {
-        addIssue({
-          title: issue.title,
-          summary: issue.summary,
-          status: 'Not started',
-          priority: selectedEmail?.priority === 'High' ? 'High' : 'Medium',
-          emailId: selectedEmail?.id,
-          dateCreated: new Date().toISOString().split('T')[0],
-          category: 'General'
-        });
+  const handleLogIssues = async () => {
+    console.log('handleLogIssues called');
+    console.log('newIssues array length:', newIssues.length);
+    console.log('newIssues:', newIssues);
+    console.log('Main issue fields - editableIssue:', editableIssue, 'editableSummary:', editableSummary);
+    console.log('selectedEmail:', selectedEmail);
+    console.log('building:', building);
+    
+    // Include the main issue fields in the list of issues to create
+    const allIssues = [
+      // Main issue (always present)
+      { title: editableIssue, summary: editableSummary },
+      // Additional issues
+      ...newIssues
+    ];
+    
+    console.log('All issues (main + additional):', allIssues);
+    
+    const validIssues = allIssues.filter(issue => issue.title.trim() && issue.summary.trim());
+    console.log('validIssues length:', validIssues.length);
+    console.log('validIssues:', validIssues);
+    
+    // Debug each issue individually
+    allIssues.forEach((issue, index) => {
+      console.log(`Issue ${index}:`, {
+        title: issue.title,
+        summary: issue.summary,
+        titleTrimmed: issue.title.trim(),
+        summaryTrimmed: issue.summary.trim(),
+        isValid: issue.title.trim() && issue.summary.trim()
       });
-      
-      setNewIssues([{ title: '', summary: '' }]);
-      toast.success(`${validIssues.length} issue(s) logged successfully!`);
+    });
+    
+    if (validIssues.length > 0) {
+      try {
+        console.log('Creating multiple issues via API...');
+        // Create issues via API calls
+        console.log(`About to create ${validIssues.length} issues`);
+        const createPromises = validIssues.map((issue, index) => {
+          const issueData = {
+            buildingId: building?.buildingId || 0,
+            issueName: issue.title,
+            issueDesc: issue.summary,
+            issueCategory: 'General',
+            issuePriority: selectedEmail?.priority === 'High' ? 'High' : 'Medium',
+            emailId: selectedEmail?.emailId || selectedEmail?.id || undefined
+          };
+          console.log(`Creating issue ${index + 1}/${validIssues.length} with data:`, issueData);
+          console.log('Email ID being sent:', selectedEmail?.emailId || selectedEmail?.id || 'undefined');
+          return createIssue(issueData);
+        });
+        
+        const results = await Promise.all(createPromises);
+        console.log('Multiple issues creation results:', results);
+        const successCount = results.filter(result => result.success).length;
+        
+        if (successCount === validIssues.length) {
+          toast.success(`${successCount} issue(s) logged successfully!`);
+        } else {
+          toast.error(`${validIssues.length - successCount} issue(s) failed to create`);
+        }
+        
+        // Clear both main issue fields and additional issues
+        setEditableIssue('');
+        setEditableSummary('');
+        setNewIssues([{ title: '', summary: '' }]);
+      } catch (error) {
+        console.error('Error creating multiple issues:', error);
+        toast.error('Failed to create issues');
+      }
+    } else {
+      console.log('No valid issues to create');
+      console.log('Main issue - title:', editableIssue, 'summary:', editableSummary);
+      console.log('Additional issues:', newIssues);
+      toast.error('Please fill in at least one issue title and summary (main issue or additional issues)');
     }
   };
 
@@ -519,7 +621,7 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
                          </div>
 
                          {/* Link to Existing Issue */}
-                         <div>
+                         {/* <div>
                            <label className="text-sm font-medium text-foreground mb-2 block">
                              Link to Existing Issue
                            </label>
@@ -577,7 +679,7 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
                                </div>
                              </div>
                            )}
-                         </div>
+                         </div> */}
 
                          <div className="flex space-x-2">
                            <Button onClick={handleSaveEdit} className="flex-1">

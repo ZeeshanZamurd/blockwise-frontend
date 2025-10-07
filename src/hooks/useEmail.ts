@@ -38,6 +38,10 @@ export interface Email {
     issuePriority: string;
     createdDate: string;
   }[];
+  // Optional fields that might be added by backend in the future
+  id?: number;
+  emailId?: number;
+  [key: string]: any; // Allow for additional fields
 }
 
 export const useEmail = () => {
@@ -70,7 +74,10 @@ export const useEmail = () => {
         bodyHtml: apiEmail.bodyHtml,
         summary: apiEmail.summary,
         issueCreationStatus: apiEmail.issueCreationStatus,
-        associatedIssues: apiEmail.associatedIssues || []
+        associatedIssues: apiEmail.associatedIssues || [],
+        // Include any additional fields that might be added by backend in the future
+        ...(apiEmail.id && { id: apiEmail.id }),
+        ...(apiEmail.emailId && { emailId: apiEmail.emailId })
       }));
 
       return { success: true, emails: mappedEmails };
