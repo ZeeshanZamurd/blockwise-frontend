@@ -9,6 +9,18 @@ import { FileText, Mail, Plus, Link } from 'lucide-react';
 import { useEmails } from '@/contexts/EmailsContext';
 import { useIssues } from '@/contexts/IssuesContext';
 import { useNavigate } from 'react-router-dom';
+import { api } from '@/lib/api';
+import { toast } from 'sonner';
+import { useEmail, Email as ApiEmail } from '@/hooks/useEmail';
+
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+}
 
 interface CommunicationsSectionProps {
   issueId: string;
@@ -34,10 +46,33 @@ interface CommunicationsSectionProps {
 const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, communications = [] }) => {
   const { emails, linkEmailToIssue } = useEmails();
   const { issues, linkIssueToEmail } = useIssues();
+  const { fetchEmails } = useEmail();
   const navigate = useNavigate();
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
   const [emailSearchTerm, setEmailSearchTerm] = useState('');
   const [selectedEmailId, setSelectedEmailId] = useState('');
+  const [isLinkingEmail, setIsLinkingEmail] = useState(false);
+  const [apiEmails, setApiEmails] = useState<ApiEmail[]>([]);
+  const [isLoadingApiEmails, setIsLoadingApiEmails] = useState(false);
+
+  // Load API emails when component mounts
+  React.useEffect(() => {
+    const loadApiEmails = async () => {
+      setIsLoadingApiEmails(true);
+      try {
+        const result = await fetchEmails();
+        if (result.success) {
+          setApiEmails(result.emails);
+        }
+      } catch (error) {
+        console.error('Failed to load API emails:', error);
+      } finally {
+        setIsLoadingApiEmails(false);
+      }
+    };
+    
+    loadApiEmails();
+  }, [fetchEmails]);
 
   // Get the current issue to check if it has an emailId
   const currentIssue = issues.find(i => i.id === issueId);
@@ -51,34 +86,131 @@ const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, 
       ? emails.filter(email => currentIssue.linkedEmailIds?.includes(email.id))
       : [];
 
-  const filteredEmails = emails.filter(email =>
-    email.id.toLowerCase().includes(emailSearchTerm.toLowerCase()) ||
+  // Use API emails for filtering instead of context emails
+  const filteredEmails = apiEmails.filter(email =>
+    (email.id?.toString() || email.emailId?.toString() || email.messageId || '').toLowerCase().includes(emailSearchTerm.toLowerCase()) ||
     email.subject.toLowerCase().includes(emailSearchTerm.toLowerCase()) ||
-    email.from.toLowerCase().includes(emailSearchTerm.toLowerCase())
+    email.fromEmail.toLowerCase().includes(emailSearchTerm.toLowerCase())
   );
 
-  const handleLinkEmail = () => {
+  const handleLinkEmail = async () => {
     if (selectedEmailId) {
-      linkEmailToIssue(selectedEmailId, issueId);
-      linkIssueToEmail(issueId, selectedEmailId);
-      setIsLinkDialogOpen(false);
-      setSelectedEmailId('');
-      setEmailSearchTerm('');
+      setIsLinkingEmail(true);
       
-      // Navigate to email tab
-      navigate('/dashboard?section=building-management&tab=emails');
+      try {
+        console.log('Linking email to issue via API...');
+        console.log('Issue ID:', issueId);
+        console.log('Selected Email ID:', selectedEmailId);
+        
+        // Find the email in API emails to get the numeric ID
+        const email = apiEmails.find(e => 
+          e.id?.toString() === selectedEmailId || 
+          e.emailId?.toString() === selectedEmailId || 
+          e.messageId === selectedEmailId
+        );
+        
+        if (!email) {
+          toast.error('Email not found. Please try selecting again.');
+          return;
+        }
+        
+        // Use the numeric ID for the API call
+        const numericEmailId = email.id || email.emailId;
+        
+        if (!numericEmailId) {
+          toast.error('Email ID not found in API response');
+          return;
+        }
+        
+        console.log('Found email:', email);
+        console.log('Using numeric email ID:', numericEmailId);
+        
+        // Call the API to link email to issue
+        const response = await api.put(`/issues/link/email?issueId=${issueId}&emailId=${numericEmailId}`);
+        
+        console.log('Link email API response:', response.data);
+        
+        if (response.data.success) {
+          // Update local context as well (using the original selectedEmailId for context)
+          linkEmailToIssue(selectedEmailId, issueId);
+          linkIssueToEmail(issueId, selectedEmailId);
+          
+          toast.success('Email linked to issue successfully!');
+          
+          // Close dialog and reset form
+          setIsLinkDialogOpen(false);
+          setSelectedEmailId('');
+          setEmailSearchTerm('');
+          
+          // Navigate to email tab
+          navigate('/dashboard?section=building-management&tab=emails');
+        } else {
+          toast.error(response.data.message || 'Failed to link email to issue');
+        }
+      } catch (error: unknown) {
+        console.error('Error linking email to issue:', error);
+        const apiError = error as ApiError;
+        const errorMessage = apiError?.response?.data?.message || apiError?.message || 'Failed to link email to issue';
+        toast.error(errorMessage);
+      } finally {
+        setIsLinkingEmail(false);
+      }
     }
   };
 
-  const handleEmailIdInput = (emailId: string) => {
-    const email = emails.find(e => e.id === emailId);
+  const handleEmailIdInput = async (emailId: string) => {
+    // Find email in API emails by ID, emailId, or messageId
+    const email = apiEmails.find(e => 
+      e.id?.toString() === emailId || 
+      e.emailId?.toString() === emailId || 
+      e.messageId === emailId
+    );
+    
     if (email) {
-      linkEmailToIssue(emailId, issueId);
-      linkIssueToEmail(issueId, emailId);
-      setEmailSearchTerm('');
+      setIsLinkingEmail(true);
       
-      // Navigate to email tab
-      navigate('/emails');
+      try {
+        console.log('Linking email to issue via API (direct input)...');
+        console.log('Issue ID:', issueId);
+        console.log('Email ID:', emailId);
+        console.log('Found email:', email);
+        
+        // Use the numeric ID for the API call
+        const numericEmailId = email.id || email.emailId;
+        
+        if (!numericEmailId) {
+          toast.error('Email ID not found in API response');
+          return;
+        }
+        
+        // Call the API to link email to issue
+        const response = await api.put(`/issues/link/email?issueId=${issueId}&emailId=${numericEmailId}`);
+        
+        console.log('Link email API response (direct input):', response.data);
+        
+        if (response.data.success) {
+          // Update local context as well (using the original emailId for context)
+          linkEmailToIssue(emailId, issueId);
+          linkIssueToEmail(issueId, emailId);
+          
+          toast.success('Email linked to issue successfully!');
+          setEmailSearchTerm('');
+          
+          // Navigate to email tab
+          navigate('/dashboard?section=building-management&tab=emails');
+        } else {
+          toast.error(response.data.message || 'Failed to link email to issue');
+        }
+      } catch (error: unknown) {
+        console.error('Error linking email to issue (direct input):', error);
+        const apiError = error as ApiError;
+        const errorMessage = apiError?.response?.data?.message || apiError?.message || 'Failed to link email to issue';
+        toast.error(errorMessage);
+      } finally {
+        setIsLinkingEmail(false);
+      }
+    } else {
+      toast.error('Email not found. Please check the email ID.');
     }
   };
 
@@ -140,14 +272,14 @@ const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, 
                         value={emailSearchTerm}
                         onChange={(e) => setEmailSearchTerm(e.target.value)}
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter' && emailSearchTerm.startsWith('EML-')) {
-                            handleEmailIdInput(emailSearchTerm);
+                          if (e.key === 'Enter' && emailSearchTerm.trim()) {
+                            handleEmailIdInput(emailSearchTerm.trim());
                           }
                         }}
                       />
                     </div>
                     
-                    {emailSearchTerm && !emailSearchTerm.startsWith('EML-') && (
+                    {emailSearchTerm && (
                       <div>
                         <label className="text-sm font-medium mb-2 block">
                           Select Email
@@ -157,15 +289,18 @@ const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, 
                             <SelectValue placeholder="Select an email..." />
                           </SelectTrigger>
                           <SelectContent>
-                            {filteredEmails.slice(0, 10).map((email) => (
-                              <SelectItem key={email.id} value={email.id}>
-                                <div className="flex flex-col">
-                                  <span className="font-medium">{email.id}</span>
-                                  <span className="text-xs text-muted-foreground">{email.subject}</span>
-                                  <span className="text-xs text-muted-foreground">From: {email.from}</span>
-                                </div>
-                              </SelectItem>
-                            ))}
+                            {filteredEmails.slice(0, 10).map((email) => {
+                              const emailId = email.id?.toString() || email.emailId?.toString() || email.messageId || 'Unknown';
+                              return (
+                                <SelectItem key={emailId} value={emailId}>
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">{emailId}</span>
+                                    <span className="text-xs text-muted-foreground">{email.subject}</span>
+                                    <span className="text-xs text-muted-foreground">From: {email.fromEmail}</span>
+                                  </div>
+                                </SelectItem>
+                              );
+                            })}
                           </SelectContent>
                         </Select>
                       </div>
@@ -202,10 +337,10 @@ const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, 
                     <>
                       <Button 
                         onClick={handleLinkEmail}
-                        disabled={!selectedEmailId}
+                        disabled={!selectedEmailId || isLinkingEmail}
                         className="flex-1"
                       >
-                        Link Email
+                        {isLinkingEmail ? 'Linking...' : 'Link Emails'}
                       </Button>
                       <Button 
                         variant="outline" 
