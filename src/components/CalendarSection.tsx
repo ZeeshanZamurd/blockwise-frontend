@@ -21,6 +21,16 @@ const CalendarSection = ({ emptyDataMode }: CalendarSectionProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
+  const [isCreatingEvent, setIsCreatingEvent] = useState(false);
+  
+  // Form state for new event
+  const [newEvent, setNewEvent] = useState({
+    title: '',
+    date: '',
+    time: '',
+    type: '',
+    description: ''
+  });
   
   // Fetch calendar events when component mounts
   useEffect(() => {
@@ -102,12 +112,18 @@ const CalendarSection = ({ emptyDataMode }: CalendarSectionProps) => {
 
   const getEventTypeColor = (type: string) => {
     switch (type.toLowerCase()) {
+      case 'other': return 'bg-gray-100 text-gray-800';
+      case 'fire_drill': return 'bg-red-100 text-red-800';
+      case 'maintenance': return 'bg-orange-100 text-orange-800';
+      case 'inspection': return 'bg-yellow-100 text-yellow-800';
+      case 'community_meeting': return 'bg-blue-100 text-blue-800';
+      case 'training': return 'bg-green-100 text-green-800';
+      // Legacy types for backward compatibility
       case 'agm': return 'bg-purple-100 text-purple-800';
       case 'general_meeting': return 'bg-blue-100 text-blue-800';
       case 'board_meeting': return 'bg-green-100 text-green-800';
       case 'committee_meeting': return 'bg-orange-100 text-orange-800';
       case 'cleaning': return 'bg-blue-100 text-blue-800';
-      case 'maintenance': return 'bg-orange-100 text-orange-800';
       case 'safety': return 'bg-red-100 text-red-800';
       case 'gardening': return 'bg-green-100 text-green-800';
       case 'meeting': return 'bg-purple-100 text-purple-800';
@@ -117,13 +133,31 @@ const CalendarSection = ({ emptyDataMode }: CalendarSectionProps) => {
   };
 
   const getEventsForDate = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0];
-    return events?.filter(event => event.date === dateStr) || [];
+    // Format date as YYYY-MM-DD in local timezone to match API response
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    
+    console.log('Looking for events on date:', dateStr, 'for calendar date:', date);
+    const matchingEvents = events?.filter(event => {
+      console.log('Comparing event date:', event.date, 'with target date:', dateStr);
+      return event.date === dateStr;
+    }) || [];
+    
+    console.log('Found events for date:', dateStr, ':', matchingEvents);
+    return matchingEvents;
   };
 
   const getTodayEvents = () => {
-    const today = new Date().toISOString().split('T')[0];
-    return events?.filter(event => event.date === today) || [];
+    // Format today's date as YYYY-MM-DD in local timezone
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${year}-${month}-${day}`;
+    
+    return events?.filter(event => event.date === todayStr) || [];
   };
 
   const getUpcomingEvents = () => {
@@ -131,13 +165,85 @@ const CalendarSection = ({ emptyDataMode }: CalendarSectionProps) => {
     const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
     
     return events?.filter(event => {
-      const eventDate = new Date(event.date);
+      // Parse event date as local date to avoid timezone issues
+      const [year, month, day] = event.date.split('-').map(Number);
+      const eventDate = new Date(year, month - 1, day); // month is 0-indexed
+      
       return eventDate >= today && eventDate <= nextWeek;
     }).slice(0, 4) || [];
   };
 
   const handleEventClick = (event: any) => {
     setSelectedEvent(event);
+  };
+
+  const handleCreateEvent = async () => {
+    // Basic validation
+    if (!newEvent.title.trim()) {
+      alert('Please enter an event title');
+      return;
+    }
+    
+    if (!newEvent.date) {
+      alert('Please select a date');
+      return;
+    }
+    
+    if (!newEvent.time) {
+      alert('Please select a time');
+      return;
+    }
+    
+    if (!newEvent.type) {
+      alert('Please select an event type');
+      return;
+    }
+
+    setIsCreatingEvent(true);
+    try {
+      console.log('Creating event with data:', newEvent);
+      
+      const result = await createEvent({
+        title: newEvent.title,
+        date: newEvent.date,
+        time: newEvent.time,
+        type: newEvent.type,
+        description: newEvent.description || ''
+      });
+      
+      if (result.success) {
+        console.log('Event created successfully:', result.event);
+        alert('Event created successfully!');
+        
+        // Reset form and close dialog
+        setNewEvent({
+          title: '',
+          date: '',
+          time: '',
+          type: '',
+          description: ''
+        });
+        setIsAddEventOpen(false);
+        
+        // Refresh events list
+        await fetchEvents();
+      } else {
+        console.error('Failed to create event:', result.error);
+        alert(`Failed to create event: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error creating event:', error);
+      alert('Failed to create event');
+    } finally {
+      setIsCreatingEvent(false);
+    }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setNewEvent(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   return (
@@ -161,39 +267,80 @@ const CalendarSection = ({ emptyDataMode }: CalendarSectionProps) => {
             <div className="space-y-4">
               <div>
                 <Label htmlFor="title">Event Title</Label>
-                <Input id="title" placeholder="Enter event title" />
+                <Input 
+                  id="title" 
+                  placeholder="Enter event title" 
+                  value={newEvent.title}
+                  onChange={(e) => handleInputChange('title', e.target.value)}
+                />
               </div>
               <div>
                 <Label htmlFor="date">Date</Label>
-                <Input id="date" type="date" />
+                <Input 
+                  id="date" 
+                  type="date" 
+                  value={newEvent.date}
+                  onChange={(e) => handleInputChange('date', e.target.value)}
+                />
               </div>
               <div>
                 <Label htmlFor="time">Time</Label>
-                <Input id="time" type="time" />
+                <Input 
+                  id="time" 
+                  type="time" 
+                  value={newEvent.time}
+                  onChange={(e) => handleInputChange('time', e.target.value)}
+                />
               </div>
               <div>
                 <Label htmlFor="type">Type</Label>
-                <Select>
+                <Select value={newEvent.type} onValueChange={(value) => handleInputChange('type', value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select event type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="maintenance">Maintenance</SelectItem>
-                    <SelectItem value="cleaning">Cleaning</SelectItem>
-                    <SelectItem value="safety">Safety</SelectItem>
-                    <SelectItem value="gardening">Gardening</SelectItem>
-                    <SelectItem value="meeting">Meeting</SelectItem>
-                    <SelectItem value="security">Security</SelectItem>
+                    <SelectItem value="OTHER">Other</SelectItem>
+                    <SelectItem value="FIRE_DRILL">Fire Drill</SelectItem>
+                    <SelectItem value="MAINTENANCE">Maintenance</SelectItem>
+                    <SelectItem value="INSPECTION">Inspection</SelectItem>
+                    <SelectItem value="COMMUNITY_MEETING">Community Meeting</SelectItem>
+                    <SelectItem value="TRAINING">Training</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
                 <Label htmlFor="description">Description</Label>
-                <Textarea id="description" placeholder="Enter event description" />
+                <Textarea 
+                  id="description" 
+                  placeholder="Enter event description" 
+                  value={newEvent.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                />
               </div>
               <div className="flex space-x-2">
-                <Button className="flex-1">Save Event</Button>
-                <Button variant="outline" onClick={() => setIsAddEventOpen(false)}>Cancel</Button>
+                <Button 
+                  className="flex-1" 
+                  onClick={handleCreateEvent}
+                  disabled={isCreatingEvent}
+                >
+                  {isCreatingEvent ? 'Creating...' : 'Save Event'}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setIsAddEventOpen(false);
+                    setNewEvent({
+                      title: '',
+                      date: '',
+                      time: '',
+                      type: '',
+                      description: ''
+                    });
+                  }}
+                  disabled={isCreatingEvent}
+                >
+                  Cancel
+                </Button>
               </div>
             </div>
           </DialogContent>
@@ -350,21 +497,27 @@ const CalendarSection = ({ emptyDataMode }: CalendarSectionProps) => {
                 <Badge className="bg-blue-100 text-blue-800">{events?.length || 0}</Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">AGM Meetings</span>
-                <Badge className="bg-purple-100 text-purple-800">
-                  {events?.filter(e => e.type === 'AGM').length || 0}
+                <span className="text-sm text-gray-600">Fire Drills</span>
+                <Badge className="bg-red-100 text-red-800">
+                  {events?.filter(e => e.type === 'FIRE_DRILL').length || 0}
                 </Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">General Meetings</span>
+                <span className="text-sm text-gray-600">Maintenance</span>
+                <Badge className="bg-orange-100 text-orange-800">
+                  {events?.filter(e => e.type === 'MAINTENANCE').length || 0}
+                </Badge>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Community Meetings</span>
                 <Badge className="bg-blue-100 text-blue-800">
-                  {events?.filter(e => e.type === 'GENERAL_MEETING').length || 0}
+                  {events?.filter(e => e.type === 'COMMUNITY_MEETING').length || 0}
                 </Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Board Meetings</span>
+                <span className="text-sm text-gray-600">Training</span>
                 <Badge className="bg-green-100 text-green-800">
-                  {events?.filter(e => e.type === 'BOARD_MEETING').length || 0}
+                  {events?.filter(e => e.type === 'TRAINING').length || 0}
                 </Badge>
               </div>
             </div>
@@ -398,7 +551,13 @@ const CalendarSection = ({ emptyDataMode }: CalendarSectionProps) => {
               const startDay = startDate.getDay() === 0 ? 6 : startDate.getDay() - 1; // Convert Sunday=0 to Monday=0
               const currentDate = new Date(today.getFullYear(), today.getMonth(), 1 - startDay + index);
               const isCurrentMonth = currentDate.getMonth() === today.getMonth();
-              const dateStr = currentDate.toISOString().split('T')[0];
+              
+              // Format date as YYYY-MM-DD in local timezone
+              const year = currentDate.getFullYear();
+              const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+              const day = String(currentDate.getDate()).padStart(2, '0');
+              const dateStr = `${year}-${month}-${day}`;
+              
               const dayEvents = events?.filter(event => event.date === dateStr) || [];
               
               return (

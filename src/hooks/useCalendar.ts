@@ -76,7 +76,7 @@ export const useCalendar = () => {
       
       console.log('Fetching calendar events for buildingId:', targetBuildingId);
       
-      const response = await api.get(`/api/v1/meeting/calendar`);
+      const response = await api.get(`/api/v1/calendar`);
       const responseData = response.data;
       
       console.log('Calendar API response:', responseData);
@@ -88,13 +88,22 @@ export const useCalendar = () => {
         return { success: false, error: errorMessage };
       }
       
-      // Extract meetings from the nested structure
-      const meetingsData = responseData.data?.monthlyMeetings?.meetings || [];
-      console.log('Extracted meetings data:', meetingsData);
+      // Extract events from the new structure - combine monthly, today, and weekly items
+      const monthlyItems = responseData.data?.monthly?.items || [];
+      const todayItems = responseData.data?.today?.items || [];
+      const weeklyItems = responseData.data?.weekly?.items || [];
+      
+      // Combine all items and remove duplicates based on title + date
+      const allItems = [...monthlyItems, ...todayItems, ...weeklyItems];
+      const uniqueItems = allItems.filter((item, index, self) => 
+        index === self.findIndex(t => t.title === item.title && t.date === item.date)
+      );
+      
+      console.log('Extracted calendar items:', uniqueItems);
       
       // Map API response to CalendarEvent interface
-      const mappedEvents: CalendarEvent[] = meetingsData.map((apiEvent: any) => ({
-        id: apiEvent.id,
+      const mappedEvents: CalendarEvent[] = uniqueItems.map((apiEvent: any, index: number) => ({
+        id: apiEvent.id || `event-${index}-${Date.now()}`, // Generate ID if not provided
         title: apiEvent.title,
         date: apiEvent.date,
         time: apiEvent.time,
@@ -109,7 +118,7 @@ export const useCalendar = () => {
         scheduleDetails: apiEvent.scheduleDetails || null,
         contractor: apiEvent.contractor || null,
         cost: apiEvent.cost || null,
-        notes: apiEvent.notes
+        notes: apiEvent.description // Use description as notes since that's what the API provides
       }));
       
       dispatch(setEvents(mappedEvents));
@@ -131,8 +140,8 @@ export const useCalendar = () => {
       
       console.log('Creating calendar event with data:', eventData);
       
-      // TODO: Replace with actual API endpoint when provided
-      const response = await api.post('/api/calendar', eventData);
+      // Use the correct API endpoint for creating events
+      const response = await api.post('/api/v1/events', eventData);
       const responseData = response.data;
       
       console.log('Create calendar event API response:', responseData);

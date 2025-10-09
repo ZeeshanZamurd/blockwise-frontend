@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -22,15 +22,47 @@ interface EnhancedCommunicationsPanelProps {
 }
 
 const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPanelProps) => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { addIssue, updateIssue, issues } = useIssues();
   const { emails, updateEmail, linkEmailToIssue } = useEmails();
-  const { fetchEmails } = useEmail();
+  const { fetchEmails, fetchEmailById } = useEmail();
   const { createIssue } = useIssue();
   const { building } = useBuilding();
   const [apiEmails, setApiEmails] = useState<Email[]>([]);
   const [isLoadingEmails, setIsLoadingEmails] = useState(false);
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
+  const [isFilteredByEmailId, setIsFilteredByEmailId] = useState(false);
+  
+  // Debug: Track when apiEmails changes
+  useEffect(() => {
+    console.log('apiEmails state changed:', apiEmails.length, 'emails');
+    console.log('apiEmails status breakdown:', {
+      inReview: apiEmails.filter(e => e.issueCreationStatus === "IN_REVIEW").length,
+      notInReview: apiEmails.filter(e => e.issueCreationStatus !== "IN_REVIEW").length,
+      total: apiEmails.length
+    });
+    
+    // Check for duplicates
+    const messageIds = apiEmails.map(e => e.messageId);
+    const uniqueMessageIds = [...new Set(messageIds)];
+    if (messageIds.length !== uniqueMessageIds.length) {
+      console.warn('Duplicate emails detected! Total:', messageIds.length, 'Unique:', uniqueMessageIds.length);
+    }
+  }, [apiEmails]);
+  
+  // Debug: Track when selectedEmail changes
+  useEffect(() => {
+    if (selectedEmail) {
+      console.log('Selected email changed:', {
+        id: selectedEmail.id,
+        messageId: selectedEmail.messageId,
+        subject: selectedEmail.subject,
+        status: selectedEmail.issueCreationStatus
+      });
+    } else {
+      console.log('Selected email cleared');
+    }
+  }, [selectedEmail]);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [isEditingIssue, setIsEditingIssue] = useState(false);
@@ -42,6 +74,71 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
   const [selectedIssueToLink, setSelectedIssueToLink] = useState('');
   const [showBanner, setShowBanner] = useState(true);
 
+  // Helper function to deduplicate emails by messageId
+  const deduplicateEmails = useCallback((emails: Email[]): Email[] => {
+    return emails.reduce((acc: Email[], current: Email) => {
+      const exists = acc.find(email => email.messageId === current.messageId);
+      if (!exists) {
+        acc.push(current);
+      }
+      return acc;
+    }, []);
+  }, []);
+
+  const loadAllEmails = useCallback(async () => {
+    console.log('Loading all emails...');
+    setIsLoadingEmails(true);
+    try {
+      const result = await fetchEmails();
+      if (result.success) {
+        // Deduplicate emails by messageId
+        const uniqueEmails = deduplicateEmails(result.emails);
+        
+        console.log('Loaded emails:', result.emails.length, 'Unique emails:', uniqueEmails.length);
+        setApiEmails(uniqueEmails);
+        setIsFilteredByEmailId(false);
+      } else {
+        console.error('Failed to fetch emails:', result.error);
+        toast.error('Failed to load emails');
+      }
+    } catch (error) {
+      console.error('Error loading emails:', error);
+      toast.error('Failed to load emails');
+    } finally {
+      setIsLoadingEmails(false);
+    }
+  }, [fetchEmails, deduplicateEmails]);
+
+  const handleFetchEmailById = useCallback(async (emailId: string) => {
+    console.log('handleFetchEmailById called with emailId:', emailId);
+    setIsLoadingEmails(true);
+    
+    try {
+      const result = await fetchEmailById(emailId);
+      
+      if (result.success) {
+        console.log('Email fetched successfully:', result.email);
+        console.log('Setting apiEmails to single email:', [result.email]);
+        setApiEmails([result.email]); // Set only this email in the list
+        setSelectedEmail(result.email); // Auto-select this email
+        setIsFilteredByEmailId(true); // Mark as filtered
+        console.log('Email should now be displayed in the list');
+      } else {
+        console.error('Failed to fetch email:', result.error);
+        toast.error(`Failed to load email: ${result.error}`);
+        // Load all emails as fallback
+        await loadAllEmails();
+      }
+    } catch (error) {
+      console.error('Error fetching email by ID:', error);
+      toast.error('Failed to load email');
+      // Load all emails as fallback
+      await loadAllEmails();
+    } finally {
+      setIsLoadingEmails(false);
+    }
+  }, [fetchEmailById, loadAllEmails]);
+
   // Handle URL filter parameter
   useEffect(() => {
     const filter = searchParams.get('filter');
@@ -51,33 +148,32 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
       setActiveTab('review');
     }
     
-    // If emailId is provided, filter to that specific email
+    // If emailId is provided, fetch that specific email
     if (emailId) {
-      console.log('EmailId filter applied:', emailId);
+      console.log('EmailId filter applied, fetching email by ID:', emailId);
+      handleFetchEmailById(emailId);
+    } else if (isFilteredByEmailId) {
+      // If emailId was removed from URL and we were previously filtered, load all emails
+      console.log('EmailId filter removed, loading all emails...');
+      loadAllEmails();
     }
-  }, [searchParams]);
+  }, [searchParams, handleFetchEmailById, isFilteredByEmailId, loadAllEmails]);
 
-  // Fetch emails when component mounts
+  // Fetch emails when component mounts (only if no emailId filter)
   useEffect(() => {
-    const loadEmails = async () => {
-      setIsLoadingEmails(true);
-      const result = await fetchEmails();
-      if (result.success) {
-        setApiEmails(result.emails);
-      } else {
-        console.error('Failed to fetch emails:', result.error);
-        toast.error('Failed to load emails');
-      }
-      setIsLoadingEmails(false);
-    };
-
-    loadEmails();
-  }, [fetchEmails]);
+    const emailId = searchParams.get('emailId');
+    
+    // Only load all emails if no emailId filter is applied and we're not already filtered
+    if (!emailId && !isFilteredByEmailId) {
+      console.log('Component mounted, loading all emails...');
+      loadAllEmails();
+    }
+  }, [fetchEmails, searchParams, loadAllEmails, isFilteredByEmailId]);
 
   // Set default values when email is selected
   useEffect(() => {
     if (selectedEmail) {
-      if (selectedEmail.issueCreationStatus === null) {
+      if (selectedEmail.issueCreationStatus === "IN_REVIEW") {
         // For emails needing review, start with empty fields
         setEditableIssue('');
         setEditableSummary('');
@@ -91,7 +187,7 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
       setSelectedIssueToLink('');
       
       // Hide banner when any email is viewed
-      if (selectedEmail.issueCreationStatus === null) {
+      if (selectedEmail.issueCreationStatus === "IN_REVIEW") {
         setShowBanner(false);
       }
     }
@@ -147,21 +243,60 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
     
     // Apply emailId filter if provided in URL
     const emailId = searchParams.get('emailId');
+    console.log('getFilteredEmails - emailId from URL:', emailId);
+    console.log('getFilteredEmails - total apiEmails:', apiEmails.length);
+    console.log('getFilteredEmails - issueCreationStatus breakdown:', {
+      inReview: apiEmails.filter(e => e.issueCreationStatus === "IN_REVIEW").length,
+      notInReview: apiEmails.filter(e => e.issueCreationStatus !== "IN_REVIEW").length,
+      total: apiEmails.length
+    });
+    
+    // Debug: Show all IN_REVIEW emails with their IDs
+    const inReviewEmails = apiEmails.filter(e => e.issueCreationStatus === "IN_REVIEW");
+    console.log('IN_REVIEW emails:', inReviewEmails.map(e => ({ id: e.id, messageId: e.messageId, subject: e.subject })));
+    
+    // Debug: Show all emails with their status
+    console.log('All emails with status:', apiEmails.map(e => ({ id: e.id, messageId: e.messageId, subject: e.subject, status: e.issueCreationStatus })));
+    
+    // Debug: Check for duplicate messageIds
+    const messageIds = apiEmails.map(e => e.messageId);
+    const duplicateMessageIds = messageIds.filter((id, index) => messageIds.indexOf(id) !== index);
+    if (duplicateMessageIds.length > 0) {
+      console.log('Duplicate messageIds found:', duplicateMessageIds);
+    }
+    
+    // Debug: Check for duplicate IDs
+    const ids = apiEmails.map(e => e.id).filter(id => id !== undefined);
+    const duplicateIds = ids.filter((id, index) => ids.indexOf(id) !== index);
+    if (duplicateIds.length > 0) {
+      console.log('Duplicate IDs found:', duplicateIds);
+    }
+    
     if (emailId) {
-      filtered = filtered.filter(email => email.messageId === emailId);
+      // Try to match by id first, then by messageId as fallback
+      filtered = filtered.filter(email => 
+        email.id?.toString() === emailId || 
+        email.emailId?.toString() === emailId || 
+        email.messageId === emailId
+      );
       console.log('Filtering by emailId:', emailId, 'Found emails:', filtered.length);
+      console.log('Available emails for filtering:', apiEmails.map(e => ({ id: e.id, emailId: e.emailId, messageId: e.messageId })));
+    } else {
+      console.log('No emailId filter applied, showing all emails:', filtered.length);
     }
     
     // Apply tab filter
     switch (activeTab) {
       case 'review':
-        // Show only emails that need review (issueCreationStatus === null)
-        filtered = filtered.filter(email => email.issueCreationStatus === null);
+        // Show only emails that need review (issueCreationStatus === "IN_REVIEW")
+        filtered = filtered.filter(email => email.issueCreationStatus === "IN_REVIEW");
+        console.log('Review tab - emails needing review (IN_REVIEW):', filtered.length);
         break;
       case 'all':
       default:
-        // Show only emails that have been processed (issueCreationStatus !== null)
-        filtered = filtered.filter(email => email.issueCreationStatus !== null);
+        // Show all emails regardless of status
+        // No filtering needed for 'all' tab
+        console.log('All tab - showing all emails:', filtered.length);
         break;
     }
     
@@ -183,8 +318,8 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
     console.log('building:', building);
     
     if (editableIssue.trim() && editableSummary.trim()) {
-      // Check if email needs review (issueCreationStatus === null means it needs review)
-      if (selectedEmail.issueCreationStatus === null) {
+      // Check if email needs review (issueCreationStatus === "IN_REVIEW" means it needs review)
+      if (selectedEmail.issueCreationStatus === "IN_REVIEW") {
         console.log('Creating issue via API...');
         // For review emails, create a new issue via API
         try {
@@ -207,12 +342,12 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
             if (selectedEmail?.id || selectedEmail?.emailId) {
               const emailId = selectedEmail?.emailId || selectedEmail?.id;
               updateEmail(emailId.toString(), { 
-                status: 'Completed',
-                aiSummary: editableSummary
-              });
+          status: 'Completed',
+          aiSummary: editableSummary
+        });
             }
-            
-            toast.success('Issue logged successfully!');
+        
+        toast.success('Issue logged successfully!');
           } else {
             toast.error(result.error || 'Failed to create issue');
           }
@@ -226,8 +361,8 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
         if (selectedEmail?.id || selectedEmail?.emailId) {
           const emailId = selectedEmail?.emailId || selectedEmail?.id;
           updateEmail(emailId.toString(), { 
-            aiSummary: editableSummary
-          });
+          aiSummary: editableSummary
+        });
         }
         toast.success('Issue updated successfully!');
       }
@@ -334,7 +469,7 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
         // Clear both main issue fields and additional issues
         setEditableIssue('');
         setEditableSummary('');
-        setNewIssues([{ title: '', summary: '' }]);
+      setNewIssues([{ title: '', summary: '' }]);
       } catch (error) {
         console.error('Error creating multiple issues:', error);
         toast.error('Failed to create issues');
@@ -359,7 +494,7 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
         <p className="text-muted-foreground">Manage building-related communications</p>
         
         {/* Show attention banner if there are emails needing review and banner is not dismissed */}
-        {apiEmails.filter(e => e.issueCreationStatus === null).length > 0 && showBanner && (
+        {apiEmails.filter(e => e.issueCreationStatus === "IN_REVIEW").length > 0 && showBanner && (
           <div className="mt-4 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-300 p-4 rounded-lg shadow-md">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
@@ -368,7 +503,7 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
                 </div>
                 <div>
                   <p className="text-orange-900 font-bold text-lg">
-                    {apiEmails.filter(e => e.issueCreationStatus === null).length} Email{apiEmails.filter(e => e.issueCreationStatus === null).length > 1 ? 's' : ''} Need{apiEmails.filter(e => e.issueCreationStatus === null).length === 1 ? 's' : ''} Immediate Review
+                    {apiEmails.filter(e => e.issueCreationStatus === "IN_REVIEW").length} Email{apiEmails.filter(e => e.issueCreationStatus === "IN_REVIEW").length > 1 ? 's' : ''} Need{apiEmails.filter(e => e.issueCreationStatus === "IN_REVIEW").length === 1 ? 's' : ''} Immediate Review
                   </p>
                   <p className="text-orange-700 text-sm">
                     Critical emails require manual review to ensure proper issue logging and response
@@ -410,9 +545,9 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
                   <TabsTrigger value="all">Emails</TabsTrigger>
                   <TabsTrigger value="review">
                     Need Review
-                    {apiEmails.filter(e => e.issueCreationStatus === null).length > 0 && (
+                    {apiEmails.filter(e => e.issueCreationStatus === "IN_REVIEW").length > 0 && (
                       <Badge variant="outline" className="ml-1 bg-orange-50 text-orange-700">
-                        {apiEmails.filter(e => e.issueCreationStatus === null).length}
+                        {apiEmails.filter(e => e.issueCreationStatus === "IN_REVIEW").length}
                       </Badge>
                     )}
                   </TabsTrigger>
@@ -432,14 +567,23 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => {
-                        // Remove emailId from URL
+                      onClick={async () => {
+                        console.log('X button clicked, loading all emails...');
+                        console.log('Current searchParams before removal:', searchParams.toString());
+                        
+                        // Remove emailId from URL using setSearchParams
                         const newSearchParams = new URLSearchParams(searchParams);
                         newSearchParams.delete('emailId');
-                        const newUrl = `${window.location.pathname}?${newSearchParams.toString()}`;
-                        window.history.replaceState({}, '', newUrl);
-                        // Force re-render by updating search params
-                        window.location.reload();
+                        console.log('New searchParams after removal:', newSearchParams.toString());
+                        setSearchParams(newSearchParams);
+                        
+                        // Clear selected email first
+                        setSelectedEmail(null);
+                        setIsFilteredByEmailId(false);
+                        
+                        // Load all emails
+                        await loadAllEmails();
+                        console.log('X button click completed');
                       }}
                       className="h-6 w-6 p-0 hover:bg-blue-200"
                     >
@@ -467,9 +611,11 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
                     <p className="text-sm text-gray-600">Loading emails...</p>
                   </div>
                 ) : (
-                  filteredEmails.map((email) => (
+                  filteredEmails.map((email, index) => {
+                    console.log(`Rendering email ${index}:`, { id: email.id, messageId: email.messageId, subject: email.subject, status: email.issueCreationStatus });
+                    return (
                     <div
-                      key={email.messageId}
+                      key={`${email.messageId}-${email.issueCreationStatus}-${index}`}
                     onClick={() => setSelectedEmail(email)}
                     className={`p-4 cursor-pointer border-b border-border hover:bg-muted/50 transition-colors ${
                         selectedEmail?.messageId === email.messageId ? 'bg-primary/5 border-l-4 border-l-primary' : ''
@@ -477,12 +623,12 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center space-x-2 min-w-0 flex-1">
-                          {email.issueCreationStatus === null ? (
+                          {email.issueCreationStatus === "IN_REVIEW" ? (
                           <Mail className="h-4 w-4 text-primary flex-shrink-0" />
                         ) : (
                           <MailOpen className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                         )}
-                          <span className={`text-sm truncate ${email.issueCreationStatus === null ? 'font-semibold' : 'text-foreground'}`}>
+                          <span className={`text-sm truncate ${email.issueCreationStatus === "IN_REVIEW" ? 'font-semibold' : 'text-foreground'}`}>
                             {email.fromEmail}
                         </span>
                         <Button
@@ -496,8 +642,8 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
                         >
                           <Copy className="h-3 w-3" />
                         </Button>
-                          {email.issueCreationStatus === null && <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0"></div>}
-                          {email.issueCreationStatus === null && (
+                          {email.issueCreationStatus === "IN_REVIEW" && <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0"></div>}
+                          {email.issueCreationStatus === "IN_REVIEW" && (
                           <Badge variant="outline" className="bg-orange-50 text-orange-700 text-xs flex-shrink-0">
                             Review
                           </Badge>
@@ -510,14 +656,15 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
                     <div className="mb-2">
                         <span className="text-xs text-muted-foreground break-all">ID: {email.messageId}</span>
                     </div>
-                      <h4 className={`text-sm mb-1 line-clamp-2 ${email.issueCreationStatus === null ? 'font-semibold' : 'text-foreground'}`}>
+                      <h4 className={`text-sm mb-1 line-clamp-2 ${email.issueCreationStatus === "IN_REVIEW" ? 'font-semibold' : 'text-foreground'}`}>
                       {email.subject}
                     </h4>
                     <p className="text-xs text-muted-foreground line-clamp-2 break-words">
                         {email.bodyText.substring(0, 100)}...
                     </p>
                   </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </CardContent>
@@ -545,12 +692,12 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
                 <Separator className="flex-shrink-0" />
                 <CardContent className="pt-4 flex-1 overflow-hidden">
                   <div className="h-full overflow-y-auto">
-                    <div className="prose prose-sm max-w-none">
-                      {selectedEmail.bodyText.split('\n').map((paragraph, index) => (
-                        <p key={index} className="mb-3 text-foreground leading-relaxed">
-                          {paragraph}
-                        </p>
-                      ))}
+                  <div className="prose prose-sm max-w-none">
+                    {selectedEmail.bodyText.split('\n').map((paragraph, index) => (
+                      <p key={index} className="mb-3 text-foreground leading-relaxed">
+                        {paragraph}
+                      </p>
+                    ))}
                     </div>
                   </div>
                 </CardContent>
@@ -580,8 +727,8 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
                    <div>
                      <div className="flex items-center justify-between mb-2">
                        <h4 className="font-medium text-foreground">Status</h4>
-                         <Badge className={selectedEmail.issueCreationStatus === null ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'}>
-                           {selectedEmail.issueCreationStatus === null ? 'Needs Review' : 'Issue Created'}
+                         <Badge className={selectedEmail.issueCreationStatus === "IN_REVIEW" ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'}>
+                           {selectedEmail.issueCreationStatus === "IN_REVIEW" ? 'Needs Review' : 'Issue Created'}
                          </Badge>
                        </div>
                        <Badge className={getPriorityColor(selectedEmail.associatedIssues.length > 0 ? selectedEmail.associatedIssues[0].issuePriority : 'Medium')}>
@@ -591,7 +738,7 @@ const EnhancedCommunicationsPanel = ({ emptyDataMode }: EnhancedCommunicationsPa
 
                    <Separator />
 
-                   {selectedEmail.issueCreationStatus === null ? (
+                   {selectedEmail.issueCreationStatus === "IN_REVIEW" ? (
                      /* Need Review Email - Manual Creation */
                      <div>
                        <h4 className="font-medium text-foreground mb-3">Manual Issue Creation</h4>

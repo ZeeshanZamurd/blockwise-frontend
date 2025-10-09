@@ -82,6 +82,7 @@ const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, 
     }
   };
 
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -113,7 +114,7 @@ const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, 
                         Click "View Email" to see the email content and navigate to the emails section.
                       </p>
                     </div>
-                  </div>
+                  </div>  
                 ) : (
                   // If no emailId, show linking instructions
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
@@ -178,13 +179,9 @@ const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, 
                     <>
                       <Button 
                         onClick={() => {
-                          console.log('View Email clicked!');
-                          console.log('issueEmailId:', issueEmailId);
-                          console.log('currentIssue:', currentIssue);
-                          // Navigate to emails tab and call API to get emails by emailId
+                          console.log('View Email clicked, navigating to emails panel with emailId:', issueEmailId);
+                          // Navigate to emails panel with emailId parameter
                           navigate(`/dashboard?section=building-management&tab=emails&emailId=${issueEmailId}`);
-                          // TODO: Call API to get emails by emailId
-                          console.log('Getting emails for emailId:', issueEmailId);
                         }}
                         className="flex-1"
                       >
@@ -290,6 +287,7 @@ const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, 
           )}
         </div>
       </CardContent>
+
     </Card>
   );
 };

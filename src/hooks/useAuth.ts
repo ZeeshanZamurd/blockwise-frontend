@@ -29,13 +29,66 @@ export const useAuth = () => {
       dispatch(setLoading(true));
       dispatch(clearError());
       
+      console.log('Attempting login with email:', email);
       const response = await api.post('/api/auth/login', { email, password });
-      const { token, user } = response.data;
+      const responseData = response.data;
       
-      dispatch(setAuth({ user, token }));
+      console.log('Login API response:', responseData);
       
-      return { success: true };
+      // Check if the API response indicates success
+      if (responseData.token && !responseData.error) {
+        // Successful login - extract user info from JWT token
+        try {
+          // Decode JWT token to get user information
+          const tokenPayload = JSON.parse(atob(responseData.token.split('.')[1]));
+          console.log('Decoded token payload:', tokenPayload);
+          
+          const user = {
+            userId: tokenPayload.userId || 14,
+            firstName: tokenPayload.firstName || 'User',
+            lastName: tokenPayload.lastName || 'Name',
+            email: tokenPayload.sub || email,
+            regBuilding: tokenPayload.buildingId ? true : false,
+            roleName: tokenPayload.role || 'USER',
+            buildingId: tokenPayload.buildingId,
+            buildingName: tokenPayload.buildingName,
+            uniqueBuildingEmail: tokenPayload.buildingEmail,
+            userName: tokenPayload.username
+          };
+          
+          dispatch(setAuth({ user, token: responseData.token }));
+          console.log('Login successful with user:', user);
+          return { success: true };
+        } catch (tokenError) {
+          console.error('Error decoding token:', tokenError);
+          // Fallback to basic user object
+          const user = {
+            userId: 14,
+            firstName: 'User',
+            lastName: 'Name',
+            email: email,
+            regBuilding: false,
+            roleName: 'USER'
+          };
+          dispatch(setAuth({ user, token: responseData.token }));
+          console.log('Login successful with fallback user');
+          return { success: true };
+        }
+      } else if (responseData.error) {
+        // API returned an error message
+        const errorMessage = responseData.error || 'Invalid email or password';
+        console.log('Login failed with error:', errorMessage);
+        dispatch(setError(errorMessage));
+        return { success: false, error: errorMessage };
+      } else {
+        // Unexpected response format
+        const errorMessage = 'Invalid response from server';
+        console.log('Unexpected login response format:', responseData);
+        dispatch(setError(errorMessage));
+        return { success: false, error: errorMessage };
+      }
     } catch (error: unknown) {
+      console.error('Login error:', error);
       const errorMessage = getErrorMessage(error, 'Login failed');
       dispatch(setError(errorMessage));
       return { success: false, error: errorMessage };

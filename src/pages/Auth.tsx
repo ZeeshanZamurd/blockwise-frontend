@@ -46,10 +46,26 @@ const Auth = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Basic validation
+    if (!email.trim()) {
+      toast.error('Please enter your email address');
+      return;
+    }
+    
+    if (!password.trim()) {
+      toast.error('Please enter your password');
+      return;
+    }
+    
+    console.log('Submitting login form with email:', email);
     const result = await login(email, password);
+    
     if (result.success) {
       toast.success('Login successful!');
       navigate(from, { replace: true });
+    } else {
+      // Error is already handled by the useEffect that watches the error state
+      console.log('Login failed:', result.error);
     }
   };
 
@@ -78,6 +94,13 @@ const Auth = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              
+              {/* Error Display */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+                  {error}
+                </div>
+              )}
               
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
