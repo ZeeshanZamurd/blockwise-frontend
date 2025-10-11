@@ -36,10 +36,7 @@ const StatusSelector: React.FC<StatusSelectorProps> = ({ currentStatus, onStatus
       <span className="text-sm font-medium text-gray-700">Status:</span>
       <Select value={currentStatus} onValueChange={onStatusChange}>
         <SelectTrigger className="w-40">
-          <div className="flex items-center space-x-2">
-            {getStatusIcon(currentStatus)}
-            <SelectValue />
-          </div>
+          <SelectValue />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="Not started">

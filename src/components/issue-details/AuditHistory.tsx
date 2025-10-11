@@ -1,6 +1,7 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { AlertTriangle, Mail, Calendar, Clock, MessageSquare } from 'lucide-react';
 
 interface AuditHistoryProps {
@@ -22,6 +23,7 @@ interface AuditEntry {
 }
 
 const AuditHistory: React.FC<AuditHistoryProps> = ({ auditHistory = [] }) => {
+  const [showAll, setShowAll] = useState(false);
   const defaultAuditHistory = [
     {
       id: 1,
@@ -59,6 +61,10 @@ const AuditHistory: React.FC<AuditHistoryProps> = ({ auditHistory = [] }) => {
 
   // Use API audit history if available, otherwise fallback to default
   const history = auditHistory.length > 0 ? auditHistory : defaultAuditHistory;
+  
+  // Show only first 3 items unless showAll is true
+  const displayedHistory = showAll ? history : history.slice(0, 3);
+  const hasMoreItems = history.length > 3;
 
   const getAuditIcon = (entry: AuditEntry) => {
     // Handle API format
@@ -88,7 +94,7 @@ const AuditHistory: React.FC<AuditHistoryProps> = ({ auditHistory = [] }) => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {history.map((entry) => {
+          {displayedHistory.map((entry) => {
             // Handle API format vs default format
             const isApiFormat = entry.actionName;
             const displayData = isApiFormat ? {
@@ -124,6 +130,20 @@ const AuditHistory: React.FC<AuditHistoryProps> = ({ auditHistory = [] }) => {
             );
           })}
         </div>
+        
+        {/* Show All Button */}
+        {hasMoreItems && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowAll(!showAll)}
+              className="w-full"
+            >
+              {showAll ? 'Show Less' : `Show All (${history.length})`}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

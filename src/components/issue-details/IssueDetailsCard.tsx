@@ -274,7 +274,7 @@ const IssueDetailsCard: React.FC<IssueDetailsCardProps> = ({ issue, onIssueUpdat
             )}
           </div>
           <div>
-            <div className="flex items-center justify-between mb-2">
+            {/* <div className="flex items-center justify-between mb-2">
               <h4 className="font-medium text-gray-900">Latest Update</h4>
               {isEditingUpdate ? (
                 <div className="flex items-center space-x-2">
@@ -314,9 +314,8 @@ const IssueDetailsCard: React.FC<IssueDetailsCardProps> = ({ issue, onIssueUpdat
                   <span>Edit</span>
                 </Button>
               )}
-            </div>
-            
-            {isEditingUpdate ? (
+            </div> 
+             {isEditingUpdate ? (
               <Textarea
                 value={editedUpdate}
                 onChange={(e) => setEditedUpdate(e.target.value)}
@@ -336,7 +335,7 @@ const IssueDetailsCard: React.FC<IssueDetailsCardProps> = ({ issue, onIssueUpdat
               <p className="text-gray-700 text-sm mb-2">
                 {issue.latestUpdate || issue.lastUpdate || 'No updates yet. Click Edit to add an update.'}
               </p>
-            )}
+            )} */}
             
             {(issue.latestUpdate || issue.lastUpdate) && (
               <div className="flex items-center justify-between text-xs text-gray-500">

@@ -10,7 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Calendar as CalendarIcon, Clock, MapPin, User, Mail, AlertTriangle, Phone, Repeat, CheckCircle } from 'lucide-react';
-import { useCalendar } from '@/hooks/useCalendar';
+import { useCalendar, CalendarEvent } from '@/hooks/useCalendar';
+import { useToast } from '@/hooks/use-toast';
 
 interface CalendarSectionProps {
   emptyDataMode?: boolean;
@@ -18,8 +19,9 @@ interface CalendarSectionProps {
 
 const CalendarSection = ({ emptyDataMode }: CalendarSectionProps) => {
   const { events, isLoading, error, fetchEvents, createEvent, forceRefresh } = useCalendar();
+  const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
   const [isCreatingEvent, setIsCreatingEvent] = useState(false);
   
@@ -143,6 +145,12 @@ const CalendarSection = ({ emptyDataMode }: CalendarSectionProps) => {
     const matchingEvents = events?.filter(event => {
       console.log('Comparing event date:', event.date, 'with target date:', dateStr);
       return event.date === dateStr;
+    }).slice().sort((a, b) => {
+      // Sort by time if both have time, otherwise by title
+      if (a.time && b.time) {
+        return a.time.localeCompare(b.time);
+      }
+      return a.title.localeCompare(b.title);
     }) || [];
     
     console.log('Found events for date:', dateStr, ':', matchingEvents);
@@ -170,32 +178,48 @@ const CalendarSection = ({ emptyDataMode }: CalendarSectionProps) => {
       const eventDate = new Date(year, month - 1, day); // month is 0-indexed
       
       return eventDate >= today && eventDate <= nextWeek;
-    }).slice(0, 4) || [];
+    }).slice().sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).slice(0, 4) || [];
   };
 
-  const handleEventClick = (event: any) => {
+  const handleEventClick = (event: CalendarEvent) => {
     setSelectedEvent(event);
   };
 
   const handleCreateEvent = async () => {
     // Basic validation
     if (!newEvent.title.trim()) {
-      alert('Please enter an event title');
+      toast({
+        title: "Validation Error",
+        description: "Please enter an event title",
+        variant: "destructive",
+      });
       return;
     }
     
     if (!newEvent.date) {
-      alert('Please select a date');
+      toast({
+        title: "Validation Error",
+        description: "Please select a date",
+        variant: "destructive",
+      });
       return;
     }
     
     if (!newEvent.time) {
-      alert('Please select a time');
+      toast({
+        title: "Validation Error",
+        description: "Please select a time",
+        variant: "destructive",
+      });
       return;
     }
     
     if (!newEvent.type) {
-      alert('Please select an event type');
+      toast({
+        title: "Validation Error",
+        description: "Please select an event type",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -213,9 +237,13 @@ const CalendarSection = ({ emptyDataMode }: CalendarSectionProps) => {
       
       if (result.success) {
         console.log('Event created successfully:', result.event);
-        alert('Event created successfully!');
+        toast({
+          title: "Success",
+          description: "Event created successfully!",
+          variant: "default",
+        });
         
-        // Reset form and close dialog
+        // Reset form
         setNewEvent({
           title: '',
           date: '',
@@ -223,17 +251,29 @@ const CalendarSection = ({ emptyDataMode }: CalendarSectionProps) => {
           type: '',
           description: ''
         });
-        setIsAddEventOpen(false);
+        
+        // Close dialog after a short delay to let user see the toast
+        setTimeout(() => {
+          setIsAddEventOpen(false);
+        }, 500);
         
         // Refresh events list
         await fetchEvents();
       } else {
         console.error('Failed to create event:', result.error);
-        alert(`Failed to create event: ${result.error}`);
+        toast({
+          title: "Error",
+          description: `Failed to create event: ${result.error}`,
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error('Error creating event:', error);
-      alert('Failed to create event');
+      toast({
+        title: "Error",
+        description: "Failed to create event",
+        variant: "destructive",
+      });
     } finally {
       setIsCreatingEvent(false);
     }
@@ -358,7 +398,7 @@ const CalendarSection = ({ emptyDataMode }: CalendarSectionProps) => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {events?.slice(0, 4).map((event, index) => (
+            {events?.slice().sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).slice(0, 4).map((event, index) => (
               <Card 
                 key={event.id}
                 className="p-4 hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-blue-500"
@@ -558,7 +598,13 @@ const CalendarSection = ({ emptyDataMode }: CalendarSectionProps) => {
               const day = String(currentDate.getDate()).padStart(2, '0');
               const dateStr = `${year}-${month}-${day}`;
               
-              const dayEvents = events?.filter(event => event.date === dateStr) || [];
+              const dayEvents = events?.filter(event => event.date === dateStr).slice().sort((a, b) => {
+                // Sort by time if both have time, otherwise by title
+                if (a.time && b.time) {
+                  return a.time.localeCompare(b.time);
+                }
+                return a.title.localeCompare(b.title);
+              }) || [];
               
               return (
                 <div 
@@ -629,7 +675,7 @@ const CalendarSection = ({ emptyDataMode }: CalendarSectionProps) => {
                     {selectedEvent.time && ` at ${selectedEvent.time}`}
                   </div>
                   <div className="text-xs text-gray-500">
-                    Status: {selectedEvent.status}
+                    Status: Scheduled
                   </div>
                 </div>
                 <div>
@@ -642,11 +688,11 @@ const CalendarSection = ({ emptyDataMode }: CalendarSectionProps) => {
               </div>
 
               {/* Attendees */}
-              {selectedEvent.attendees && (
+              {selectedEvent.contact && (
                 <div>
-                  <Label>Attendees</Label>
+                  <Label>Contact</Label>
                   <div className="text-sm text-gray-700 mt-1">
-                    {selectedEvent.attendees}
+                    {selectedEvent.contact}
                   </div>
                 </div>
               )}
@@ -661,23 +707,19 @@ const CalendarSection = ({ emptyDataMode }: CalendarSectionProps) => {
 
               {/* Additional Details */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {selectedEvent.transcript && (
+                {selectedEvent.contactPhone && (
                   <div>
-                    <Label>Transcript</Label>
+                    <Label>Phone</Label>
                     <div className="text-sm text-gray-700 mt-1">
-                      <a href={selectedEvent.transcript} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                        View Transcript
-                      </a>
+                      {selectedEvent.contactPhone}
                     </div>
                   </div>
                 )}
-                {selectedEvent.videoUrl && (
+                {selectedEvent.contactEmail && (
                   <div>
-                    <Label>Video Recording</Label>
+                    <Label>Email</Label>
                     <div className="text-sm text-gray-700 mt-1">
-                      <a href={selectedEvent.videoUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                        Watch Video
-                      </a>
+                      {selectedEvent.contactEmail}
                     </div>
                   </div>
                 )}

@@ -11,7 +11,15 @@ import { useIssues } from '@/contexts/IssuesContext';
 
 interface LinkedIssuesProps {
   issueId: string;
-  linkedIssues?: any[];
+  linkedIssues?: Array<{
+    id: string | number;
+    issueName?: string;
+    issueStatus?: string;
+    createdDate?: string;
+    title?: string;
+    status?: string;
+    dateCreated?: string;
+  }>;
 }
 
 const LinkedIssues: React.FC<LinkedIssuesProps> = ({ issueId, linkedIssues = [] }) => {
@@ -19,6 +27,7 @@ const LinkedIssues: React.FC<LinkedIssuesProps> = ({ issueId, linkedIssues = [] 
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
   const [issueSearchTerm, setIssueSearchTerm] = useState('');
   const [selectedIssueId, setSelectedIssueId] = useState('');
+  const [showAll, setShowAll] = useState(false);
 
   // Debug logging
   console.log('LinkedIssues component:', {
@@ -29,10 +38,10 @@ const LinkedIssues: React.FC<LinkedIssuesProps> = ({ issueId, linkedIssues = [] 
   });
 
   // Use API linked issues data if available, otherwise fallback to context issues
-  const currentIssue = issues.find(i => i.id === issueId || i.id === parseInt(issueId));
+  const currentIssue = issues.find(i => i.id === issueId);
   const linkedIssuesList = linkedIssues.length > 0 ? linkedIssues : 
     (currentIssue?.linkedIssueIds ? 
-      issues.filter(issue => currentIssue.linkedIssueIds.includes(issue.id) || currentIssue.linkedIssueIds.includes(issue.id.toString())) : 
+      issues.filter(issue => currentIssue.linkedIssueIds.includes(issue.id)) : 
       []);
 
   console.log('LinkedIssues processed:', {
@@ -41,8 +50,12 @@ const LinkedIssues: React.FC<LinkedIssuesProps> = ({ issueId, linkedIssues = [] 
     linkedIssuesListLength: linkedIssuesList.length
   });
 
+  // Show only first 3 items unless showAll is true
+  const displayedLinkedIssues = showAll ? linkedIssuesList : linkedIssuesList.slice(0, 3);
+  const hasMoreItems = linkedIssuesList.length > 3;
+
   const filteredIssues = issues.filter(issue =>
-    issue.id !== issueId && issue.id !== parseInt(issueId) && (
+    issue.id !== issueId && (
       issue.id.toLowerCase().includes(issueSearchTerm.toLowerCase()) ||
       issue.title.toLowerCase().includes(issueSearchTerm.toLowerCase()) ||
       issue.summary.toLowerCase().includes(issueSearchTerm.toLowerCase())
@@ -61,8 +74,8 @@ const LinkedIssues: React.FC<LinkedIssuesProps> = ({ issueId, linkedIssues = [] 
   };
 
   const handleIssueIdInput = (inputIssueId: string) => {
-    const issue = issues.find(i => i.id === inputIssueId || i.id === parseInt(inputIssueId));
-    if (issue && issue.id !== issueId && issue.id !== parseInt(issueId)) {
+    const issue = issues.find(i => i.id === inputIssueId);
+    if (issue && issue.id !== issueId) {
       linkIssueToIssue(issueId, inputIssueId);
       linkIssueToIssue(inputIssueId, issueId);
       setIssueSearchTerm('');
@@ -172,8 +185,8 @@ const LinkedIssues: React.FC<LinkedIssuesProps> = ({ issueId, linkedIssues = [] 
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {linkedIssuesList.length > 0 ? (
-            linkedIssuesList.map((linkedIssue) => {
+          {displayedLinkedIssues.length > 0 ? (
+            displayedLinkedIssues.map((linkedIssue) => {
               // Handle both API linked issue format and context issue format
               const isApiFormat = linkedIssue.issueName;
               const issue = isApiFormat ? {
@@ -214,6 +227,20 @@ const LinkedIssues: React.FC<LinkedIssuesProps> = ({ issueId, linkedIssues = [] 
             </div>
           )}
         </div>
+        
+        {/* Show All Button */}
+        {hasMoreItems && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowAll(!showAll)}
+              className="w-full"
+            >
+              {showAll ? 'Show Less' : `Show All (${linkedIssuesList.length})`}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

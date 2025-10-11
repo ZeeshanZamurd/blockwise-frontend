@@ -49,28 +49,32 @@ const EnhancedIssueLog = ({ emptyDataMode = false }: EnhancedIssueLogProps) => {
     };
   }, []);
 
-  // Simple fetch when building data is available
+  // Simple fetch when building data is available - only if no status filter is active
   useEffect(() => {
     console.log('EnhancedIssueLog useEffect triggered:', {
       buildingId: building?.buildingId,
       issuesLength: issues.length,
       isIssuesLoading: isIssuesLoading,
-      hasAttemptedFetch: hasAttemptedFetch
+      hasAttemptedFetch: hasAttemptedFetch,
+      filterStatus: filterStatus
     });
     
-    // Only fetch if we have building data, no issues, not loading, and haven't attempted fetch yet
-    if (building?.buildingId && issues.length === 0 && !isIssuesLoading && !hasAttemptedFetch) {
+    // Only fetch if we have building data, no issues, not loading, haven't attempted fetch yet, AND status is 'live'
+    if (building?.buildingId && issues.length === 0 && !isIssuesLoading && !hasAttemptedFetch && filterStatus === 'live') {
       console.log('Fetching issues for building:', building.buildingId);
       setHasAttemptedFetch(true);
       fetchIssues(building.buildingId);
     }
-  }, [building?.buildingId, issues.length, isIssuesLoading, hasAttemptedFetch, fetchIssues]);
+  }, [building?.buildingId, issues.length, isIssuesLoading, hasAttemptedFetch, fetchIssues, filterStatus]);
 
   // Handle priority filter changes
   useEffect(() => {
     console.log('Priority filter changed:', filterPriority);
     
     if (building?.buildingId) {
+      // Reset the fetch attempt flag when filter changes
+      setHasAttemptedFetch(false);
+      
       if (filterPriority !== 'all') {
         console.log('Fetching issues by priority:', filterPriority, 'for building:', building.buildingId);
         getIssuesByBuildingIdAndPriority(building.buildingId, filterPriority);
@@ -86,6 +90,9 @@ const EnhancedIssueLog = ({ emptyDataMode = false }: EnhancedIssueLogProps) => {
         console.log('Status filter changed:', filterStatus);
 
         if (building?.buildingId) {
+          // Reset the fetch attempt flag when filter changes
+          setHasAttemptedFetch(false);
+          
           if (filterStatus === 'live') {
             console.log('Status filter set to live, fetching all issues for building:', building.buildingId);
             fetchIssues(building.buildingId);

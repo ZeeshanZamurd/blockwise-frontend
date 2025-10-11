@@ -74,38 +74,38 @@ const EditableBlockDetails = ({ emptyDataMode = false }: EditableBlockDetailsPro
 
     // Add additional sections for missing data
     sections.push(
-      {
-        id: 'managing-agent',
-        title: 'Managing Agent',
-        icon: User,
-        fields: [
-          { id: 'company', label: 'Company', value: '-', type: 'text' },
-          { id: 'manager', label: 'Building Manager', value: '-', type: 'text' },
-          { id: 'phone', label: 'Phone', value: '-', type: 'phone' },
-          { id: 'email', label: 'Email', value: '-', type: 'email' }
-        ]
-      },
-      {
-        id: 'building-codes',
-        title: 'Building Codes / Lock Boxes',
-        icon: Key,
-        fields: [
-          { id: 'main-gate', label: 'Main Gate Code', value: '-', type: 'code' },
-          { id: 'side-gate', label: 'Side Gate Code', value: '-', type: 'code' },
-          { id: 'emergency', label: 'Emergency Code', value: '-', type: 'code' }
-        ]
-      },
-      {
-        id: 'building-plans',
-        title: 'Building Plans & Documents',
-        icon: FileText,
-        fields: [],
-        documents: [
-          { name: 'Floor Plan' },
-          { name: 'Building Layout' },
-          { name: 'Emergency Procedures' }
-        ]
-      }
+      // {
+      //   id: 'managing-agent',
+      //   title: 'Managing Agent',
+      //   icon: User,
+      //   fields: [
+      //     { id: 'company', label: 'Company', value: '-', type: 'text' },
+      //     { id: 'manager', label: 'Building Manager', value: '-', type: 'text' },
+      //     { id: 'phone', label: 'Phone', value: '-', type: 'phone' },
+      //     { id: 'email', label: 'Email', value: '-', type: 'email' }
+      //   ]
+      // },
+      // {
+      //   id: 'building-codes',
+      //   title: 'Building Codes / Lock Boxes',
+      //   icon: Key,
+      //   fields: [
+      //     { id: 'main-gate', label: 'Main Gate Code', value: '-', type: 'code' },
+      //     { id: 'side-gate', label: 'Side Gate Code', value: '-', type: 'code' },
+      //     { id: 'emergency', label: 'Emergency Code', value: '-', type: 'code' }
+      //   ]
+      // },
+      // {
+      //   id: 'building-plans',
+      //   title: 'Building Plans & Documents',
+      //   icon: FileText,
+      //   fields: [],
+      //   documents: [
+      //     { name: 'Floor Plan' },
+      //     { name: 'Building Layout' },
+      //     { name: 'Emergency Procedures' }
+      //   ]
+      // }
     );
 
     return sections;
@@ -229,7 +229,7 @@ const EditableBlockDetails = ({ emptyDataMode = false }: EditableBlockDetailsPro
           <p className="text-muted-foreground">Comprehensive building information and management details</p>
         </div>
         
-        <div className="flex gap-2 mt-4 md:mt-0">
+        {/* <div className="flex gap-2 mt-4 md:mt-0">
           <Button 
             variant="outline" 
             onClick={() => {
@@ -250,7 +250,7 @@ const EditableBlockDetails = ({ emptyDataMode = false }: EditableBlockDetailsPro
               </>
             )}
           </Button>
-        </div>
+        </div> */}
         
         <Alert className="md:max-w-md mt-4 md:mt-0">
           <Mail className="h-4 w-4" />
@@ -277,12 +277,12 @@ const EditableBlockDetails = ({ emptyDataMode = false }: EditableBlockDetailsPro
         </Alert>
       </div>
 
-      <div className="flex justify-end">
+      {/* <div className="flex justify-end">
         <Button onClick={addSection} variant="outline">
           <Plus className="h-4 w-4 mr-2" />
           Add Section
         </Button>
-      </div>
+      </div> */}
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {sections.map((section) => {
@@ -295,7 +295,7 @@ const EditableBlockDetails = ({ emptyDataMode = false }: EditableBlockDetailsPro
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Icon className="h-5 w-5" />
-                    {isEditingTitle ? (
+                    {/* {isEditingTitle ? (
                       <Input
                         value={section.title}
                         onChange={(e) => updateSectionTitle(section.id, e.target.value)}
@@ -304,30 +304,30 @@ const EditableBlockDetails = ({ emptyDataMode = false }: EditableBlockDetailsPro
                         className="text-lg font-semibold"
                         autoFocus
                       />
-                    ) : (
+                    ) : ( */}
                       <span 
                         className="cursor-pointer hover:text-blue-600"
                         onClick={() => setEditingSection(section.id)}
                       >
                         {section.title}
                       </span>
-                    )}
+                     {/* )} */}
                   </div>
                   <div className="flex gap-2">
-                    <Button
+                    {/* <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setEditingSection(isEditingTitle ? null : section.id)}
                     >
                       <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
+                    </Button> */}
+                    {/* <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => addField(section.id)}
                     >
                       <Plus className="h-4 w-4" />
-                    </Button>
+                    </Button> */}
                   </div>
                 </CardTitle>
               </CardHeader>

@@ -54,6 +54,7 @@ const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, 
   const [isLinkingEmail, setIsLinkingEmail] = useState(false);
   const [apiEmails, setApiEmails] = useState<ApiEmail[]>([]);
   const [isLoadingApiEmails, setIsLoadingApiEmails] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
   // Load API emails when component mounts
   React.useEffect(() => {
@@ -85,6 +86,10 @@ const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, 
     (currentIssue?.linkedEmailIds && currentIssue.linkedEmailIds.length > 0) 
       ? emails.filter(email => currentIssue.linkedEmailIds?.includes(email.id))
       : [];
+
+  // Show only first 3 items unless showAll is true
+  const displayedLinkedEmails = showAll ? linkedEmails : linkedEmails.slice(0, 3);
+  const hasMoreItems = linkedEmails.length > 3;
 
   // Use API emails for filtering instead of context emails
   const filteredEmails = apiEmails.filter(email =>
@@ -363,8 +368,8 @@ const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, 
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {linkedEmails.length > 0 ? (
-            linkedEmails.map((communication, index) => {
+          {displayedLinkedEmails.length > 0 ? (
+            displayedLinkedEmails.map((communication, index) => {
               // Handle both API communication format and context email format
               const isApiFormat = communication.messageId;
               const email = isApiFormat ? {
@@ -421,6 +426,20 @@ const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, 
             </div>
           )}
         </div>
+        
+        {/* Show All Button */}
+        {hasMoreItems && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowAll(!showAll)}
+              className="w-full"
+            >
+              {showAll ? 'Show Less' : `Show All (${linkedEmails.length})`}
+            </Button>
+          </div>
+        )}
       </CardContent>
 
     </Card>

@@ -4,6 +4,7 @@ interface Role {
   id: number;
   roleName: string;
   status: boolean;
+  roleDefinition: string;
   roleDesc: string;
   createdAt: string;
   updatedAt: string;
