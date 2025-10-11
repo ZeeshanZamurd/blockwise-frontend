@@ -95,17 +95,17 @@ const EditableBlockDetails = ({ emptyDataMode = false }: EditableBlockDetailsPro
       //     { id: 'emergency', label: 'Emergency Code', value: '-', type: 'code' }
       //   ]
       // },
-      // {
-      //   id: 'building-plans',
-      //   title: 'Building Plans & Documents',
-      //   icon: FileText,
-      //   fields: [],
-      //   documents: [
-      //     { name: 'Floor Plan' },
-      //     { name: 'Building Layout' },
-      //     { name: 'Emergency Procedures' }
-      //   ]
-      // }
+      {
+        id: 'building-plans',
+        title: 'Building Plans & Documents',
+        icon: FileText,
+        fields: [],
+        documents: [
+          { name: 'Floor Plan' },
+          { name: 'Building Layout' },
+          { name: 'Emergency Procedures' }
+        ]
+      }
     );
 
     return sections;

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -7,153 +7,45 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { FileText, Search, Download, Eye, Calendar, User, Upload, Plus, Shield, Building, AlertTriangle, FileCheck, Edit, Grid, List, Folder, Archive } from 'lucide-react';
+import { FileText, Search, Download, Eye, Calendar, User, Upload, Plus, Shield, Building, AlertTriangle, FileCheck, Edit, Grid, List, Folder, Archive, RefreshCw } from 'lucide-react';
+import { useDocument } from '@/hooks/useDocument';
+import { toast } from 'sonner';
 
 interface DocumentVaultProps {
   emptyDataMode?: boolean;
 }
 
+interface Document {
+  id: number;
+  title: string;
+  category: string | null;
+  type: string;
+  size: string | null;
+  uploadDate: string;
+  lastModified: string;
+  uploadedBy: string;
+  description: string | null;
+  tags: string[] | null;
+  status: string;
+  expiryDate: string | null;
+  icon: React.ElementType;
+  color: string;
+  folderId: string | null;
+  archived: boolean;
+  fileUrl?: string;
+  filePath?: string;
+}
+
 const DocumentVault = ({ emptyDataMode }: DocumentVaultProps) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedDocument, setSelectedDocument] = useState<any>(null);
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [editingExpiry, setEditingExpiry] = useState<string | null>(null);
   const [tempExpiryDate, setTempExpiryDate] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const { uploadDocument, uploadMultipleDocuments, fetchDocuments, isUploading, uploadProgress, isLoading } = useDocument();
 
-  const initialDocuments = [
-    {
-      id: 1,
-      title: 'Building Leasehold Document',
-      category: 'Legal',
-      type: 'PDF',
-      size: '2.4 MB',
-      uploadDate: '2024-01-15',
-      lastModified: '2024-01-15',
-      uploadedBy: 'Rob Cox',
-      description: 'Original leasehold agreement for the building including all terms and conditions',
-      tags: ['leasehold', 'legal', 'agreement'],
-      status: 'Current',
-      expiryDate: null,
-      icon: Building,
-      color: 'bg-blue-100 text-blue-800'
-    },
-    {
-      id: 2,
-      title: 'Fire Safety Certificate',
-      category: 'Compliance',
-      type: 'PDF',
-      size: '845 KB',
-      uploadDate: '2024-06-01',
-      lastModified: '2024-06-01',
-      uploadedBy: 'Fire Safety Compliance Ltd',
-      description: 'Annual fire safety certificate confirming building compliance with fire regulations',
-      tags: ['fire safety', 'compliance', 'certificate'],
-      status: 'Valid',
-      expiryDate: '2025-06-01',
-      icon: Shield,
-      color: 'bg-red-100 text-red-800'
-    },
-    {
-      id: 3,
-      title: 'Gas Safety Certificate',
-      category: 'Compliance',
-      type: 'PDF',
-      size: '512 KB',
-      uploadDate: '2024-05-20',
-      lastModified: '2024-05-20',
-      uploadedBy: 'Thames Valley Lifts',
-      description: 'Annual gas safety inspection certificate for all communal gas installations',
-      tags: ['gas safety', 'compliance', 'certificate'],
-      status: 'Expiring Soon',
-      expiryDate: '2024-07-15',
-      icon: AlertTriangle,
-      color: 'bg-yellow-100 text-yellow-800'
-    },
-    {
-      id: 4,
-      title: 'EWS1 Form - External Wall Survey',
-      category: 'Safety',
-      type: 'PDF',
-      size: '1.8 MB',
-      uploadDate: '2024-03-10',
-      lastModified: '2024-03-10',
-      uploadedBy: 'Building Safety Surveyors Ltd',
-      description: 'External Wall System survey form confirming building safety for mortgage and insurance purposes',
-      tags: ['EWS1', 'building safety', 'survey', 'mortgage'],
-      status: 'Current',
-      expiryDate: '2026-03-10',
-      icon: FileCheck,
-      color: 'bg-green-100 text-green-800'
-    },
-    {
-      id: 5,
-      title: 'Electrical Installation Certificate',
-      category: 'Safety',
-      type: 'PDF',
-      size: '634 KB',
-      uploadDate: '2024-04-05',
-      lastModified: '2024-04-05',
-      uploadedBy: 'PowerTech Electrical',
-      description: 'Electrical installation safety certificate for communal areas and systems',
-      tags: ['electrical', 'safety', 'installation'],
-      status: 'Current',
-      expiryDate: '2029-04-05',
-      icon: Shield,
-      color: 'bg-purple-100 text-purple-800'
-    },
-    {
-      id: 6,
-      title: 'Building Insurance Policy',
-      category: 'Insurance',
-      type: 'PDF',
-      size: '3.2 MB',
-      uploadDate: '2024-02-28',
-      lastModified: '2024-02-28',
-      uploadedBy: 'Metro Insurance Brokers',
-      description: 'Comprehensive building insurance policy covering structure, public liability, and management liability',
-      tags: ['insurance', 'policy', 'coverage'],
-      status: 'Current',
-      expiryDate: '2025-02-28',
-      icon: Shield,
-      color: 'bg-indigo-100 text-indigo-800'
-    },
-    {
-      id: 7,
-      title: 'Building Floor Plans',
-      category: 'Plans',
-      type: 'PDF',
-      size: '4.7 MB',
-      uploadDate: '2024-01-20',
-      lastModified: '2024-01-20',
-      uploadedBy: 'Architectural Plans Ltd',
-      description: 'Detailed floor plans showing all levels, units, and communal areas of the building',
-      tags: ['floor plans', 'architecture', 'layout'],
-      status: 'Current',
-      expiryDate: null,
-      icon: Building,
-      color: 'bg-teal-100 text-teal-800'
-    },
-    {
-      id: 8,
-      title: 'Site and Grounds Map',
-      category: 'Plans',
-      type: 'PDF',
-      size: '2.1 MB',
-      uploadDate: '2024-01-20',
-      lastModified: '2024-01-20',
-      uploadedBy: 'Architectural Plans Ltd',
-      description: 'Comprehensive site map showing building location, boundaries, gardens, and parking areas',
-      tags: ['site map', 'grounds', 'boundaries'],
-      status: 'Current',
-      expiryDate: null,
-      icon: Building,
-      color: 'bg-teal-100 text-teal-800'
-    }
-];
-
-  // Empty data adjustments
-  const emptyDocuments = emptyDataMode ? [] : initialDocuments;
-  const [documents, setDocuments] = useState<any[]>(emptyDocuments.map((d) => ({ ...d, folderId: null as string | null, archived: false })));
+  // Initialize with empty array - will be populated from API
+  const [documents, setDocuments] = useState<Document[]>([]);
   const [folders, setFolders] = useState<{ id: string; name: string }[]>([
     { id: 'f-fire', name: 'Fire Safety' },
   ]);
@@ -164,10 +56,29 @@ const DocumentVault = ({ emptyDataMode }: DocumentVaultProps) => {
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
   const [tempTitle, setTempTitle] = useState('');
 
+  // Fetch documents from API on component mount
+  useEffect(() => {
+    const loadDocuments = async () => {
+      if (!emptyDataMode) {
+        console.log('Loading documents from API...');
+        const result = await fetchDocuments();
+        if (result.success && result.data) {
+          console.log('Documents loaded successfully:', result.data);
+          setDocuments(result.data);
+        } else {
+          console.error('Failed to load documents:', result.error);
+          toast.error(`Failed to load documents: ${result.error}`);
+        }
+      }
+    };
+    
+    loadDocuments();
+  }, [emptyDataMode, fetchDocuments]);
+
   const handleCreateFolder = () => {
     const name = newFolderName.trim();
     if (!name) return;
-    const id = (crypto as any).randomUUID ? (crypto as any).randomUUID() : `f-${Date.now()}`;
+    const id = crypto.randomUUID ? crypto.randomUUID() : `f-${Date.now()}`;
     setFolders((prev) => [...prev, { id, name }]);
     setNewFolderName('');
   };
@@ -190,7 +101,8 @@ const DocumentVault = ({ emptyDataMode }: DocumentVaultProps) => {
     setTempTitle('');
   };
 
-  const getCategoryColor = (category: string) => {
+  const getCategoryColor = (category: string | null) => {
+    if (!category) return 'bg-gray-100 text-gray-800';
     switch (category.toLowerCase()) {
       case 'legal': return 'bg-blue-100 text-blue-800';
       case 'compliance': return 'bg-red-100 text-red-800';
@@ -216,8 +128,8 @@ const filteredDocuments = documents
     .filter((doc) => (showArchived ? true : !doc.archived))
     .filter((doc) =>
       doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doc.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doc.tags.some((tag: string) => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+      (doc.category && doc.category.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (doc.tags && doc.tags.length > 0 && doc.tags.some((tag: string) => tag.toLowerCase().includes(searchTerm.toLowerCase())))
     );
 
   const getDaysUntilExpiry = (expiryDate: string | null) => {
@@ -279,6 +191,60 @@ const filteredDocuments = documents
 
   const certificateStats = getCertificateStats();
 
+  const handleFileUpload = async (file: File) => {
+    try {
+      const result = await uploadDocument(file, {
+        onSuccess: async (response) => {
+          console.log('Document uploaded successfully:', response);
+          toast.success(`Document "${file.name}" uploaded successfully!`);
+          
+          // Refresh the documents list from API
+          const result = await fetchDocuments();
+          if (result.success && result.data) {
+            setDocuments(result.data);
+          }
+        },
+        onError: (error) => {
+          console.error('Document upload failed:', error);
+          toast.error(`Failed to upload document: ${error}`);
+        }
+      });
+
+      return result;
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('An error occurred during upload');
+    }
+  };
+
+  const handleMultipleFileUpload = async (files: FileList) => {
+    const fileArray = Array.from(files);
+    
+    try {
+      const results = await uploadMultipleDocuments(fileArray, {
+        onSuccess: async (response) => {
+          console.log('Multiple documents uploaded successfully:', response);
+          toast.success(`${fileArray.length} documents uploaded successfully!`);
+          
+          // Refresh the documents list from API
+          const result = await fetchDocuments();
+          if (result.success && result.data) {
+            setDocuments(result.data);
+          }
+        },
+        onError: (error) => {
+          console.error('Multiple document upload failed:', error);
+          toast.error(`Failed to upload documents: ${error}`);
+        }
+      });
+
+      return results;
+    } catch (error) {
+      console.error('Multiple upload error:', error);
+      toast.error('An error occurred during upload');
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Certificate Summary Cards */}
@@ -329,6 +295,32 @@ const filteredDocuments = documents
           <p className="text-gray-600">Secure storage for all building-related documents</p>
         </div>
         <div className="flex items-center space-x-2">
+          <Button 
+            variant="outline" 
+            onClick={async () => {
+              console.log('Manual refresh triggered');
+              const result = await fetchDocuments();
+              if (result.success && result.data) {
+                setDocuments(result.data);
+                toast.success('Documents refreshed successfully!');
+              } else {
+                toast.error(`Failed to refresh documents: ${result.error}`);
+              }
+            }}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                Refreshing...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </>
+            )}
+          </Button>
           <Button variant="outline" onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}>
             {viewMode === 'grid' ? <List className="h-4 w-4" /> : <Grid className="h-4 w-4" />}
           </Button>
@@ -339,22 +331,59 @@ const filteredDocuments = documents
               const input = document.createElement('input');
               input.type = 'file';
               input.multiple = true;
-              input.accept = '.pdf,.doc,.docx,.jpg,.jpeg,.png';
+              input.accept = '.pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif';
               input.onchange = (e) => {
                 const files = (e.target as HTMLInputElement).files;
-                if (files) {
+                if (files && files.length > 0) {
                   console.log('Files selected:', files);
-                  // In a real app, handle file upload here
+                  if (files.length === 1) {
+                    handleFileUpload(files[0]);
+                  } else {
+                    handleMultipleFileUpload(files);
+                  }
                 }
               };
               input.click();
             }}
+            disabled={isUploading}
           >
-            <Upload className="h-4 w-4 mr-2" />
-            Upload Document
+            {isUploading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Uploading... ({uploadProgress}%)
+              </>
+            ) : (
+              <>
+                <Upload className="h-4 w-4 mr-2" />
+                Upload Document
+              </>
+            )}
           </Button>
         </div>
       </div>
+
+      {/* Upload Progress Indicator */}
+      {isUploading && (
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+              <div className="flex-1">
+                <div className="flex justify-between text-sm text-gray-600 mb-1">
+                  <span>Uploading document...</span>
+                  <span>{uploadProgress}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                    style={{ width: `${uploadProgress}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Simple Folder Organization */}
       <Card>
@@ -472,8 +501,20 @@ const filteredDocuments = documents
         </Card>
       )}
 
+      {/* Loading State */}
+      {isLoading && (
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-center space-x-3">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+              <p className="text-gray-600">Loading documents...</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Documents View */}
-      {viewMode === 'grid' ? (
+      {!isLoading && viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredDocuments.map((document) => {
             const Icon = document.icon;
@@ -490,7 +531,7 @@ const filteredDocuments = documents
                       <div>
                         <CardTitle className="text-lg">{document.title}</CardTitle>
                         <Badge className={getCategoryColor(document.category)} variant="outline">
-                          {document.category}
+                          {document.category || 'General'}
                         </Badge>
                       </div>
                     </div>
@@ -549,7 +590,7 @@ const filteredDocuments = documents
             );
           })}
         </div>
-      ) : (
+      ) : !isLoading ? (
         <div className="space-y-2">
           {filteredDocuments.map((document) => {
             const Icon = document.icon;
@@ -576,7 +617,7 @@ const filteredDocuments = documents
                     </div>
                     <div className="flex items-center space-x-2">
                       <Badge className={getCategoryColor(document.category)} variant="outline">
-                        {document.category}
+                        {document.category || 'General'}
                       </Badge>
                       <Badge className={getStatusColor(document.status)}>
                         {document.status}
@@ -602,7 +643,7 @@ const filteredDocuments = documents
             );
           })}
         </div>
-      )}
+      ) : null}
 
       {/* Document Details Modal */}
       {selectedDocument && (
@@ -666,7 +707,7 @@ const filteredDocuments = documents
                       <div className="flex justify-between">
                         <span className="text-gray-500">Category:</span>
                         <Badge className={getCategoryColor(selectedDocument.category)} variant="outline">
-                          {selectedDocument.category}
+                          {selectedDocument.category || 'General'}
                         </Badge>
                       </div>
                       <div className="flex justify-between">
@@ -731,17 +772,21 @@ const filteredDocuments = documents
 
               <div>
                 <h4 className="font-medium text-gray-900 mb-2">Description</h4>
-                <p className="text-sm text-gray-600">{selectedDocument.description}</p>
+                <p className="text-sm text-gray-600">{selectedDocument.description || 'No description available'}</p>
               </div>
 
               <div>
                 <h4 className="font-medium text-gray-900 mb-2">Tags</h4>
                 <div className="flex flex-wrap gap-2">
-                  {selectedDocument.tags.map((tag, index) => (
-                    <Badge key={index} variant="outline" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
+                  {selectedDocument.tags && selectedDocument.tags.length > 0 ? (
+                    selectedDocument.tags.map((tag, index) => (
+                      <Badge key={index} variant="outline" className="text-xs">
+                        {tag}
+                      </Badge>
+                    ))
+                  ) : (
+                    <span className="text-sm text-gray-500">No tags</span>
+                  )}
                 </div>
               </div>
 
