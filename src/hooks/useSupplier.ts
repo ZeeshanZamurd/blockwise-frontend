@@ -100,16 +100,28 @@ export const useSupplier = () => {
       
       console.log('Create supplier API response:', responseData);
       
-      if (responseData.success === false) {
+      // Handle the API response format where success: false but data exists
+      if (responseData.success === false && !responseData.data) {
         const errorMessage = responseData.message || 'Failed to create supplier';
         dispatch(setError(errorMessage));
         return { success: false, error: errorMessage };
       }
       
-      // Handle direct object response or wrapped response
-      const newSupplier = responseData.data || responseData;
-      dispatch(addSupplier(newSupplier));
-      return { success: true, supplier: newSupplier };
+      // If data exists, treat it as successful regardless of success flag
+      if (responseData.data) {
+        dispatch(addSupplier(responseData.data));
+        return { success: true, supplier: responseData.data };
+      }
+      
+      // Handle direct object response (legacy format)
+      if (responseData.id) {
+        dispatch(addSupplier(responseData));
+        return { success: true, supplier: responseData };
+      }
+      
+      const errorMessage = responseData.message || 'Failed to create supplier';
+      dispatch(setError(errorMessage));
+      return { success: false, error: errorMessage };
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(error, 'Failed to create supplier');
       console.error('Error creating supplier:', error);

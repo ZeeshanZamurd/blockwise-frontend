@@ -4,6 +4,7 @@ export interface Supplier {
   id: number;
   name: string;
   category: string;
+  categoryId: number;
   contact: string;
   phone: string;
   email: string;

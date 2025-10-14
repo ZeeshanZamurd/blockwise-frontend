@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Phone, Mail, MapPin, Star, Calendar, FileText, Plus, Grid, List, Users, Loader2 } from 'lucide-react';
 import { useSupplier, Supplier } from '@/hooks/useSupplier';
 import { useBuilding } from '@/hooks/useBuilding';
+import { useCategory } from '@/hooks/useCategory';
 import { toast } from 'sonner';
 
 interface SuppliersSectionProps {
@@ -19,6 +20,7 @@ interface SuppliersSectionProps {
 const SuppliersSection = ({ emptyDataMode }: SuppliersSectionProps) => {
   const { suppliers, isLoading, error, fetchSuppliers, forceRefresh, createSupplier } = useSupplier();
   const { building } = useBuilding();
+  const { categories, isLoading: categoriesLoading, fetchCategories } = useCategory();
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -26,6 +28,7 @@ const SuppliersSection = ({ emptyDataMode }: SuppliersSectionProps) => {
   const [newSupplier, setNewSupplier] = useState({
     name: '',
     category: '',
+    categoryId: 0,
     contact: '',
     phone: '',
     email: '',
@@ -42,20 +45,29 @@ const SuppliersSection = ({ emptyDataMode }: SuppliersSectionProps) => {
     buildingId: building?.buildingId || 0
   });
 
-  // Fetch suppliers when component mounts
+  // Fetch suppliers and categories when component mounts
   useEffect(() => {
-    const loadSuppliers = async () => {
-      const result = await fetchSuppliers();
-      if (!result.success) {
-        console.error('Failed to fetch suppliers:', result.error);
+    const loadData = async () => {
+      const [suppliersResult, categoriesResult] = await Promise.all([
+        fetchSuppliers(),
+        fetchCategories()
+      ]);
+      
+      if (!suppliersResult.success) {
+        console.error('Failed to fetch suppliers:', suppliersResult.error);
         toast.error('Failed to load suppliers');
+      }
+      
+      if (!categoriesResult.success) {
+        console.error('Failed to fetch categories:', categoriesResult.error);
+        toast.error('Failed to load categories');
       }
     };
 
     if (!emptyDataMode) {
-      loadSuppliers();
+      loadData();
     }
-  }, [emptyDataMode, fetchSuppliers]);
+  }, [emptyDataMode, fetchSuppliers, fetchCategories]);
 
   // Update buildingId when building changes
   useEffect(() => {
@@ -65,7 +77,7 @@ const SuppliersSection = ({ emptyDataMode }: SuppliersSectionProps) => {
   }, [building?.buildingId]);
 
   const handleCreateSupplier = async () => {
-    if (!newSupplier.name || !newSupplier.category || !newSupplier.contact) {
+    if (!newSupplier.name || !newSupplier.categoryId || !newSupplier.contact) {
       toast.error('Please fill in required fields (Name, Category, Contact)');
       return;
     }
@@ -79,6 +91,7 @@ const SuppliersSection = ({ emptyDataMode }: SuppliersSectionProps) => {
         setNewSupplier({
           name: '',
           category: '',
+          categoryId: 0,
           contact: '',
           phone: '',
           email: '',
@@ -458,18 +471,24 @@ const SuppliersSection = ({ emptyDataMode }: SuppliersSectionProps) => {
               </div>
               <div>
                 <label className="text-sm font-medium">Category *</label>
-                <Select value={newSupplier.category} onValueChange={(value) => setNewSupplier(prev => ({ ...prev, category: value }))}>
+                <Select value={newSupplier.categoryId.toString()} onValueChange={(value) => {
+                  const categoryId = parseInt(value);
+                  const selectedCategory = categories.find(cat => cat.id === categoryId);
+                  setNewSupplier(prev => ({ 
+                    ...prev, 
+                    categoryId: categoryId,
+                    category: selectedCategory?.name || ''
+                  }));
+                }}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Boiler and Heat Management">Boiler and Heat Management</SelectItem>
-                    <SelectItem value="Gardeners">Gardeners</SelectItem>
-                    <SelectItem value="Cleaning Company">Cleaning Company</SelectItem>
-                    <SelectItem value="Gate Repair">Gate Repair</SelectItem>
-                    <SelectItem value="Japanese Knotweed">Japanese Knotweed</SelectItem>
-                    <SelectItem value="Bin Store Cleaning">Bin Store Cleaning</SelectItem>
-                    <SelectItem value="Window Cleaners">Window Cleaners</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id.toString()}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
