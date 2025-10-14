@@ -167,22 +167,28 @@ const MeetingsSection = ({ emptyDataMode }: MeetingsSectionProps) => {
 
   const handleDownloadDocument = async (documentId: number) => {
     try {
-      const response = await api.get(`/api/v1/document/download/${documentId}`, {
-        responseType: 'blob'
-      });
+      const response = await api.get(`/api/v1/document/view/${documentId}`);
       
-      // Create a blob URL and trigger download
-      const blob = new Blob([response.data]);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `meeting-document-${documentId}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      
-      toast.success('Document downloaded successfully!');
+      // The API returns an object with a URL property
+      if (response.data && response.data.url) {
+        // Fetch the file content and trigger download
+        const fileResponse = await fetch(response.data.url);
+        const blob = await fileResponse.blob();
+        
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `meeting-document-${documentId}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        toast.success('Document downloaded successfully!');
+      } else {
+        toast.error('No document URL found');
+      }
     } catch (error) {
       console.error('Error downloading document:', error);
       toast.error('Failed to download document');
