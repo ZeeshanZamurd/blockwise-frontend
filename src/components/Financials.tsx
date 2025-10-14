@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Plus, Edit2, Save, X, Trash2, Calendar, ChevronDown, ChevronRight, Upload, Paperclip, Receipt } from 'lucide-react';
 import ChargeBreakdownForm from './ChargeBreakdownForm';
+import { useFinance } from '@/hooks/useFinance';
+import { toast } from 'sonner';
 
 interface FinancialsProps {
   emptyDataMode?: boolean;
@@ -44,7 +46,7 @@ interface MonthData {
 }
 
 const Financials = ({ emptyDataMode }: FinancialsProps) => {
-  const [activeTab, setActiveTab] = useState('monthly');
+  const [activeTab, setActiveTab] = useState('annual');
   const [showAddMonth, setShowAddMonth] = useState(false);
   const [showAddYear, setShowAddYear] = useState(false);
   const [newMonthName, setNewMonthName] = useState('');
@@ -63,6 +65,8 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
   const [budgetDocumentsByYear, setBudgetDocumentsByYear] = useState<Record<string, { fileName: string; fileUrl: string }[]>>({});
   const [tempBudget, setTempBudget] = useState<number>(0);
   const [editingBudgetItems, setEditingBudgetItems] = useState(false);
+  const [availableYears, setAvailableYears] = useState<string[]>([]);
+  const { fetchAnnualBudget, createAnnualBudget, fetchAvailableYears, isLoading: isFinanceLoading } = useFinance();
 
   useEffect(() => {
     // Load or migrate data
@@ -127,7 +131,36 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
     setBudgetDocumentsByYear(initialBudgetDocuments);
     setCurrentYear(detectedYear);
     setTempBudget(initialBudgetByYear[detectedYear] || 120000);
-  }, []);
+
+    // Fetch available years from API
+    const loadAvailableYears = async () => {
+      try {
+        const yearsResponse = await fetchAvailableYears();
+        if (yearsResponse.success && yearsResponse.data) {
+          setAvailableYears(yearsResponse.data.sort());
+          
+          // If current year is not in API years, use the most recent API year
+          if (!yearsResponse.data.includes(detectedYear)) {
+            const mostRecentYear = yearsResponse.data[yearsResponse.data.length - 1];
+            if (mostRecentYear) {
+              setCurrentYear(mostRecentYear);
+              setTempBudget(initialBudgetByYear[mostRecentYear] || 120000);
+            }
+          }
+        } else {
+          console.error('Failed to fetch available years:', yearsResponse.error);
+          // Fallback to local storage years
+          setAvailableYears(years.sort());
+        }
+      } catch (error) {
+        console.error('Error fetching available years:', error);
+        // Fallback to local storage years
+        setAvailableYears(years.sort());
+      }
+    };
+
+    loadAvailableYears();
+  }, [fetchAvailableYears]);
 
   useEffect(() => {
     // Save to localStorage whenever data changes
@@ -156,16 +189,65 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
     }, 0);
   };
 
-  const addYear = () => {
+  const addYear = async () => {
     if (newYear && !monthsByYear[newYear]) {
-      setMonthsByYear(prev => ({ ...prev, [newYear]: [] }));
-      setBudgetByYear(prev => ({ ...prev, [newYear]: 120000 }));
-      setBudgetLineItemsByYear(prev => ({ ...prev, [newYear]: [] }));
-      setBudgetDocumentsByYear(prev => ({ ...prev, [newYear]: [] }));
-      setCurrentYear(newYear);
-      setTempBudget(120000);
-      setNewYear('');
-      setShowAddYear(false);
+      try {
+        // Try to fetch existing budget from API first
+        const budgetResponse = await fetchAnnualBudget(newYear);
+        
+        if (budgetResponse.success && budgetResponse.data) {
+          // Use API data
+          const apiData = budgetResponse.data;
+          setMonthsByYear(prev => ({ ...prev, [newYear]: [] }));
+          setBudgetByYear(prev => ({ ...prev, [newYear]: apiData.totalBudget }));
+          setBudgetLineItemsByYear(prev => ({ ...prev, [newYear]: [] }));
+          setBudgetDocumentsByYear(prev => ({ ...prev, [newYear]: [] }));
+          setCurrentYear(newYear);
+          setTempBudget(apiData.totalBudget);
+          
+          // Update available years list
+          setAvailableYears(prev => [...prev, newYear].sort());
+          
+          toast.success(`Year ${newYear} loaded with budget £${apiData.totalBudget.toLocaleString()}`);
+        } else {
+          // Create new budget with default value
+          const createResponse = await createAnnualBudget(newYear, 120000);
+          
+          if (createResponse.success && createResponse.data) {
+            const apiData = createResponse.data;
+            setMonthsByYear(prev => ({ ...prev, [newYear]: [] }));
+            setBudgetByYear(prev => ({ ...prev, [newYear]: apiData.totalBudget }));
+            setBudgetLineItemsByYear(prev => ({ ...prev, [newYear]: [] }));
+            setBudgetDocumentsByYear(prev => ({ ...prev, [newYear]: [] }));
+            setCurrentYear(newYear);
+            setTempBudget(apiData.totalBudget);
+            
+            // Update available years list
+            setAvailableYears(prev => [...prev, newYear].sort());
+            
+            toast.success(`Year ${newYear} created with budget £${apiData.totalBudget.toLocaleString()}`);
+          } else {
+            // Fallback to local storage if API fails
+            setMonthsByYear(prev => ({ ...prev, [newYear]: [] }));
+            setBudgetByYear(prev => ({ ...prev, [newYear]: 120000 }));
+            setBudgetLineItemsByYear(prev => ({ ...prev, [newYear]: [] }));
+            setBudgetDocumentsByYear(prev => ({ ...prev, [newYear]: [] }));
+            setCurrentYear(newYear);
+            setTempBudget(120000);
+            
+            // Update available years list
+            setAvailableYears(prev => [...prev, newYear].sort());
+            
+            toast.error(createResponse.error || 'Failed to create year budget, using default values');
+          }
+        }
+        
+        setNewYear('');
+        setShowAddYear(false);
+      } catch (error) {
+        console.error('Error adding year:', error);
+        toast.error('Failed to add year');
+      }
     }
   };
 
@@ -261,14 +343,25 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
   const remaining = totalBudget - totalSpent;
   const percentageUsed = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
 
-  const availableYears = Object.keys(monthsByYear).sort();
-
-  const handleYearSelect = (value: string) => {
+  const handleYearSelect = async (value: string) => {
     if (value === 'add-year') {
       setShowAddYear(true);
     } else {
       setCurrentYear(value);
       setTempBudget(budgetByYear[value] || 120000);
+      
+      // Try to fetch budget data from API when switching years
+      try {
+        const budgetResponse = await fetchAnnualBudget(value);
+        if (budgetResponse.success && budgetResponse.data) {
+          const apiData = budgetResponse.data;
+          setBudgetByYear(prev => ({ ...prev, [value]: apiData.totalBudget }));
+          setTempBudget(apiData.totalBudget);
+        }
+      } catch (error) {
+        console.error('Error fetching budget for year:', value, error);
+        // Continue with local storage data
+      }
     }
   };
 
@@ -416,8 +509,9 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="annual">Annual Budget</TabsTrigger>
           <TabsTrigger value="monthly">Monthly Spending</TabsTrigger>
-          <TabsTrigger value="annual">Annual Budget</TabsTrigger>
+         
         </TabsList>
 
         <TabsContent value="monthly" className="space-y-6">
@@ -661,9 +755,9 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={() => setShowAddYear(true)} variant="outline">
+            <Button onClick={() => setShowAddYear(true)} variant="outline" disabled={isFinanceLoading}>
               <Plus className="h-4 w-4 mr-2" />
-              Start New Year
+              {isFinanceLoading ? 'Loading...' : 'Start New Year'}
             </Button>
           </div>
 
@@ -932,7 +1026,9 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
               onChange={(e) => setNewYear(e.target.value)}
             />
             <div className="flex gap-2">
-              <Button onClick={addYear} className="flex-1">Create Year</Button>
+              <Button onClick={addYear} className="flex-1" disabled={isFinanceLoading}>
+                {isFinanceLoading ? 'Creating...' : 'Create Year'}
+              </Button>
               <Button onClick={() => setShowAddYear(false)} variant="outline">Cancel</Button>
             </div>
           </div>

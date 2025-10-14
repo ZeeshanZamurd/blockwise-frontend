@@ -57,7 +57,7 @@ export const useSupplier = () => {
       dispatch(setHasAttemptedFetch(true));
       
       console.log('Fetching suppliers for buildingId:', targetBuildingId);
-      const response = await api.get(`/api/suppliers/${targetBuildingId}`);
+      const response = await api.get(`/api/suppliers`);
       const responseData = response.data;
       
       console.log('Suppliers API response:', responseData);
@@ -66,11 +66,13 @@ export const useSupplier = () => {
       let suppliersData;
       if (Array.isArray(responseData)) {
         suppliersData = responseData;
-      } else if (responseData.success === false) {
+      } else if (responseData.success === false && !responseData.data) {
+        // Only treat as error if there's no data and success is false
         const errorMessage = responseData.message || 'Failed to fetch suppliers';
         dispatch(setError(errorMessage));
         return { success: false, error: errorMessage };
       } else {
+        // Handle both success: true and success: false with data
         suppliersData = responseData.data || responseData;
       }
       

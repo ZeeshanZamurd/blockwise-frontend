@@ -35,6 +35,7 @@ interface CreateMeetingData {
   transcript?: string;
   videoUrl?: string;
   notes?: string;
+  file?: File;
 }
 
 const getErrorMessage = (error: unknown, defaultMessage: string): string => {
@@ -78,6 +79,7 @@ export const useMeeting = () => {
         transcript: string | null;
         videoUrl: string | null;
         notes: string | null;
+        documentId: number | null;
       }) => ({
         id: apiMeeting.id,
         title: apiMeeting.title,
@@ -88,7 +90,8 @@ export const useMeeting = () => {
         status: apiMeeting.status,
         transcript: apiMeeting.transcript,
         videoUrl: apiMeeting.videoUrl,
-        notes: apiMeeting.notes
+        notes: apiMeeting.notes,
+        documentId: apiMeeting.documentId
       }));
       
       dispatch(setMeetings(mappedMeetings));
@@ -154,38 +157,40 @@ export const useMeeting = () => {
       
       console.log('Formatted date:', formattedDate);
       
-      const payload = {
+      // Create FormData with the expected structure
+      const formData = new FormData();
+      
+      // Create the data payload as JSON string
+      const dataPayload = {
         title: meetingData.title,
         type: meetingData.type,
         date: formattedDate,
         time: meetingData.time,
-        attendees: meetingData.attendees,
+        attendees: Array.isArray(meetingData.attendees) ? meetingData.attendees.join(',') : meetingData.attendees,
         status: meetingData.status,
-        transcript: meetingData.transcript || null,
-        videoUrl: meetingData.videoUrl || null,
-        notes: meetingData.notes || null
+        transcript: meetingData.transcript,
+        videoUrl: meetingData.videoUrl,
+        notes: meetingData.notes
       };
       
-      // Also try alternative payload structures
-      const alternativePayloads = [
-        payload, // Original
-        { ...payload, date: new Date(meetingData.date).toISOString() }, // ISO string
-        { ...payload, date: new Date(meetingData.date).getTime() }, // Timestamp
-        { ...payload, meetingDate: formattedDate, date: formattedDate }, // Both field names
-      ];
+      // Append the data as JSON string
+      formData.append('data', JSON.stringify(dataPayload));
       
-      console.log('API payload:', payload);
-      console.log('Alternative payloads:', alternativePayloads);
-      
-      // Try the first payload first
-      let response;
-      try {
-        response = await api.post('/api/v1/meeting', payload);
-      } catch (error) {
-        console.log('First payload failed, trying alternative...');
-        // If the first fails, try the ISO string format
-        response = await api.post('/api/v1/meeting', alternativePayloads[1]);
+      // If there's a file, append it
+      if (meetingData.file) {
+        formData.append('file', meetingData.file);
       }
+      
+      console.log('FormData contents:');
+      for (const [key, value] of formData.entries()) {
+        console.log(`${key}: ${value}`);
+      }
+      
+      const response = await api.post('/api/v1/meeting', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       const responseData = response.data;
       
       console.log('Create meeting API response:', responseData);
@@ -207,7 +212,8 @@ export const useMeeting = () => {
         status: responseData.data.status,
         transcript: responseData.data.transcript,
         videoUrl: responseData.data.videoUrl,
-        notes: responseData.data.notes
+        notes: responseData.data.notes,
+        documentId: responseData.data.documentId
       };
       
       dispatch(addMeeting(newMeeting));

@@ -11,6 +11,7 @@ export interface Meeting {
   transcript: string | null;
   videoUrl: string | null;
   notes: string | null;
+  documentId: number | null;
 }
 
 interface MeetingsState {

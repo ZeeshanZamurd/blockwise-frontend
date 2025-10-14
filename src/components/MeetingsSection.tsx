@@ -8,9 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, Users, FileText, Video, Archive, Loader2 } from 'lucide-react';
+import { Calendar, Users, FileText, Video, Archive, Loader2, Download, Eye } from 'lucide-react';
 import { useMeeting, Meeting, CreateMeetingData } from '@/hooks/useMeeting';
 import { toast } from 'sonner';
+import { api } from '@/lib/api';
 
 interface MeetingsSectionProps {
   emptyDataMode?: boolean;
@@ -30,7 +31,8 @@ const MeetingsSection = ({ emptyDataMode }: MeetingsSectionProps) => {
     status: 'Scheduled',
     transcript: '',
     videoUrl: '',
-    notes: ''
+    notes: '',
+    file: undefined
   });
 
   // Fetch meetings and meeting types when component mounts
@@ -111,7 +113,8 @@ const MeetingsSection = ({ emptyDataMode }: MeetingsSectionProps) => {
       status: newMeetingData.status,
       transcript: newMeetingData.transcript || null,
       videoUrl: newMeetingData.videoUrl || null,
-      notes: newMeetingData.notes || null
+      notes: newMeetingData.notes || null,
+      file: newMeetingData.file
     };
 
     console.log('Meeting data being sent:', meetingData);
@@ -131,7 +134,8 @@ const MeetingsSection = ({ emptyDataMode }: MeetingsSectionProps) => {
         status: 'Scheduled',
         transcript: '',
         videoUrl: '',
-        notes: ''
+        notes: '',
+        file: undefined
       });
     } else {
       toast.error('Failed to schedule meeting');
@@ -161,9 +165,46 @@ const MeetingsSection = ({ emptyDataMode }: MeetingsSectionProps) => {
     return time;
   };
 
-  const formatAttendees = (attendees: string[] | null) => {
-    if (!attendees || attendees.length === 0) return 'TBD';
-    return attendees.join(', ');
+  const handleDownloadDocument = async (documentId: number) => {
+    try {
+      const response = await api.get(`/api/v1/document/download/${documentId}`, {
+        responseType: 'blob'
+      });
+      
+      // Create a blob URL and trigger download
+      const blob = new Blob([response.data]);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `meeting-document-${documentId}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Document downloaded successfully!');
+    } catch (error) {
+      console.error('Error downloading document:', error);
+      toast.error('Failed to download document');
+    }
+  };
+
+  const handleViewDocument = async (documentId: number) => {
+    try {
+      const response = await api.get(`/api/v1/document/view/${documentId}`);
+      
+      // The API returns an object with a URL property
+      if (response.data && response.data.url) {
+        // Open the document URL directly in a new tab
+        window.open(response.data.url, '_blank');
+        toast.success('Document opened in new tab!');
+      } else {
+        toast.error('No document URL found');
+      }
+    } catch (error) {
+      console.error('Error viewing document:', error);
+      toast.error('Failed to view document');
+    }
   };
 
   // Show loading state
@@ -281,8 +322,19 @@ const MeetingsSection = ({ emptyDataMode }: MeetingsSectionProps) => {
 
               <div>
                 <Label htmlFor="meeting-documents">Upload Documents</Label>
-                <Input id="meeting-documents" type="file" multiple accept=".pdf,.doc,.docx" />
+                <Input 
+                  id="meeting-documents" 
+                  type="file" 
+                  accept=".pdf,.doc,.docx" 
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    setNewMeetingData(prev => ({ ...prev, file: file }));
+                  }}
+                />
                 <p className="text-sm text-muted-foreground mt-1">Upload agenda, supporting documents, etc.</p>
+                {newMeetingData.file && (
+                  <p className="text-sm text-green-600 mt-1">File selected: {newMeetingData.file.name}</p>
+                )}
               </div>
 
               <div className="flex space-x-2">
@@ -351,6 +403,12 @@ const MeetingsSection = ({ emptyDataMode }: MeetingsSectionProps) => {
                             <div className="flex items-center gap-1">
                               <Video className="h-4 w-4" />
                               Recording available
+                            </div>
+                          )}
+                          {meeting.documentId && (
+                            <div className="flex items-center gap-1">
+                              <FileText className="h-4 w-4" />
+                              Document attached
                             </div>
                           )}
                         </div>
@@ -426,6 +484,36 @@ const MeetingsSection = ({ emptyDataMode }: MeetingsSectionProps) => {
                             >
                               View meeting recording
                             </a>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Document */}
+                      {selectedMeeting.documentId && (
+                        <div>
+                          <h3 className="font-semibold mb-2">Meeting Document</h3>
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4" />
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleViewDocument(selectedMeeting.documentId!)}
+                                className="flex items-center gap-1"
+                              >
+                                <Eye className="h-3 w-3" />
+                                View Document
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleDownloadDocument(selectedMeeting.documentId!)}
+                                className="flex items-center gap-1"
+                              >
+                                <Download className="h-3 w-3" />
+                                Download
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       )}
