@@ -30,8 +30,8 @@ interface Document {
   expiryDate: string | null;
   icon: React.ElementType;
   color: string;
-  folderId: string | null;
-  archived: boolean;
+  folderId: number | null;
+  isArchived: boolean;
   fileUrl?: string;
   filePath?: string;
 }
@@ -42,19 +42,26 @@ const DocumentVault = ({ emptyDataMode }: DocumentVaultProps) => {
   const [editingExpiry, setEditingExpiry] = useState<string | null>(null);
   const [tempExpiryDate, setTempExpiryDate] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
-  const { uploadDocument, uploadMultipleDocuments, fetchDocuments, isUploading, uploadProgress, isLoading } = useDocument();
+  const { uploadDocument, uploadMultipleDocuments, fetchDocuments, getDocumentUrl, fetchFolders, updateDocument, createFolder, updateArchive, isUploading, uploadProgress, isLoading } = useDocument();
 
   // Initialize with empty array - will be populated from API
   const [documents, setDocuments] = useState<Document[]>([]);
-  const [folders, setFolders] = useState<{ id: string; name: string }[]>([
-    { id: 'f-fire', name: 'Fire Safety' },
-  ]);
-  const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
+  const [folders, setFolders] = useState<{ id: number; name: string }[]>([]);
+  const [activeFolderId, setActiveFolderId] = useState<number | null>(null);
   const [showArchived, setShowArchived] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [isManageFoldersOpen, setIsManageFoldersOpen] = useState(false);
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
   const [tempTitle, setTempTitle] = useState('');
+  
+  // New state for editing document details
+  const [isEditingDocument, setIsEditingDocument] = useState(false);
+  const [editingDocumentData, setEditingDocumentData] = useState({
+    title: '',
+    category: '',
+    folderId: null as number | null,
+    expiryDate: ''
+  });
 
   // Fetch documents from API on component mount
   useEffect(() => {
@@ -64,10 +71,16 @@ const DocumentVault = ({ emptyDataMode }: DocumentVaultProps) => {
         const result = await fetchDocuments();
         if (result.success && result.data) {
           console.log('Documents loaded successfully:', result.data);
+          console.log('Documents with folder mapping:', result.data.map(doc => ({
+            id: doc.id,
+            title: doc.title,
+            folderId: doc.folderId
+          })));
           setDocuments(result.data);
         } else {
           console.error('Failed to load documents:', result.error);
           toast.error(`Failed to load documents: ${result.error}`);
+          // Don't break the UI - keep existing documents or show empty state
         }
       }
     };
@@ -75,30 +88,199 @@ const DocumentVault = ({ emptyDataMode }: DocumentVaultProps) => {
     loadDocuments();
   }, [emptyDataMode, fetchDocuments]);
 
-  const handleCreateFolder = () => {
+  // Fetch folders from API on component mount
+  useEffect(() => {
+    const loadFolders = async () => {
+      if (!emptyDataMode) {
+        console.log('Loading folders from API...');
+        const result = await fetchFolders();
+        if (result.success && result.data) {
+          console.log('Folders loaded successfully:', result.data);
+          const mappedFolders = result.data.map(folder => ({
+            id: folder.id,
+            name: folder.folderName
+          }));
+          console.log('Mapped folders:', mappedFolders);
+          setFolders(mappedFolders);
+        } else {
+          console.error('Failed to load folders:', result.error);
+          toast.error(`Failed to load folders: ${result.error}`);
+          // Don't break the UI - keep existing folders or show empty state
+        }
+      }
+    };
+    
+    loadFolders();
+  }, [emptyDataMode, fetchFolders]);
+
+  const handleCreateFolder = async () => {
     const name = newFolderName.trim();
     if (!name) return;
-    const id = crypto.randomUUID ? crypto.randomUUID() : `f-${Date.now()}`;
-    setFolders((prev) => [...prev, { id, name }]);
-    setNewFolderName('');
+
+    try {
+      console.log(`Creating folder: ${name}`);
+      const result = await createFolder(name);
+      
+      if (result.success && result.data) {
+        console.log('Folder created successfully:', result.data);
+        
+        // Add the new folder to local state
+        const newFolder = {
+          id: result.data.id,
+          name: result.data.folderName
+        };
+        
+        setFolders((prev) => [...prev, newFolder]);
+        setNewFolderName('');
+        toast.success(`Folder "${name}" created successfully!`);
+      } else {
+        console.error('Failed to create folder:', result.error);
+        toast.error(`Failed to create folder: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error creating folder:', error);
+      toast.error('Failed to create folder');
+    }
   };
 
-  const handleRenameFolder = (id: string, name: string) => {
+  const handleRenameFolder = (id: number, name: string) => {
     setFolders((prev) => prev.map((f) => (f.id === id ? { ...f, name } : f)));
   };
 
-  const handleMoveDocument = (docId: number, folderId: string | null) => {
+  const handleMoveDocument = (docId: number, folderId: number | null) => {
     setDocuments((prev) => prev.map((d) => (d.id === docId ? { ...d, folderId } : d)));
   };
 
-  const handleToggleArchive = (docId: number, force?: boolean) => {
-    setDocuments((prev) => prev.map((d) => (d.id === docId ? { ...d, archived: force !== undefined ? force : !d.archived } : d)));
+  const handleToggleArchive = async (docId: number, force?: boolean) => {
+    const newArchivedStatus = force !== undefined ? force : !documents.find(d => d.id === docId)?.isArchived;
+    
+    console.log(`ARCHIVE TOGGLE: Document ${docId}, New status: ${newArchivedStatus}`);
+    
+    try {
+      // Call API to update archive status
+      const result = await updateArchive(docId, newArchivedStatus);
+      
+      if (result.success && result.data) {
+        // Update the document in local state
+        setDocuments((prev) => prev.map((d) => 
+          d.id === docId ? { ...d, isArchived: newArchivedStatus } : d
+        ));
+        
+        // Update selected document if it's the same one
+        if (selectedDocument && selectedDocument.id === docId) {
+          setSelectedDocument({ ...selectedDocument, isArchived: newArchivedStatus });
+        }
+        
+        toast.success(`Document ${newArchivedStatus ? 'archived' : 'unarchived'} successfully!`);
+      } else {
+        toast.error(`Failed to update archive status: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error toggling archive status:', error);
+      toast.error('Failed to update archive status');
+    }
   };
 
   const handleTitleSave = (docId: number) => {
     setDocuments((prev) => prev.map((d) => (d.id === docId ? { ...d, title: tempTitle } : d)));
     setEditingTitleId(null);
     setTempTitle('');
+  };
+
+  const handleViewDocument = async (documentId: number) => {
+    try {
+      const result = await getDocumentUrl(documentId);
+      console.log('result ',result)
+      if (result && result.data) {
+        window.open(result.data, '_blank')
+      } else {
+        toast.error(`Failed to get document URL: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error getting document URL:', error);
+      toast.error('Failed to get document URL');
+    }
+  };
+
+  const handleDownloadDocument = async (documentId: number) => {
+    try {
+      const result = await getDocumentUrl(documentId);
+      console.log('resuilt is ',result)
+      if (result && result.data) {
+        // Create a temporary link to download the file
+        const link = document.createElement('a');
+        link.href = result.data;
+        link.download = ''; // Let the browser determine the filename
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        toast.error(`Failed to get document URL: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error getting document URL:', error);
+      toast.error('Failed to get document URL');
+    }
+  };
+
+  const handleEditDocument = (document: Document) => {
+    console.log('Editing document with expiry date:', document.expiryDate);
+    const dateForInput = document.expiryDate ? document.expiryDate.split('T')[0] : '';
+    console.log('Date for input field:', dateForInput);
+    
+    setIsEditingDocument(true);
+    setEditingDocumentData({
+      title: document.title,
+      category: document.category || '',
+      folderId: document.folderId,
+      expiryDate: dateForInput
+    });
+  };
+
+  const handleSaveDocument = async () => {
+    if (!selectedDocument) return;
+
+    try {
+      console.log('Original expiry date:', editingDocumentData.expiryDate);
+      const formattedExpiryDate = editingDocumentData.expiryDate ? `${editingDocumentData.expiryDate}T00:00:00` : null;
+      console.log('Formatted expiry date for API:', formattedExpiryDate);
+      
+      const updateData = {
+        title: editingDocumentData.title,
+        category: editingDocumentData.category,
+        folderId: editingDocumentData.folderId,
+        expiryDate: formattedExpiryDate
+      };
+
+      const result = await updateDocument(selectedDocument.id, updateData);
+      if (result.success && result.data) {
+        // Update the document in the local state
+        setDocuments((prev) => prev.map((d) => 
+          d.id === selectedDocument.id ? { ...d, ...result.data } : d
+        ));
+        
+        // Update the selected document
+        setSelectedDocument({ ...selectedDocument, ...result.data });
+        
+        setIsEditingDocument(false);
+        toast.success('Document updated successfully!');
+      } else {
+        toast.error(`Failed to update document: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error updating document:', error);
+      toast.error('Failed to update document');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingDocument(false);
+    setEditingDocumentData({
+      title: '',
+      category: '',
+      folderId: null,
+      expiryDate: ''
+    });
   };
 
   const getCategoryColor = (category: string | null) => {
@@ -125,7 +307,7 @@ const DocumentVault = ({ emptyDataMode }: DocumentVaultProps) => {
 
 const filteredDocuments = documents
     .filter((doc) => (activeFolderId ? doc.folderId === activeFolderId : true))
-    .filter((doc) => (showArchived ? true : !doc.archived))
+    .filter((doc) => (showArchived ? true : !doc.isArchived))
     .filter((doc) =>
       doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (doc.category && doc.category.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -153,12 +335,10 @@ const filteredDocuments = documents
     setTempExpiryDate('');
   };
 
-  // Certificate stats for summary cards
-  const getCertificateStats = () => {
-    const certificateDocuments = documents.filter(doc => 
-      doc.category.toLowerCase() === 'compliance' || 
-      doc.category.toLowerCase() === 'safety'
-    );
+  // Certificate stats for summary cards - memoized to prevent infinite re-renders
+  const certificateStats = React.useMemo(() => {
+    // Calculate stats for ALL documents, not just certificate-specific ones
+    const allDocuments = documents;
     
     const now = new Date();
     const sixMonthsFromNow = new Date();
@@ -170,7 +350,7 @@ const filteredDocuments = documents
     let expired = 0;
     let expiringSoon = 0;
     
-    certificateDocuments.forEach(doc => {
+    allDocuments.forEach(doc => {
       if (!doc.expiryDate) {
         valid++; // Documents without expiry are considered valid
         return;
@@ -186,10 +366,22 @@ const filteredDocuments = documents
       }
     });
     
-    return { valid, expired, expiringSoon, total: certificateDocuments.length };
-  };
-
-  const certificateStats = getCertificateStats();
+    console.log('Certificate stats calculation (ALL DOCUMENTS):', {
+      totalDocuments: allDocuments.length,
+      valid,
+      expired,
+      expiringSoon,
+      documents: allDocuments.map(doc => ({
+        title: doc.title,
+        category: doc.category,
+        expiryDate: doc.expiryDate,
+        status: doc.status,
+        isArchived: doc.isArchived
+      }))
+    });
+    
+    return { valid, expired, expiringSoon, total: allDocuments.length };
+  }, [documents]);
 
   const handleFileUpload = async (file: File) => {
     try {
@@ -199,9 +391,17 @@ const filteredDocuments = documents
           toast.success(`Document "${file.name}" uploaded successfully!`);
           
           // Refresh the documents list from API
-          const result = await fetchDocuments();
-          if (result.success && result.data) {
-            setDocuments(result.data);
+          try {
+            const result = await fetchDocuments();
+            if (result.success && result.data) {
+              setDocuments(result.data);
+            } else {
+              console.error('Failed to refresh documents after upload:', result.error);
+              // Don't break the UI - just log the error
+            }
+          } catch (error) {
+            console.error('Error refreshing documents after upload:', error);
+            // Don't break the UI - just log the error
           }
         },
         onError: (error) => {
@@ -227,9 +427,17 @@ const filteredDocuments = documents
           toast.success(`${fileArray.length} documents uploaded successfully!`);
           
           // Refresh the documents list from API
-          const result = await fetchDocuments();
-          if (result.success && result.data) {
-            setDocuments(result.data);
+          try {
+            const result = await fetchDocuments();
+            if (result.success && result.data) {
+              setDocuments(result.data);
+            } else {
+              console.error('Failed to refresh documents after multiple upload:', result.error);
+              // Don't break the UI - just log the error
+            }
+          } catch (error) {
+            console.error('Error refreshing documents after multiple upload:', error);
+            // Don't break the UI - just log the error
           }
         },
         onError: (error) => {
@@ -247,11 +455,11 @@ const filteredDocuments = documents
 
   return (
     <div className="p-6 space-y-6">
-      {/* Certificate Summary Cards */}
+      {/* Document Status Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valid Certificates</CardTitle>
+            <CardTitle className="text-sm font-medium">Valid Documents</CardTitle>
             <FileCheck className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
@@ -299,12 +507,19 @@ const filteredDocuments = documents
             variant="outline" 
             onClick={async () => {
               console.log('Manual refresh triggered');
-              const result = await fetchDocuments();
-              if (result.success && result.data) {
-                setDocuments(result.data);
-                toast.success('Documents refreshed successfully!');
-              } else {
-                toast.error(`Failed to refresh documents: ${result.error}`);
+              try {
+                const result = await fetchDocuments();
+                if (result.success && result.data) {
+                  setDocuments(result.data);
+                  toast.success('Documents refreshed successfully!');
+                } else {
+                  toast.error(`Failed to refresh documents: ${result.error}`);
+                  // Don't break the UI - keep existing documents
+                }
+              } catch (error) {
+                console.error('Refresh error:', error);
+                toast.error('Failed to refresh documents');
+                // Don't break the UI - keep existing documents
               }
             }}
             disabled={isLoading}
@@ -355,7 +570,7 @@ const filteredDocuments = documents
             ) : (
               <>
                 <Upload className="h-4 w-4 mr-2" />
-                Upload Document
+                Upload Document2
               </>
             )}
           </Button>
@@ -404,14 +619,14 @@ const filteredDocuments = documents
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Folder</label>
-              <Select value={activeFolderId ?? 'all'} onValueChange={(v) => setActiveFolderId(v === 'all' ? null : v)}>
+              <Select value={activeFolderId?.toString() ?? 'all'} onValueChange={(v) => setActiveFolderId(v === 'all' ? null : parseInt(v))}>
                 <SelectTrigger>
                   <SelectValue placeholder="All Documents" />
                 </SelectTrigger>
                 <SelectContent className="bg-background border z-50">
                   <SelectItem value="all">All Documents</SelectItem>
                   {folders.map((f) => (
-                    <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                    <SelectItem key={f.id} value={f.id.toString()}>{f.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -423,11 +638,13 @@ const filteredDocuments = documents
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => {
+                  onClick={async () => {
                     const name = prompt('Enter folder name:');
+                    console.log('Prompt result:', name);
                     if (name?.trim()) {
+                      console.log('Setting folder name and calling API:', name.trim());
                       setNewFolderName(name.trim());
-                      handleCreateFolder();
+                      await handleCreateFolder();
                     }
                   }}
                 >
@@ -446,7 +663,41 @@ const filteredDocuments = documents
             <div className="space-y-2">
               <label className="text-sm font-medium">Show</label>
               <div className="flex items-center gap-2">
-                <Switch id="show-archived" checked={showArchived} onCheckedChange={setShowArchived} />
+                <Switch 
+                  id="show-archived" 
+                  checked={showArchived} 
+                  onCheckedChange={async (checked) => {
+                    console.log('SHOW ARCHIVED SWITCH TOGGLED:', checked);
+                    setShowArchived(checked);
+                    
+                    try {
+                      if (checked) {
+                        console.log('Fetching archived documents...');
+                        const result = await fetchDocuments(true);
+                        if (result.success && result.data) {
+                          console.log('Archived documents fetched:', result.data);
+                          setDocuments(result.data);
+                        } else {
+                          console.error('Failed to fetch archived documents:', result.error);
+                          toast.error(`Failed to fetch archived documents: ${result.error}`);
+                        }
+                      } else {
+                        console.log('Fetching non-archived documents...');
+                        const result = await fetchDocuments(false);
+                        if (result.success && result.data) {
+                          console.log('Non-archived documents fetched:', result.data);
+                          setDocuments(result.data);
+                        } else {
+                          console.error('Failed to fetch non-archived documents:', result.error);
+                          toast.error(`Failed to fetch non-archived documents: ${result.error}`);
+                        }
+                      }
+                    } catch (error) {
+                      console.error('Error fetching documents:', error);
+                      toast.error('Failed to fetch documents');
+                    }
+                  }} 
+                />
                 <label htmlFor="show-archived" className="text-sm">Archived</label>
               </div>
             </div>
@@ -473,11 +724,11 @@ const filteredDocuments = documents
                   <span className="font-medium">All Documents</span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {documents.filter(doc => !doc.archived).length} documents
+                  {documents.filter(doc => !doc.isArchived).length} documents
                 </p>
               </div>
               {folders.map((folder) => {
-                const folderDocs = documents.filter(doc => doc.folderId === folder.id && !doc.archived);
+                const folderDocs = documents.filter(doc => doc.folderId === folder.id && !doc.isArchived);
                 return (
                   <div 
                     key={folder.id}
@@ -571,16 +822,31 @@ const filteredDocuments = documents
                     </div>
 
                     <div className="text-xs text-gray-500">
-                      <div>Uploaded: {document.uploadDate}</div>
+                      <div>Uploaded: {document.uploadDate ? new Date(document.uploadDate).toLocaleDateString() : 'Unknown'}</div>
                       <div>By: {document.uploadedBy}</div>
                     </div>
 
                     <div className="flex space-x-2">
-                      <Button variant="outline" size="sm" className="flex-1">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewDocument(document.id);
+                        }}
+                      >
                         <Eye className="h-3 w-3 mr-1" />
                         View
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownloadDocument(document.id);
+                        }}
+                      >
                         <Download className="h-3 w-3" />
                       </Button>
                     </div>
@@ -611,7 +877,7 @@ const filteredDocuments = documents
                           <span>•</span>
                           <span>{document.size}</span>
                           <span>•</span>
-                          <span>Uploaded: {document.uploadDate}</span>
+                          <span>Uploaded: {document.uploadDate ? new Date(document.uploadDate).toLocaleDateString() : 'Unknown'}</span>
                         </div>
                       </div>
                     </div>
@@ -624,16 +890,30 @@ const filteredDocuments = documents
                       </Badge>
                        {daysUntilExpiry !== null && (
                          <div className="text-xs text-gray-500">
-                           <span>Expiry: {document.expiryDate}</span>
+                           <span>Expiry: {document.expiryDate ? new Date(document.expiryDate).toLocaleDateString() : 'No expiry date'}</span>
                            <span className={`ml-2 ${daysUntilExpiry < 30 ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
                              • {daysUntilExpiry < 0 ? 'Expired' : `${daysUntilExpiry} days left`}
                            </span>
                          </div>
                        )}
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewDocument(document.id);
+                        }}
+                      >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownloadDocument(document.id);
+                        }}
+                      >
                         <Download className="h-4 w-4" />
                       </Button>
                     </div>
@@ -648,50 +928,78 @@ const filteredDocuments = documents
       {/* Document Details Modal */}
       {selectedDocument && (
         <Dialog open={!!selectedDocument} onOpenChange={() => setSelectedDocument(null)}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <selectedDocument.icon className="h-5 w-5" />
-                  {editingTitleId === selectedDocument.id.toString() ? (
+                  {isEditingDocument ? (
                     <div className="flex items-center gap-2">
-                      <Input value={tempTitle} onChange={(e) => setTempTitle(e.target.value)} className="h-8 w-64" />
-                      <Button size="sm" variant="outline" onClick={() => handleTitleSave(selectedDocument.id)}>Save</Button>
-                      <Button size="sm" variant="ghost" onClick={() => { setEditingTitleId(null); setTempTitle(''); }}>Cancel</Button>
+                      <Input 
+                        value={editingDocumentData.title} 
+                        onChange={(e) => setEditingDocumentData(prev => ({ ...prev, title: e.target.value }))} 
+                        className="h-8 w-64" 
+                      />
+                      <Button size="sm" variant="outline" onClick={handleSaveDocument}>Save</Button>
+                      <Button size="sm" variant="ghost" onClick={handleCancelEdit}>Cancel</Button>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
                       <span>{selectedDocument.title}</span>
-                      <Button variant="ghost" size="sm" className="h-6" onClick={() => { setEditingTitleId(selectedDocument.id.toString()); setTempTitle(selectedDocument.title); }}>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-6" 
+                        onClick={() => handleEditDocument(selectedDocument)}
+                      >
                         <Edit className="h-3 w-3" />
                       </Button>
                     </div>
                   )}
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <Folder className="h-4 w-4 text-gray-400" />
-                    <Select value={selectedDocument.folderId ?? 'none'} onValueChange={(v) => handleMoveDocument(selectedDocument.id, v === 'none' ? null : v)}>
-                      <SelectTrigger className="h-8 w-40">
-                        <SelectValue placeholder="Assign folder" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">No folder</SelectItem>
-                        {folders.map((f) => (
-                          <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button variant="outline" size="sm" onClick={() => handleToggleArchive(selectedDocument.id, !selectedDocument.archived)}>
-                    <Archive className="h-4 w-4 mr-1" />
-                    {selectedDocument.archived ? 'Unarchive' : 'Archive'}
-                  </Button>
+                  {isEditingDocument ? (
+                    <div className="flex items-center gap-2">
+                      <Folder className="h-4 w-4 text-gray-400" />
+                      <Select 
+                        value={editingDocumentData.folderId?.toString() ?? 'none'} 
+                        onValueChange={(v) => setEditingDocumentData(prev => ({ 
+                          ...prev, 
+                          folderId: v === 'none' ? null : parseInt(v) 
+                        }))}
+                      >
+                        <SelectTrigger className="h-8 w-40">
+                          <SelectValue placeholder="Assign folder" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No folder</SelectItem>
+                          {folders.map((f) => (
+                            <SelectItem key={f.id} value={f.id.toString()}>{f.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Folder className="h-4 w-4 text-gray-400" />
+                      <Select value={selectedDocument.folderId?.toString() ?? 'none'} onValueChange={(v) => handleMoveDocument(selectedDocument.id, v === 'none' ? null : parseInt(v))}>
+                        <SelectTrigger className="h-8 w-40">
+                          <SelectValue placeholder="Assign folder" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No folder</SelectItem>
+                          {folders.map((f) => (
+                            <SelectItem key={f.id} value={f.id.toString()}>{f.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>
                     <h4 className="font-medium text-gray-900 mb-2">Document Information</h4>
@@ -706,9 +1014,18 @@ const filteredDocuments = documents
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-500">Category:</span>
-                        <Badge className={getCategoryColor(selectedDocument.category)} variant="outline">
-                          {selectedDocument.category || 'General'}
-                        </Badge>
+                        {isEditingDocument ? (
+                          <Input 
+                            value={editingDocumentData.category} 
+                            onChange={(e) => setEditingDocumentData(prev => ({ ...prev, category: e.target.value }))} 
+                            className="h-6 w-32 text-xs" 
+                            placeholder="Category"
+                          />
+                        ) : (
+                          <Badge className={getCategoryColor(selectedDocument.category)} variant="outline">
+                            {selectedDocument.category || 'General'}
+                          </Badge>
+                        )}
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-500">Status:</span>
@@ -726,7 +1043,7 @@ const filteredDocuments = documents
                     <div className="space-y-2 text-sm">
                       <div className="flex items-center space-x-2">
                         <Calendar className="h-4 w-4 text-gray-400" />
-                        <span>Uploaded: {selectedDocument.uploadDate}</span>
+                        <span>Uploaded: {selectedDocument.uploadDate ? new Date(selectedDocument.uploadDate).toLocaleDateString() : 'Unknown'}</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <User className="h-4 w-4 text-gray-400" />
@@ -734,34 +1051,18 @@ const filteredDocuments = documents
                       </div>
                       <div className="flex items-center space-x-2">
                         <Calendar className="h-4 w-4 text-gray-400" />
-                        {editingExpiry === selectedDocument.id.toString() ? (
+                        {isEditingDocument ? (
                           <div className="flex items-center space-x-2">
                             <Input
                               type="date"
-                              value={tempExpiryDate}
-                              onChange={(e) => setTempExpiryDate(e.target.value)}
+                              value={editingDocumentData.expiryDate}
+                              onChange={(e) => setEditingDocumentData(prev => ({ ...prev, expiryDate: e.target.value }))}
                               className="h-6 text-xs"
                             />
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleExpirySave(selectedDocument.id.toString())}
-                              className="h-6 px-2 text-xs"
-                            >
-                              Save
-                            </Button>
                           </div>
                         ) : (
                           <div className="flex items-center space-x-2">
-                            <span>Expires: {selectedDocument.expiryDate || 'No expiry date'}</span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleExpiryEdit(selectedDocument.id.toString(), selectedDocument.expiryDate)}
-                              className="h-4 w-4 p-0"
-                            >
-                              <Edit className="h-3 w-3" />
-                            </Button>
+                            <span>Expires: {selectedDocument.expiryDate ? new Date(selectedDocument.expiryDate).toLocaleDateString() : 'No expiry date'}</span>
                           </div>
                         )}
                       </div>
@@ -790,16 +1091,39 @@ const filteredDocuments = documents
                 </div>
               </div>
 
-              <div className="flex space-x-2">
-                <Button className="flex-1">
+              <div className="flex flex-wrap gap-2">
+                <Button 
+                  className="flex-1 min-w-0"
+                  onClick={() => handleViewDocument(selectedDocument.id)}
+                >
                   <Eye className="h-4 w-4 mr-2" />
                   View Document
                 </Button>
-                <Button variant="outline">
+                <Button 
+                  variant="outline"
+                  className="flex-1 min-w-0"
+                  onClick={() => handleDownloadDocument(selectedDocument.id)}
+                >
                   <Download className="h-4 w-4 mr-2" />
                   Download
                 </Button>
-                <Button variant="outline" onClick={() => setSelectedDocument(null)}>
+                <Button 
+                  variant="outline"
+                  className="flex-1 min-w-0"
+                  onClick={async () => {
+                    console.log('ARCHIVE BUTTON CLICKED');
+                    await handleToggleArchive(selectedDocument.id, !selectedDocument.isArchived);
+                  }}
+                  disabled={isLoading}
+                >
+                  <Archive className="h-4 w-4 mr-2" />
+                  {selectedDocument.isArchived ? 'Unarchive' : 'Archive'}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="flex-1 min-w-0"
+                  onClick={() => setSelectedDocument(null)}
+                >
                   Close
                 </Button>
               </div>
@@ -820,9 +1144,9 @@ const filteredDocuments = documents
                 placeholder="New folder name" 
                 value={newFolderName}
                 onChange={(e) => setNewFolderName(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleCreateFolder()}
+                onKeyPress={async (e) => e.key === 'Enter' && await handleCreateFolder()}
               />
-              <Button onClick={handleCreateFolder}>
+              <Button onClick={async () => await handleCreateFolder()}>
                 <Plus className="h-4 w-4 mr-2" />
                 Create
               </Button>

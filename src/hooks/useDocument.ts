@@ -44,8 +44,8 @@ interface Document {
   expiryDate: string | null;
   icon: React.ElementType;
   color: string;
-  folderId: string | null;
-  archived: boolean;
+  folderId: number | null;
+  isArchived: boolean;
   fileUrl?: string;
   filePath?: string;
 }
@@ -53,6 +53,62 @@ interface Document {
 interface DocumentsResponse {
   success: boolean;
   data?: Document[];
+  error?: string;
+  message?: string;
+}
+
+interface DocumentUrlResponse {
+  success: boolean;
+  data?: string;
+  error?: string;
+  message?: string;
+}
+
+interface Folder {
+  id: number;
+  folderName: string;
+  parentFolderId: number | null;
+}
+
+interface FoldersResponse {
+  success: boolean;
+  data?: Folder[];
+  error?: string;
+  message?: string;
+}
+
+interface UpdateDocumentRequest {
+  title?: string;
+  category?: string;
+  folderId?: number;
+  expiryDate?: string;
+}
+
+interface UpdateDocumentResponse {
+  success: boolean;
+  data?: Document;
+  error?: string;
+  message?: string;
+}
+
+interface CreateFolderRequest {
+  folderName: string;
+}
+
+interface CreateFolderResponse {
+  success: boolean;
+  data?: Folder;
+  error?: string;
+  message?: string;
+}
+
+interface UpdateArchiveRequest {
+  isArchived: boolean;
+}
+
+interface UpdateArchiveResponse {
+  success: boolean;
+  data?: Document;
   error?: string;
   message?: string;
 }
@@ -120,7 +176,7 @@ export const useDocument = () => {
       options?.onSuccess?.(successResponse);
       return successResponse;
 
-    } catch (error: any) {
+    } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       console.error('Document upload error:', error);
       
       let errorMessage = 'Failed to upload document';
@@ -161,15 +217,24 @@ export const useDocument = () => {
     );
   }, [uploadDocument]);
 
-  const fetchDocuments = useCallback(async (): Promise<DocumentsResponse> => {
+  const fetchDocuments = useCallback(async (isArchived?: boolean): Promise<DocumentsResponse> => {
     setIsLoading(true);
     
     try {
-      console.log('Fetching documents from API...');
-      const response = await api.get('/api/v1/document');
+      console.log('FETCH DOCUMENTS API CALL:', { isArchived });
+      
+      // Build URL with query parameter if isArchived is specified
+      let url = '/api/v1/document';
+      if (isArchived !== undefined) {
+        url += `?isArchived=${isArchived}`;
+      }
+      
+      console.log('API URL:', url);
+      
+      const response = await api.get(url);
       const responseData = response.data;
       
-      console.log('Documents API response:', responseData);
+      console.log('API Response:', responseData);
       
       // Check if the API response indicates success
       if (responseData.success === false) {
@@ -185,14 +250,14 @@ export const useDocument = () => {
       }
 
       // Transform API data to match our Document interface
-      const transformedDocuments: Document[] = (responseData.data || []).map((apiDoc: any) => ({
+      const transformedDocuments: Document[] = (responseData.data || []).map((apiDoc: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
         id: apiDoc.id,
         title: apiDoc.title,
         category: apiDoc.category || 'General',
         type: apiDoc.type?.toUpperCase() || 'FILE',
         size: apiDoc.size || 'Unknown',
-        uploadDate: new Date(apiDoc.uploadDate).toLocaleDateString(),
-        lastModified: new Date(apiDoc.lastModified).toLocaleDateString(),
+        uploadDate: apiDoc.uploadDate,
+        lastModified: apiDoc.lastModified,
         uploadedBy: apiDoc.uploadedBy || 'Unknown',
         description: apiDoc.description || `Document: ${apiDoc.title}`,
         tags: apiDoc.tags || ['document'],
@@ -200,8 +265,8 @@ export const useDocument = () => {
         expiryDate: apiDoc.expiryDate,
         icon: FileText,
         color: 'bg-gray-100 text-gray-800',
-        folderId: null,
-        archived: false,
+        folderId: apiDoc.folderId,
+        isArchived: apiDoc.isArchived || false,
         fileUrl: apiDoc.filePath,
         filePath: apiDoc.filePath
       }));
@@ -214,7 +279,7 @@ export const useDocument = () => {
       console.log('Documents fetched successfully:', successResponse);
       return successResponse;
 
-    } catch (error: any) {
+    } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       console.error('Documents fetch error:', error);
       
       let errorMessage = 'Failed to fetch documents';
@@ -237,10 +302,260 @@ export const useDocument = () => {
     }
   }, []);
 
+  const getDocumentUrl = useCallback(async (documentId: number): Promise<DocumentUrlResponse> => {
+    setIsLoading(true);
+    
+    try {
+      console.log(`Getting document URL for ID: ${documentId}`);
+      const response = await api.get(`/api/v1/document/view/${documentId}`);
+      const responseData = response.data;
+      
+      console.log(!responseData.url,'Document URL API response:', responseData.url);
+      
+      if(responseData.url){
+        return {
+          success: true,
+          data: responseData.url
+        };
+      }
+      
+      const errorMessage = !responseData.url ? 'Failed to get document URL' : responseData.message;
+      console.error('Document URL fetch failed:', errorMessage);
+      
+      return {
+        success: false,
+        error: errorMessage
+      };
+
+
+   
+
+    } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+      console.error('Document URL fetch error:', error);
+      
+      let errorMessage = 'Failed to get document URL';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      return {
+        success: false,
+        error: errorMessage
+      };
+
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const fetchFolders = useCallback(async (): Promise<FoldersResponse> => {
+    setIsLoading(true);
+    
+    try {
+      console.log('Fetching folders from API...');
+      const response = await api.get('/api/v1/document/folder');
+      const responseData = response.data;
+      
+      console.log('Folders API response:', responseData);
+      
+      if (responseData.success === false) {
+        const errorMessage = responseData.message || 'Failed to fetch folders';
+        console.error('Folders fetch failed:', errorMessage);
+        
+        return {
+          success: false,
+          error: errorMessage
+        };
+      }
+
+      return {
+        success: true,
+        data: responseData.data || []
+      };
+
+    } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+      console.error('Folders fetch error:', error);
+      
+      let errorMessage = 'Failed to fetch folders';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      return {
+        success: false,
+        error: errorMessage
+      };
+
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const updateDocument = useCallback(async (
+    documentId: number,
+    updateData: UpdateDocumentRequest
+  ): Promise<UpdateDocumentResponse> => {
+    setIsLoading(true);
+    
+    try {
+      console.log(`Updating document ${documentId} with data:`, updateData);
+      const response = await api.put(`/api/v1/document/${documentId}`, updateData);
+      const responseData = response.data;
+      
+      console.log('Update document API response:', responseData);
+      
+      if (responseData.success === false) {
+        const errorMessage = responseData.message || 'Failed to update document';
+        console.error('Document update failed:', errorMessage);
+        
+        return {
+          success: false,
+          error: errorMessage
+        };
+      }
+
+      return {
+        success: true,
+        data: responseData.data
+      };
+
+    } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+      console.error('Document update error:', error);
+      
+      let errorMessage = 'Failed to update document';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      return {
+        success: false,
+        error: errorMessage
+      };
+
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const createFolder = useCallback(async (
+    folderName: string
+  ): Promise<CreateFolderResponse> => {
+    setIsLoading(true);
+    
+    try {
+      console.log(`Creating folder: ${folderName}`);
+      const response = await api.post('/api/v1/document/folder', {
+        folderName: folderName
+      });
+      const responseData = response.data;
+      
+      console.log('Create folder API response:', responseData);
+      
+      if (responseData.success === false) {
+        const errorMessage = responseData.message || 'Failed to create folder';
+        console.error('Folder creation failed:', errorMessage);
+        
+        return {
+          success: false,
+          error: errorMessage
+        };
+      }
+
+      return {
+        success: true,
+        data: responseData.data
+      };
+
+    } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+      console.error('Folder creation error:', error);
+      
+      let errorMessage = 'Failed to create folder';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      return {
+        success: false,
+        error: errorMessage
+      };
+
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const updateArchive = useCallback(async (
+    documentId: number,
+    isArchived: boolean
+  ): Promise<UpdateArchiveResponse> => {
+    setIsLoading(true);
+    
+    try {
+      console.log(`Updating archive status for document ${documentId} to ${isArchived}`);
+      const response = await api.put(`/api/v1/document/${documentId}/archive`, {
+        isArchived
+      });
+      const responseData = response.data;
+      
+      console.log('Update archive API response:', responseData);
+      
+      if (responseData.success === false) {
+        const errorMessage = responseData.message || 'Failed to update archive status';
+        console.error('Archive update failed:', errorMessage);
+        
+        return {
+          success: false,
+          error: errorMessage
+        };
+      }
+
+      return {
+        success: true,
+        data: responseData.data
+      };
+
+    } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+      console.error('Archive update error:', error);
+      
+      let errorMessage = 'Failed to update archive status';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      return {
+        success: false,
+        error: errorMessage
+      };
+
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   return {
     uploadDocument,
     uploadMultipleDocuments,
     fetchDocuments,
+    getDocumentUrl,
+    fetchFolders,
+    updateDocument,
+    createFolder,
+    updateArchive,
     isUploading,
     uploadProgress,
     isLoading

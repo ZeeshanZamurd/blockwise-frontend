@@ -87,9 +87,9 @@ const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, 
       ? emails.filter(email => currentIssue.linkedEmailIds?.includes(email.id))
       : [];
 
-  // Show only first 3 items unless showAll is true
-  const displayedLinkedEmails = showAll ? linkedEmails : linkedEmails.slice(0, 3);
-  const hasMoreItems = linkedEmails.length > 3;
+  // Show only first 4 items unless showAll is true
+  const displayedLinkedEmails = showAll ? linkedEmails : linkedEmails.slice(0, 4);
+  const hasMoreItems = linkedEmails.length > 4;
 
   // Use API emails for filtering instead of context emails
   const filteredEmails = apiEmails.filter(email =>

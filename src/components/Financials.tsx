@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -66,7 +66,29 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
   const [tempBudget, setTempBudget] = useState<number>(0);
   const [editingBudgetItems, setEditingBudgetItems] = useState(false);
   const [availableYears, setAvailableYears] = useState<string[]>([]);
-  const { fetchAnnualBudget, createAnnualBudget, fetchAvailableYears, isLoading: isFinanceLoading } = useFinance();
+  const [yearToFinanceId, setYearToFinanceId] = useState<Record<string, number>>({});
+  const [apiBudgetData, setApiBudgetData] = useState<{
+    totalBudget: number;
+    totalSpent: number;
+    remainingBudget: number;
+    percentageSpent: number;
+  } | null>(null);
+  const [apiMonthlyData, setApiMonthlyData] = useState<{
+    monthlyExpenses: Array<{
+      id: number;
+      month: string;
+      totalSpent: number;
+      totalItems: number;
+      items: Array<{
+        id: number;
+        category: string;
+        itemName: string;
+        description: string;
+        amount: number;
+      }>;
+    }>;
+  } | null>(null);
+  const { fetchAnnualBudget, createAnnualBudget, updateAnnualBudget, fetchMonthlyFinance, saveLineItem, fetchAvailableYears, isLoading: isFinanceLoading } = useFinance();
 
   useEffect(() => {
     // Load or migrate data
@@ -79,14 +101,21 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
     const oldMonths = localStorage.getItem('financials_months');
     const oldBudget = localStorage.getItem('financials_annual_budget');
     
-    let initialMonthsByYear: Record<string, MonthData[]> = {};
-    let initialBudgetByYear: Record<string, number> = {};
-    let initialBudgetLineItems: Record<string, BudgetLineItem[]> = {};
-    let initialBudgetDocuments: Record<string, { fileName: string; fileUrl: string }[]> = {};
+    const initialMonthsByYear: Record<string, MonthData[]> = {};
+    const initialBudgetByYear: Record<string, number> = {};
+    const initialBudgetLineItems: Record<string, BudgetLineItem[]> = {};
+    const initialBudgetDocuments: Record<string, { fileName: string; fileUrl: string }[]> = {};
     let detectedYear = new Date().getFullYear().toString();
 
     if (savedMonthsByYear) {
-      initialMonthsByYear = JSON.parse(savedMonthsByYear);
+      const parsedData = JSON.parse(savedMonthsByYear);
+      // Clean up invalid years from localStorage
+      Object.keys(parsedData).forEach(year => {
+        const yearNum = parseInt(year);
+        if (yearNum >= 2020 && yearNum <= 2030) {
+          initialMonthsByYear[year] = parsedData[year];
+        }
+      });
     } else if (oldMonths) {
       // Migrate old data
       const oldMonthsData = JSON.parse(oldMonths);
@@ -96,7 +125,14 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
     }
 
     if (savedBudgetByYear) {
-      initialBudgetByYear = JSON.parse(savedBudgetByYear);
+      const parsedData = JSON.parse(savedBudgetByYear);
+      // Clean up invalid years from localStorage
+      Object.keys(parsedData).forEach(year => {
+        const yearNum = parseInt(year);
+        if (yearNum >= 2020 && yearNum <= 2030) {
+          initialBudgetByYear[year] = parsedData[year];
+        }
+      });
     } else if (oldBudget) {
       // Migrate old budget
       initialBudgetByYear[detectedYear] = parseFloat(oldBudget);
@@ -104,11 +140,25 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
     }
 
     if (savedBudgetLineItems) {
-      initialBudgetLineItems = JSON.parse(savedBudgetLineItems);
+      const parsedData = JSON.parse(savedBudgetLineItems);
+      // Clean up invalid years from localStorage
+      Object.keys(parsedData).forEach(year => {
+        const yearNum = parseInt(year);
+        if (yearNum >= 2020 && yearNum <= 2030) {
+          initialBudgetLineItems[year] = parsedData[year];
+        }
+      });
     }
 
     if (savedBudgetDocuments) {
-      initialBudgetDocuments = JSON.parse(savedBudgetDocuments);
+      const parsedData = JSON.parse(savedBudgetDocuments);
+      // Clean up invalid years from localStorage
+      Object.keys(parsedData).forEach(year => {
+        const yearNum = parseInt(year);
+        if (yearNum >= 2020 && yearNum <= 2030) {
+          initialBudgetDocuments[year] = parsedData[year];
+        }
+      });
     }
 
     // Set default year if no data exists
@@ -122,7 +172,18 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
     // Detect current year from existing data
     const years = Object.keys(initialMonthsByYear);
     if (years.length > 0) {
-      detectedYear = years[years.length - 1]; // Use most recent year
+      // Filter out invalid years (not between 2020 and 2030)
+      const validYears = years.filter(year => {
+        const yearNum = parseInt(year);
+        return yearNum >= 2020 && yearNum <= 2030;
+      });
+      
+      if (validYears.length > 0) {
+        detectedYear = validYears[validYears.length - 1]; // Use most recent valid year
+      } else {
+        // If no valid years found, use current year
+        detectedYear = new Date().getFullYear().toString();
+      }
     }
 
     setMonthsByYear(initialMonthsByYear);
@@ -136,15 +197,40 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
     const loadAvailableYears = async () => {
       try {
         const yearsResponse = await fetchAvailableYears();
+        console.log('yearsResponseyearsResponse ',yearsResponse)
         if (yearsResponse.success && yearsResponse.data) {
-          setAvailableYears(yearsResponse.data.sort());
+          // Extract year values from the API response objects and create finance ID mapping
+          const yearStrings = yearsResponse.data.map(item => item.year.toString());
+          const financeIdMapping: Record<string, number> = {};
+          
+          yearsResponse.data.forEach(item => {
+            const yearStr = item.year.toString();
+            const yearNum = parseInt(yearStr);
+            if (yearNum >= 2020 && yearNum <= 2030) {
+              financeIdMapping[yearStr] = item.financeId;
+            }
+          });
+          
+          console.log('Extracted year strings from API:', yearStrings);
+          console.log('Finance ID mapping:', financeIdMapping);
+          
+          // Filter out invalid years (not between 2020 and 2030)
+          const validApiYears = yearStrings.filter(year => {
+            const yearNum = parseInt(year);
+            return yearNum >= 2020 && yearNum <= 2030;
+          });
+          
+          console.log('Valid API years after filtering:', validApiYears);
+          setAvailableYears(validApiYears.sort());
+          setYearToFinanceId(financeIdMapping);
           
           // If current year is not in API years, use the most recent API year
-          if (!yearsResponse.data.includes(detectedYear)) {
-            const mostRecentYear = yearsResponse.data[yearsResponse.data.length - 1];
+          if (!validApiYears.includes(detectedYear)) {
+            const mostRecentYear = validApiYears[validApiYears.length - 1];
             if (mostRecentYear) {
               setCurrentYear(mostRecentYear);
-              setTempBudget(initialBudgetByYear[mostRecentYear] || 120000);
+              // Don't set tempBudget here - let loadApiBudgetData handle it
+              // setTempBudget(initialBudgetByYear[mostRecentYear] || 120000);
             }
           }
         } else {
@@ -170,6 +256,112 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
     localStorage.setItem('financials_budget_documents_by_year', JSON.stringify(budgetDocumentsByYear));
   }, [monthsByYear, budgetByYear, budgetLineItemsByYear, budgetDocumentsByYear]);
 
+  const loadApiBudgetData = useCallback(async (year: string) => {
+    try {
+      const budgetResponse = await fetchAnnualBudget(year);
+      if (budgetResponse.success && budgetResponse.data) {
+        const apiData = budgetResponse.data;
+        setApiBudgetData({
+          totalBudget: apiData.totalBudget,
+          totalSpent: apiData.totalSpent,
+          remainingBudget: apiData.remainingBudget,
+          percentageSpent: apiData.percentageSpent
+        });
+        
+        // Update tempBudget with the API budget value
+        setTempBudget(apiData.totalBudget);
+      } else {
+        // Show error toast but don't break the UI
+        toast.error(budgetResponse.error || 'Failed to load budget data');
+        console.error('Budget API error:', budgetResponse.error);
+        
+        // Fallback to local budget data
+        setTempBudget(budgetByYear[year] || 120000);
+      }
+    } catch (error) {
+      console.error('Error loading API budget data:', error);
+      toast.error('Failed to load budget data');
+      
+      // Fallback to local budget data
+      setTempBudget(budgetByYear[year] || 120000);
+    }
+  }, [fetchAnnualBudget, budgetByYear]);
+
+  const loadApiMonthlyData = useCallback(async (year: string) => {
+    try {
+      const monthlyResponse = await fetchMonthlyFinance(year);
+      if (monthlyResponse.success && monthlyResponse.data) {
+        const apiData = monthlyResponse.data;
+        setApiMonthlyData({
+          monthlyExpenses: apiData.monthlyExpenses
+        });
+      } else {
+        // Show error toast but don't break the UI
+        toast.error(monthlyResponse.error || 'Failed to load monthly data');
+        console.error('Monthly API error:', monthlyResponse.error);
+      }
+    } catch (error) {
+      console.error('Error loading API monthly data:', error);
+      toast.error('Failed to load monthly data');
+    }
+  }, [fetchMonthlyFinance]);
+
+  const getAllMonthsOfYear = (year: string) => {
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    
+    return monthNames.map((monthName, index) => {
+      const monthKey = monthName.toLowerCase();
+      const apiMonthData = apiMonthlyData?.monthlyExpenses.find(m => m.month.toLowerCase() === monthKey);
+      
+      console.log(`Month: ${monthName}, API data:`, apiMonthData);
+      console.log(`Line items for ${monthName}:`, apiMonthData?.items);
+      
+      return {
+        id: `api-${year}-${index}`,
+        month: `${monthName} ${year}`,
+        lineItems: apiMonthData ? apiMonthData.items.map(item => ({
+          id: item.id.toString(),
+          description: `${item.itemName}: ${item.description}`,
+          amount: item.amount,
+          attachments: [],
+          charges: []
+        })) : [],
+        status: apiMonthData ? 'uploaded' : 'draft' as 'draft' | 'uploaded'
+      };
+    });
+  };
+
+  // Load API budget data when currentYear changes
+  useEffect(() => {
+    if (currentYear) {
+      loadApiBudgetData(currentYear);
+      loadApiMonthlyData(currentYear);
+    }
+  }, [currentYear, loadApiBudgetData, loadApiMonthlyData]);
+
+  // Auto-expand months that have line items when API data loads
+  useEffect(() => {
+    if (apiMonthlyData) {
+      const monthsWithData = apiMonthlyData.monthlyExpenses.filter(month => month.items.length > 0);
+      if (monthsWithData.length > 0) {
+        setExpandedMonths(prev => {
+          const newExpandedMonths = new Set(prev);
+          monthsWithData.forEach(month => {
+            const monthIndex = ['january', 'february', 'march', 'april', 'may', 'june',
+              'july', 'august', 'september', 'october', 'november', 'december'].indexOf(month.month.toLowerCase());
+            if (monthIndex !== -1) {
+              newExpandedMonths.add(`api-${currentYear}-${monthIndex}`);
+            }
+          });
+          return newExpandedMonths;
+        });
+      }
+    }
+  }, [apiMonthlyData, currentYear]);
+
   // Always show functional interface with manual add capabilities
 
   const getStatusColor = (status: string) => {
@@ -180,7 +372,70 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
     }
   };
 
-  const getCurrentMonths = () => monthsByYear[currentYear] || [];
+  const getCurrentMonths = () => {
+    // Always show all 12 months for any year
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    
+    // Get local modifications for this year
+    const localMonths = monthsByYear[currentYear] || [];
+    
+    // If we have API data, use it; otherwise fall back to local data
+    if (apiMonthlyData && apiMonthlyData.monthlyExpenses.length > 0) {
+      console.log('Using API monthly data:', apiMonthlyData);
+      return monthNames.map((monthName, index) => {
+        const monthKey = monthName.toLowerCase();
+        const apiMonthData = apiMonthlyData.monthlyExpenses.find(m => m.month.toLowerCase() === monthKey);
+        
+        // Check if there are local modifications for this month
+        const localMonth = localMonths.find(m => m.month.includes(monthName));
+        
+        if (localMonth) {
+          // Use local modifications (which may include API data + new items)
+          console.log(`Using local modifications for ${monthName}:`, localMonth);
+          return localMonth;
+        } else if (apiMonthData) {
+          // Use API data
+          console.log(`Found API data for ${monthName}:`, apiMonthData);
+          return {
+            id: `api-${currentYear}-${index}`,
+            month: `${monthName} ${currentYear}`,
+            lineItems: apiMonthData.items.map(item => ({
+              id: item.id.toString(),
+              description: `${item.itemName}: ${item.description}`,
+              amount: item.amount,
+              attachments: [],
+              charges: []
+            })),
+            status: 'uploaded' as 'draft' | 'uploaded'
+          };
+        } else {
+          // No API data for this month, create empty month
+          return {
+            id: `local-${currentYear}-${index}`,
+            month: `${monthName} ${currentYear}`,
+            lineItems: [],
+            status: 'draft' as 'draft' | 'uploaded'
+          };
+        }
+      });
+    } else {
+      console.log('No API monthly data, using local data');
+      // No API data, use local data
+      return monthNames.map((monthName, index) => {
+        const existingMonth = localMonths.find(m => m.month.includes(monthName));
+        
+        return existingMonth || {
+          id: `local-${currentYear}-${index}`,
+          month: `${monthName} ${currentYear}`,
+          lineItems: [],
+          status: 'draft' as 'draft' | 'uploaded'
+        };
+      });
+    }
+  };
   const getCurrentBudget = () => budgetByYear[currentYear] || 0;
 
   const getTotalSpent = () => {
@@ -191,6 +446,13 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
 
   const addYear = async () => {
     if (newYear && !monthsByYear[newYear]) {
+      // Validate that the new year is valid
+      const yearNum = parseInt(newYear);
+      if (yearNum < 2020 || yearNum > 2030) {
+        toast.error('Please enter a valid year between 2020 and 2030');
+        return;
+      }
+      
       try {
         // Try to fetch existing budget from API first
         const budgetResponse = await fetchAnnualBudget(newYear);
@@ -270,67 +532,242 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
   };
 
   const addLineItem = (monthId: string) => {
+    console.log('addLineItem called with monthId:', monthId);
+    console.log('Current months before adding:', getCurrentMonths());
+    
+    // Simply add a new line item to local state
     const newLineItem: LineItem = {
-      id: Date.now().toString(),
+      id: `new-${Date.now().toString()}`,
       description: '',
       amount: 0,
       attachments: [],
       charges: []
     };
 
-    setMonthsByYear(prev => ({
-      ...prev,
-      [currentYear]: getCurrentMonths().map(month =>
-        month.id === monthId
-          ? { ...month, lineItems: [...month.lineItems, newLineItem] }
-          : month
-      )
-    }));
+    // Extract month name from the monthId
+    const monthIndex = parseInt(monthId.split('-')[2]);
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    const monthName = monthNames[monthIndex];
+    
+    console.log(`Adding line item to ${monthName} (index: ${monthIndex})`);
+    
+    setMonthsByYear(prev => {
+      const currentMonths = getCurrentMonths();
+      const monthToUpdate = currentMonths.find(m => m.id === monthId);
+      
+      if (monthToUpdate) {
+        const updatedMonth = {
+          ...monthToUpdate,
+          lineItems: [...monthToUpdate.lineItems, newLineItem]
+        };
+        
+        const updated = {
+          ...prev,
+          [currentYear]: (prev[currentYear] || []).map(month =>
+            month.month.includes(monthName)
+              ? updatedMonth
+              : month
+          )
+        };
+        
+        // If no existing month found, add the new month
+        if (!updated[currentYear].some(m => m.month.includes(monthName))) {
+          updated[currentYear] = [...updated[currentYear], updatedMonth];
+        }
+        
+        console.log('Updated monthsByYear:', updated);
+        console.log('New line item added:', newLineItem);
+        return updated;
+      }
+      return prev;
+    });
   };
 
   const updateLineItem = (monthId: string, lineItemId: string, field: 'description' | 'amount', value: string | number) => {
-    setMonthsByYear(prev => ({
-      ...prev,
-      [currentYear]: getCurrentMonths().map(month =>
-        month.id === monthId
-          ? {
-              ...month,
-              lineItems: month.lineItems.map(item =>
-                item.id === lineItemId ? { ...item, [field]: value } : item
-              )
-            }
-          : month
-      )
-    }));
+    // Check if this is an API month
+    if (monthId.startsWith('api-')) {
+      const monthIndex = parseInt(monthId.split('-')[2]);
+      const monthNames = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ];
+      const monthName = monthNames[monthIndex];
+      
+      setMonthsByYear(prev => {
+        const currentMonths = getCurrentMonths();
+        const monthToUpdate = currentMonths.find(m => m.id === monthId);
+        
+        if (monthToUpdate) {
+          const updatedMonth = {
+            ...monthToUpdate,
+            lineItems: monthToUpdate.lineItems.map(item =>
+              item.id === lineItemId ? { ...item, [field]: value } : item
+            )
+          };
+          
+          return {
+            ...prev,
+            [currentYear]: (prev[currentYear] || []).map(month =>
+              month.month.includes(monthName)
+                ? updatedMonth
+                : month
+            )
+          };
+        }
+        return prev;
+      });
+    } else {
+      // For local months, use the existing logic
+      setMonthsByYear(prev => ({
+        ...prev,
+        [currentYear]: getCurrentMonths().map(month =>
+          month.id === monthId
+            ? {
+                ...month,
+                lineItems: month.lineItems.map(item =>
+                  item.id === lineItemId ? { ...item, [field]: value } : item
+                )
+              }
+            : month
+        )
+      }));
+    }
   };
 
   const removeLineItem = (monthId: string, lineItemId: string) => {
-    setMonthsByYear(prev => ({
-      ...prev,
-      [currentYear]: getCurrentMonths().map(month =>
-        month.id === monthId
-          ? {
-              ...month,
-              lineItems: month.lineItems.filter(item => item.id !== lineItemId)
-            }
-          : month
-      )
-    }));
+    // Check if this is an API month
+    if (monthId.startsWith('api-')) {
+      const monthIndex = parseInt(monthId.split('-')[2]);
+      const monthNames = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ];
+      const monthName = monthNames[monthIndex];
+      
+      setMonthsByYear(prev => {
+        const currentMonths = getCurrentMonths();
+        const monthToUpdate = currentMonths.find(m => m.id === monthId);
+        
+        if (monthToUpdate) {
+          const updatedMonth = {
+            ...monthToUpdate,
+            lineItems: monthToUpdate.lineItems.filter(item => item.id !== lineItemId)
+          };
+          
+          return {
+            ...prev,
+            [currentYear]: (prev[currentYear] || []).map(month =>
+              month.month.includes(monthName)
+                ? updatedMonth
+                : month
+            )
+          };
+        }
+        return prev;
+      });
+    } else {
+      // For local months, use the existing logic
+      setMonthsByYear(prev => ({
+        ...prev,
+        [currentYear]: getCurrentMonths().map(month =>
+          month.id === monthId
+            ? {
+                ...month,
+                lineItems: month.lineItems.filter(item => item.id !== lineItemId)
+              }
+            : month
+        )
+      }));
+    }
   };
 
-  const saveMonth = (monthId: string) => {
-    setMonthsByYear(prev => ({
-      ...prev,
-      [currentYear]: getCurrentMonths().map(month =>
-        month.id === monthId ? { ...month, status: 'uploaded' } : month
-      )
-    }));
-    setEditingMonth(null);
+  const saveMonth = async (monthId: string) => {
+    // Extract month index from monthId (e.g., "api-2025-6" -> 6 -> monthId = 7 for July)
+    const monthIndex = parseInt(monthId.split('-')[2]);
+    
+    // Month ID should be 1-based (1 for January, 2 for February, etc.)
+    const apiMonthId = monthIndex + 1;
+    
+    console.log(`Saving month: (index: ${monthIndex}, API monthId: ${apiMonthId})`);
+    
+    // Get finance ID for current year
+    const financeId = yearToFinanceId[currentYear];
+    if (!financeId) {
+      toast.error(`No finance ID found for year ${currentYear}`);
+      return;
+    }
+    
+    // Find the month data
+    const monthData = getCurrentMonths().find(m => m.id === monthId);
+    if (monthData) {
+      console.log('Month data to save:', monthData);
+      
+      // Prepare array of new line items to save
+      const newLineItems = monthData.lineItems
+        .filter(item => item.id.startsWith('new-'))
+        .map(item => ({
+          itemName: item.description.split(':')[0]?.trim() || 'New Item',
+          category: 'General',
+          description: item.description.split(':')[1]?.trim() || item.description || '',
+          amount: item.amount || 0
+        }));
+      
+      if (newLineItems.length === 0) {
+        toast.info('No new line items to save');
+        return;
+      }
+      
+      console.log(`Saving ${newLineItems.length} new line items to API:`, newLineItems);
+      
+      try {
+        const response = await saveLineItem(financeId, apiMonthId.toString(), newLineItems);
+        if (!response.success) {
+          toast.error(`Failed to save line items: ${response.error}`);
+          return;
+        }
+        console.log('Line items saved successfully:', response);
+        
+        // Update local state to mark as uploaded
+        setMonthsByYear(prev => ({
+          ...prev,
+          [currentYear]: getCurrentMonths().map(month =>
+            month.id === monthId ? { ...month, status: 'uploaded' } : month
+          )
+        }));
+        
+        setEditingMonth(null);
+        toast.success(`${newLineItems.length} line items saved successfully!`);
+      } catch (error) {
+        console.error('Error saving line items:', error);
+        toast.error('Failed to save line items');
+      }
+    }
   };
 
-  const saveBudget = () => {
-    setBudgetByYear(prev => ({ ...prev, [currentYear]: tempBudget }));
-    setEditingBudget(false);
+  const saveBudget = async () => {
+    try {
+      // Call API to update budget using the hook function
+      const response = await updateAnnualBudget(currentYear, tempBudget);
+      
+      if (response.success) {
+        // Update local state
+        setBudgetByYear(prev => ({ ...prev, [currentYear]: tempBudget }));
+        setEditingBudget(false);
+        
+        // Reload API budget data to get updated values
+        await loadApiBudgetData(currentYear);
+        
+        toast.success('Budget updated successfully!');
+      } else {
+        toast.error(response.error || 'Failed to update budget');
+      }
+    } catch (error) {
+      console.error('Error updating budget:', error);
+      toast.error('Failed to update budget');
+    }
   };
 
   const cancelBudgetEdit = () => {
@@ -338,29 +775,35 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
     setEditingBudget(false);
   };
 
-  const totalSpent = getTotalSpent();
-  const totalBudget = getCurrentBudget();
-  const remaining = totalBudget - totalSpent;
-  const percentageUsed = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
+  const totalSpent = apiBudgetData?.totalSpent ?? getTotalSpent();
+  const totalBudget = apiBudgetData?.totalBudget ?? getCurrentBudget();
+  const remaining = apiBudgetData?.remainingBudget ?? (totalBudget - totalSpent);
+  const percentageUsed = apiBudgetData?.percentageSpent ?? (totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0);
 
   const handleYearSelect = async (value: string) => {
     if (value === 'add-year') {
       setShowAddYear(true);
     } else {
-      setCurrentYear(value);
-      setTempBudget(budgetByYear[value] || 120000);
+      // Validate that the selected year is valid
+      const yearNum = parseInt(value);
+      if (yearNum < 2020 || yearNum > 2030) {
+        toast.error('Please select a valid year between 2020 and 2030');
+        return;
+      }
       
-      // Try to fetch budget data from API when switching years
+      setCurrentYear(value);
+      // Don't set tempBudget here - let loadApiBudgetData handle it
+      // setTempBudget(budgetByYear[value] || 120000);
+      
+      // Load API budget and monthly data for the selected year
       try {
-        const budgetResponse = await fetchAnnualBudget(value);
-        if (budgetResponse.success && budgetResponse.data) {
-          const apiData = budgetResponse.data;
-          setBudgetByYear(prev => ({ ...prev, [value]: apiData.totalBudget }));
-          setTempBudget(apiData.totalBudget);
-        }
+        await loadApiBudgetData(value);
+        await loadApiMonthlyData(value);
       } catch (error) {
-        console.error('Error fetching budget for year:', value, error);
-        // Continue with local storage data
+        console.error('Error loading data for year:', value, error);
+        toast.error('Failed to load data for selected year');
+        // Fallback to local budget if API fails
+        setTempBudget(budgetByYear[value] || 120000);
       }
     }
   };
@@ -417,24 +860,111 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
     setChargeBreakdownOpen(true);
   };
 
-  const saveCharges = (charges: Charge[]) => {
+  const saveLineItemChanges = async (updatedData: { description: string; amount: number; category: string }) => {
     if (!selectedLineItem) return;
 
-    setMonthsByYear(prev => ({
-      ...prev,
-      [currentYear]: getCurrentMonths().map(month =>
-        month.id === selectedLineItem.monthId
-          ? {
-              ...month,
-              lineItems: month.lineItems.map(item =>
-                item.id === selectedLineItem.lineItemId 
-                  ? { ...item, charges }
-                  : item
-              )
-            }
-          : month
-      )
-    }));
+    const lineItem = getSelectedLineItem();
+    if (!lineItem) return;
+
+    // Find the month to check its status
+    const month = getCurrentMonths().find(m => m.id === selectedLineItem.monthId);
+    const isDraftMonth = month?.status === 'draft';
+    const isNewItem = lineItem.id.startsWith('new-');
+    
+    console.log('Save line item changes:', {
+      monthStatus: month?.status,
+      isDraftMonth,
+      isNewItem,
+      updatedData,
+      originalDescription: lineItem.description,
+      newDescription: `${updatedData.category}: ${updatedData.description}`
+    });
+    
+    if (isDraftMonth && isNewItem) {
+      // For new items in draft months, call saveLineItem API
+      const monthIndex = parseInt(selectedLineItem.monthId.split('-')[2]);
+      const apiMonthId = monthIndex + 1;
+      const financeId = yearToFinanceId[currentYear];
+      
+      if (!financeId) {
+        toast.error(`No finance ID found for year ${currentYear}`);
+        return;
+      }
+      
+      const lineItemData = [{
+        itemName: updatedData.description.split(':')[0]?.trim() || updatedData.description || 'New Item',
+        category: updatedData.category || 'General',
+        description: updatedData.description.split(':')[1]?.trim() || updatedData.description || '',
+        amount: updatedData.amount || 0
+      }];
+      
+      console.log('Saving new line item via API:', {
+        financeId,
+        apiMonthId,
+        lineItemData,
+        originalDescription: updatedData.description,
+        extractedCategory: updatedData.category,
+        extractedItemName: updatedData.description.split(':')[0]?.trim(),
+        extractedDescription: updatedData.description.split(':')[1]?.trim()
+      });
+      
+      try {
+        const response = await saveLineItem(financeId, apiMonthId.toString(), lineItemData);
+        if (response.success) {
+          // Update local state with the new data including category
+          setMonthsByYear(prev => ({
+            ...prev,
+            [currentYear]: getCurrentMonths().map(month =>
+              month.id === selectedLineItem.monthId
+                ? {
+                    ...month,
+                    lineItems: month.lineItems.map(item =>
+                      item.id === selectedLineItem.lineItemId 
+                        ? { 
+                            ...item, 
+                            description: `${updatedData.category}: ${updatedData.description}`,
+                            amount: updatedData.amount 
+                          }
+                        : item
+                    )
+                  }
+                : month
+            )
+          }));
+          
+          toast.success('Line item saved successfully!');
+        } else {
+          toast.error(`Failed to save line item: ${response.error}`);
+        }
+      } catch (error) {
+        console.error('Error saving line item:', error);
+        toast.error('Failed to save line item');
+      }
+    } else {
+      // For existing items (saved status), just update local state
+      setMonthsByYear(prev => ({
+        ...prev,
+        [currentYear]: getCurrentMonths().map(month =>
+          month.id === selectedLineItem.monthId
+            ? {
+                ...month,
+                lineItems: month.lineItems.map(item =>
+                  item.id === selectedLineItem.lineItemId 
+                    ? { 
+                        ...item, 
+                        description: `${updatedData.category}: ${updatedData.description}`,
+                        amount: updatedData.amount 
+                      }
+                    : item
+                )
+              }
+            : month
+        )
+      }));
+      
+      toast.success('Line item updated locally');
+    }
+    
     setSelectedLineItem(null);
   };
 
@@ -531,10 +1061,10 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={() => setShowAddMonth(true)} className="bg-primary text-primary-foreground hover:bg-primary/90">
+            {/* <Button onClick={() => setShowAddMonth(true)} className="bg-primary text-primary-foreground hover:bg-primary/90">
               <Plus className="h-4 w-4 mr-2" />
               Add Month
-            </Button>
+            </Button> */}
           </div>
 
           {/* Simple Summary Cards */}
@@ -569,11 +1099,26 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
               const monthTotal = month.lineItems.reduce((sum, item) => sum + item.amount, 0);
               const isExpanded = expandedMonths.has(month.id);
               
+              console.log('Month expand/collapse:', {
+                monthId: month.id,
+                monthName: month.month,
+                status: month.status,
+                isExpanded,
+                expandedMonths: Array.from(expandedMonths)
+              });
+              
               return (
                 <Card key={month.id} className="border border-border">
                   <Collapsible 
                     open={isExpanded}
                     onOpenChange={(open) => {
+                      console.log('Collapsible onOpenChange:', {
+                        monthId: month.id,
+                        monthName: month.month,
+                        open,
+                        currentExpanded: expandedMonths.has(month.id)
+                      });
+                      
                       const newSet = new Set(expandedMonths);
                       if (open) {
                         newSet.add(month.id);
@@ -630,8 +1175,21 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
                             <div className="flex gap-2 items-center">
                               <Input
                                 placeholder="Description"
-                                value={item.description}
-                                onChange={(e) => updateLineItem(month.id, item.id, 'description', e.target.value)}
+                                value={(() => {
+                                  // If description has format "Category: Description", show only description part
+                                  if (item.description.includes(':')) {
+                                    return item.description.split(':')[1]?.trim() || item.description;
+                                  }
+                                  return item.description;
+                                })()}
+                                onChange={(e) => {
+                                  // Get current category and combine with new description
+                                  const currentCategory = item.description.includes(':') 
+                                    ? item.description.split(':')[0]?.trim() || 'General'
+                                    : 'General';
+                                  const newDescription = `${currentCategory}: ${e.target.value}`;
+                                  updateLineItem(month.id, item.id, 'description', newDescription);
+                                }}
                                 disabled={editingMonth !== month.id}
                                 className="flex-1"
                               />
@@ -875,8 +1433,8 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
                   )}
                 </div>
                 {/* Budget Document Upload */}
-                <div className="border rounded-lg p-4 bg-muted/20">
-                  <div className="flex items-center justify-between mb-3">
+                {/* <div className="border rounded-lg p-4 bg-muted/20"> */}
+                  {/* <div className="flex items-center justify-between mb-3">
                     <h4 className="font-medium">Budget Documents</h4>
                     <Button 
                       onClick={() => {
@@ -895,8 +1453,8 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
                       <Upload className="h-4 w-4 mr-2" />
                       Upload Budget
                     </Button>
-                  </div>
-                  {budgetDocumentsByYear[currentYear] && budgetDocumentsByYear[currentYear].length > 0 ? (
+                  </div> */}
+                  {/* {budgetDocumentsByYear[currentYear] && budgetDocumentsByYear[currentYear].length > 0 ? (
                     <div className="space-y-2">
                       {budgetDocumentsByYear[currentYear].map((doc, index) => (
                         <div key={index} className="flex items-center justify-between bg-background rounded px-3 py-2">
@@ -917,11 +1475,11 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground">No budget documents uploaded</p>
-                  )}
-                </div>
+                  )} */}
+                {/* </div> */}
 
                 {/* Manual Budget Items */}
-                <div className="border rounded-lg p-4">
+                {/* <div className="border rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="font-medium">Budget Line Items</h4>
                     {budgetLineItemsByYear[currentYear] && budgetLineItemsByYear[currentYear].length > 0 && (
@@ -985,7 +1543,7 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
                       </Button>
                     </div>
                   )}
-                </div>
+                </div> */}
               </CardContent>
             </Card>
 
@@ -1040,10 +1598,38 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
         <ChargeBreakdownForm
           open={chargeBreakdownOpen}
           onOpenChange={setChargeBreakdownOpen}
-          lineItemDescription={getSelectedLineItem()?.description || ''}
+          lineItemDescription={(() => {
+            const item = getSelectedLineItem();
+            if (!item) return '';
+            
+            // If description has format "Category: Description", extract only description part
+            if (item.description.includes(':')) {
+              const extractedDescription = item.description.split(':')[1]?.trim() || item.description;
+              console.log('Extracting description:', {
+                original: item.description,
+                extracted: extractedDescription
+              });
+              return extractedDescription;
+            }
+            
+            // Otherwise, return the full description
+            return item.description;
+          })()}
           lineItemAmount={getSelectedLineItem()?.amount || 0}
-          onSave={saveCharges}
-          initialCharges={getSelectedLineItem()?.charges || []}
+          lineItemCategory={(() => {
+            const item = getSelectedLineItem();
+            if (!item) return 'General';
+            
+            // If description has format "Category: Description", extract category
+            if (item.description.includes(':')) {
+              return item.description.split(':')[0]?.trim() || 'General';
+            }
+            
+            // Otherwise, return General as default
+            return 'General';
+          })()}
+          onSave={saveLineItemChanges}
+          isNewItem={getSelectedLineItem()?.id.startsWith('new-') || false}
         />
       )}
     </div>
