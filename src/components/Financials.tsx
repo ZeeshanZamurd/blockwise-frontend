@@ -161,37 +161,41 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
       });
     }
 
-    // Set default year if no data exists
-    if (Object.keys(initialMonthsByYear).length === 0) {
-      initialMonthsByYear[detectedYear] = [];
-      initialBudgetByYear[detectedYear] = 120000;
-      initialBudgetLineItems[detectedYear] = [];
-      initialBudgetDocuments[detectedYear] = [];
-    }
+    // DON'T set default year - let user choose
+    // if (Object.keys(initialMonthsByYear).length === 0) {
+    //   initialMonthsByYear[detectedYear] = [];
+    //   initialBudgetByYear[detectedYear] = 120000;
+    //   initialBudgetLineItems[detectedYear] = [];
+    //   initialBudgetDocuments[detectedYear] = [];
+    // }
 
-    // Detect current year from existing data
-    const years = Object.keys(initialMonthsByYear);
-    if (years.length > 0) {
-      // Filter out invalid years (not between 2020 and 2030)
-      const validYears = years.filter(year => {
-        const yearNum = parseInt(year);
-        return yearNum >= 2020 && yearNum <= 2030;
-      });
-      
-      if (validYears.length > 0) {
-        detectedYear = validYears[validYears.length - 1]; // Use most recent valid year
-      } else {
-        // If no valid years found, use current year
-        detectedYear = new Date().getFullYear().toString();
-      }
-    }
+    // DON'T detect current year automatically - let user choose
+    // const years = Object.keys(initialMonthsByYear);
+    // if (years.length > 0) {
+    //   // Filter out invalid years (not between 2020 and 2030)
+    //   const validYears = years.filter(year => {
+    //     const yearNum = parseInt(year);
+    //     return yearNum >= 2020 && yearNum <= 2030;
+    //   });
+    //   
+    //   if (validYears.length > 0) {
+    //     detectedYear = validYears[validYears.length - 1]; // Use most recent valid year
+    //   } else {
+    //     // If no valid years found, don't set a default year - let user choose
+    //     detectedYear = '';
+    //   }
+    // }
+    
+    // Always start with no year selected
+    detectedYear = '';
 
     setMonthsByYear(initialMonthsByYear);
     setBudgetByYear(initialBudgetByYear);
     setBudgetLineItemsByYear(initialBudgetLineItems);
     setBudgetDocumentsByYear(initialBudgetDocuments);
-    setCurrentYear(detectedYear);
-    setTempBudget(initialBudgetByYear[detectedYear] || 120000);
+    // DON'T set current year - let user choose
+    // setCurrentYear(detectedYear);
+    // setTempBudget(initialBudgetByYear[detectedYear] || 120000);
 
     // Fetch available years from API
     const loadAvailableYears = async () => {
@@ -224,24 +228,19 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
           setAvailableYears(validApiYears.sort());
           setYearToFinanceId(financeIdMapping);
           
-          // If current year is not in API years, use the most recent API year
-          if (!validApiYears.includes(detectedYear)) {
-            const mostRecentYear = validApiYears[validApiYears.length - 1];
-            if (mostRecentYear) {
-              setCurrentYear(mostRecentYear);
-              // Don't set tempBudget here - let loadApiBudgetData handle it
-              // setTempBudget(initialBudgetByYear[mostRecentYear] || 120000);
-            }
-          }
+          // DON'T set current year automatically - let user choose
+          console.log(`Available years from API: ${validApiYears.join(', ')} - user must select manually`);
         } else {
           console.error('Failed to fetch available years:', yearsResponse.error);
-          // Fallback to local storage years
-          setAvailableYears(years.sort());
+          // Fallback to local storage years - NO API calls, NO year selection
+          setAvailableYears(Object.keys(initialMonthsByYear).sort());
+          console.log(`Available years from localStorage: ${Object.keys(initialMonthsByYear).join(', ')} - user must select manually`);
         }
       } catch (error) {
         console.error('Error fetching available years:', error);
-        // Fallback to local storage years
-        setAvailableYears(years.sort());
+        // Fallback to local storage years - NO API calls, NO year selection
+        setAvailableYears(Object.keys(initialMonthsByYear).sort());
+        console.log(`Available years from localStorage (error fallback): ${Object.keys(initialMonthsByYear).join(', ')} - user must select manually`);
       }
     };
 
@@ -334,13 +333,7 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
     });
   };
 
-  // Load API budget data when currentYear changes
-  useEffect(() => {
-    if (currentYear) {
-      loadApiBudgetData(currentYear);
-      loadApiMonthlyData(currentYear);
-    }
-  }, [currentYear, loadApiBudgetData, loadApiMonthlyData]);
+  // NO automatic API calls - only call APIs when user explicitly selects a year
 
   // Auto-expand months that have line items when API data loads
   useEffect(() => {
@@ -567,12 +560,12 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
         };
         
         const updated = {
-          ...prev,
+      ...prev,
           [currentYear]: (prev[currentYear] || []).map(month =>
             month.month.includes(monthName)
               ? updatedMonth
-              : month
-          )
+          : month
+      )
         };
         
         // If no existing month found, add the new month
@@ -624,19 +617,19 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
       });
     } else {
       // For local months, use the existing logic
-      setMonthsByYear(prev => ({
-        ...prev,
-        [currentYear]: getCurrentMonths().map(month =>
-          month.id === monthId
-            ? {
-                ...month,
-                lineItems: month.lineItems.map(item =>
-                  item.id === lineItemId ? { ...item, [field]: value } : item
-                )
-              }
-            : month
-        )
-      }));
+    setMonthsByYear(prev => ({
+      ...prev,
+      [currentYear]: getCurrentMonths().map(month =>
+        month.id === monthId
+          ? {
+              ...month,
+              lineItems: month.lineItems.map(item =>
+                item.id === lineItemId ? { ...item, [field]: value } : item
+              )
+            }
+          : month
+      )
+    }));
     }
   };
 
@@ -673,17 +666,17 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
       });
     } else {
       // For local months, use the existing logic
-      setMonthsByYear(prev => ({
-        ...prev,
-        [currentYear]: getCurrentMonths().map(month =>
-          month.id === monthId
-            ? {
-                ...month,
-                lineItems: month.lineItems.filter(item => item.id !== lineItemId)
-              }
-            : month
-        )
-      }));
+    setMonthsByYear(prev => ({
+      ...prev,
+      [currentYear]: getCurrentMonths().map(month =>
+        month.id === monthId
+          ? {
+              ...month,
+              lineItems: month.lineItems.filter(item => item.id !== lineItemId)
+            }
+          : month
+      )
+    }));
     }
   };
 
@@ -741,15 +734,26 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
         }
         console.log('Line items saved successfully:', response);
         
-        // Update local state to mark as uploaded
-        setMonthsByYear(prev => ({
-          ...prev,
-          [currentYear]: getCurrentMonths().map(month =>
-            month.id === monthId ? { ...month, status: 'uploaded' } : month
-          )
-        }));
+        // Update local state to mark as uploaded and change item IDs from 'new-' to saved IDs
+    setMonthsByYear(prev => ({
+      ...prev,
+      [currentYear]: getCurrentMonths().map(month =>
+            month.id === monthId ? { 
+              ...month, 
+              status: 'uploaded',
+              lineItems: month.lineItems.map(item => {
+                // If this was a new item, update its ID to reflect it's now saved
+                if (item.id.startsWith('new-')) {
+                  // Generate a new ID that doesn't start with 'new-' to indicate it's saved
+                  return { ...item, id: `saved-${Date.now()}-${Math.random().toString(36).substr(2, 9)}` };
+                }
+                return item;
+              })
+            } : month
+      )
+    }));
         
-        setEditingMonth(null);
+    setEditingMonth(null);
         toast.success(`${newLineItems.length} new line items saved successfully!`);
       } catch (error) {
         console.error('Error saving line items:', error);
@@ -765,8 +769,8 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
       
       if (response.success) {
         // Update local state
-        setBudgetByYear(prev => ({ ...prev, [currentYear]: tempBudget }));
-        setEditingBudget(false);
+    setBudgetByYear(prev => ({ ...prev, [currentYear]: tempBudget }));
+    setEditingBudget(false);
         
         // Reload API budget data to get updated values
         await loadApiBudgetData(currentYear);
@@ -802,18 +806,23 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
         return;
       }
       
+      console.log(`User explicitly selected year: ${value}`);
       setCurrentYear(value);
-      // Don't set tempBudget here - let loadApiBudgetData handle it
-      // setTempBudget(budgetByYear[value] || 120000);
       
-      // Load API budget and monthly data for the selected year
-      try {
-        await loadApiBudgetData(value);
-        await loadApiMonthlyData(value);
+      // Only call APIs when user explicitly selects a year
+      if (availableYears.includes(value)) {
+        console.log(`Calling APIs for selected year: ${value}`);
+        try {
+          await loadApiBudgetData(value);
+          await loadApiMonthlyData(value);
       } catch (error) {
-        console.error('Error loading data for year:', value, error);
-        toast.error('Failed to load data for selected year');
-        // Fallback to local budget if API fails
+          console.error('Error loading data for year:', value, error);
+          toast.error('Failed to load data for selected year');
+          // Fallback to local budget if API fails
+          setTempBudget(budgetByYear[value] || 120000);
+        }
+      } else {
+        console.log(`Year ${value} not in availableYears, using local data only`);
         setTempBudget(budgetByYear[value] || 120000);
       }
     }
@@ -923,25 +932,25 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
         const response = await saveLineItem(financeId, apiMonthId.toString(), lineItemData);
         if (response.success) {
           // Update local state with the new data including category
-          setMonthsByYear(prev => ({
-            ...prev,
-            [currentYear]: getCurrentMonths().map(month =>
-              month.id === selectedLineItem.monthId
-                ? {
-                    ...month,
-                    lineItems: month.lineItems.map(item =>
-                      item.id === selectedLineItem.lineItemId 
+    setMonthsByYear(prev => ({
+      ...prev,
+      [currentYear]: getCurrentMonths().map(month =>
+        month.id === selectedLineItem.monthId
+          ? {
+              ...month,
+              lineItems: month.lineItems.map(item =>
+                item.id === selectedLineItem.lineItemId 
                         ? { 
                             ...item, 
                             description: `${updatedData.category}: ${updatedData.description}`,
                             amount: updatedData.amount 
                           }
-                        : item
-                    )
-                  }
-                : month
-            )
-          }));
+                  : item
+              )
+            }
+          : month
+      )
+    }));
           
           toast.success('Line item saved successfully!');
         } else {
@@ -1060,9 +1069,9 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <h3 className="text-2xl font-bold">Monthly Spending</h3>
-              <Select value={currentYear} onValueChange={handleYearSelect}>
-                <SelectTrigger className="w-24">
-                  <SelectValue />
+              <Select value={currentYear || ""} onValueChange={handleYearSelect}>
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="Select Year" />
                 </SelectTrigger>
                 <SelectContent className="bg-background border z-50">
                   {availableYears.map(year => (
@@ -1078,6 +1087,26 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
             </Button> */}
           </div>
 
+          {/* Show message when no year is selected */}
+          {!currentYear && (
+            <Card className="border-dashed border-2 border-muted-foreground/25">
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold text-muted-foreground mb-2">No Year Selected</h3>
+                <p className="text-sm text-muted-foreground text-center mb-4">
+                  Please select a year from the dropdown above or add a new year to start managing your finances.
+                </p>
+                <Button onClick={() => setShowAddYear(true)} variant="outline">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add New Year
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Only show summary cards and month cards when a year is selected */}
+          {currentYear && (
+            <>
           {/* Simple Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
@@ -1181,29 +1210,48 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
                           </div>
                         </div>
                         
-                        {month.lineItems.map((item) => (
-                          <div key={item.id} className="space-y-2">
+                        {month.lineItems.map((item) => {
+                          const isNewItem = item.id.startsWith('new-');
+                          const isExistingItem = !isNewItem; // This includes both API items and locally saved items
+                          
+                          console.log('Line item status:', {
+                            itemId: item.id,
+                            description: item.description,
+                            amount: item.amount,
+                            isNewItem,
+                            isExistingItem
+                          });
+                          
+                          return (
+                            <div key={item.id} className={`space-y-2 ${isExistingItem ? 'opacity-60' : ''}`}>
                             <div className="flex gap-2 items-center">
+                                <div className="flex-1 relative">
                               <Input
                                 placeholder="Description"
-                                value={(() => {
-                                  // If description has format "Category: Description", show only description part
-                                  if (item.description.includes(':')) {
-                                    return item.description.split(':')[1]?.trim() || item.description;
-                                  }
-                                  return item.description;
-                                })()}
-                                onChange={(e) => {
-                                  // Get current category and combine with new description
-                                  const currentCategory = item.description.includes(':') 
-                                    ? item.description.split(':')[0]?.trim() || 'General'
-                                    : 'General';
-                                  const newDescription = `${currentCategory}: ${e.target.value}`;
-                                  updateLineItem(month.id, item.id, 'description', newDescription);
-                                }}
-                                disabled={editingMonth !== month.id}
-                                className="flex-1"
-                              />
+                                    value={(() => {
+                                      // If description has format "Category: Description", show only description part
+                                      if (item.description.includes(':')) {
+                                        return item.description.split(':')[1]?.trim() || item.description;
+                                      }
+                                      return item.description;
+                                    })()}
+                                    onChange={(e) => {
+                                      // Get current category and combine with new description
+                                      const currentCategory = item.description.includes(':') 
+                                        ? item.description.split(':')[0]?.trim() || 'General'
+                                        : 'General';
+                                      const newDescription = `${currentCategory}: ${e.target.value}`;
+                                      updateLineItem(month.id, item.id, 'description', newDescription);
+                                    }}
+                                    disabled={isExistingItem}
+                                    className={`flex-1 ${isExistingItem ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                                  />
+                                  {isExistingItem && (
+                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500 bg-white px-1">
+                                      SAVED
+                                    </div>
+                                  )}
+                                </div>
                               <div className="relative w-32">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">£</span>
                                 <Input
@@ -1211,21 +1259,22 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
                                   placeholder="0"
                                   value={item.amount || ''}
                                   onChange={(e) => updateLineItem(month.id, item.id, 'amount', parseFloat(e.target.value) || 0)}
-                                  disabled={editingMonth !== month.id}
-                                  className="pl-6 text-right"
+                                    disabled={isExistingItem}
+                                    className={`pl-6 text-right ${isExistingItem ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                                 />
                               </div>
                                <Button 
                                  onClick={() => openChargeBreakdown(month.id, item.id)}
                                  variant="outline" 
                                  size="sm"
-                                 title="Add more info and upload invoices"
-                                 className="text-blue-600 hover:text-blue-700 px-3"
+                                 title={isExistingItem ? "This item is already saved" : "Add more info and upload invoices"}
+                                 className={`px-3 ${isExistingItem ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:text-blue-700'}`}
+                                 disabled={isExistingItem}
                                >
                                  <Plus className="h-4 w-4 mr-1" />
                                  Add more info
                                </Button>
-                               {editingMonth === month.id && (
+                               {editingMonth === month.id && !isExistingItem && (
                                  <>
                                    <Button 
                                      onClick={() => {
@@ -1248,6 +1297,7 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
                                      onClick={() => removeLineItem(month.id, item.id)}
                                      variant="outline" 
                                      size="sm"
+                                     title="Remove line item"
                                    >
                                      <Trash2 className="h-4 w-4" />
                                    </Button>
@@ -1257,8 +1307,8 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
                             
                              {/* Charges summary */}
                              {item.charges && item.charges.length > 0 && (
-                               <div className="ml-4 text-xs text-muted-foreground">
-                                 <span className="text-blue-600 font-medium">
+                               <div className={`ml-4 text-xs ${isExistingItem ? 'text-gray-400' : 'text-muted-foreground'}`}>
+                                 <span className={`font-medium ${isExistingItem ? 'text-gray-400' : 'text-blue-600'}`}>
                                    {item.charges.length} charge{item.charges.length !== 1 ? 's' : ''} • 
                                    £{item.charges.reduce((sum, charge) => sum + charge.amount, 0).toLocaleString()} breakdown
                                  </span>
@@ -1267,12 +1317,12 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
 
                              {/* Attachments display */}
                              {item.attachments && item.attachments.length > 0 && (
-                               <div className="ml-4 space-y-1">
+                               <div className={`ml-4 space-y-1 ${isExistingItem ? 'opacity-60' : ''}`}>
                                  {item.attachments.map((attachment, index) => (
-                                   <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
+                                   <div key={index} className={`flex items-center gap-2 text-sm ${isExistingItem ? 'text-gray-400' : 'text-muted-foreground'}`}>
                                      <Paperclip className="h-3 w-3" />
                                      <span className="flex-1">{attachment.fileName}</span>
-                                     {editingMonth === month.id && (
+                                     {editingMonth === month.id && !isExistingItem && (
                                        <Button
                                          onClick={() => removeAttachment(month.id, item.id, attachment.fileName)}
                                          variant="ghost"
@@ -1287,7 +1337,8 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
                                </div>
                              )}
                           </div>
-                        ))}
+                          );
+                        })}
                         
                         {editingMonth === month.id && (
                           <Button 
@@ -1306,15 +1357,17 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
               );
             })}
           </div>
+            </>
+          )}
         </TabsContent>
 
         <TabsContent value="annual" className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <h3 className="text-xl font-semibold">Annual Budget - {currentYear}</h3>
-              <Select value={currentYear} onValueChange={handleYearSelect}>
+              <h3 className="text-xl font-semibold">Annual Budget - {currentYear || 'Select Year'}</h3>
+              <Select value={currentYear || ""} onValueChange={handleYearSelect}>
                 <SelectTrigger className="w-32">
-                  <SelectValue />
+                  <SelectValue placeholder="Select Year" />
                 </SelectTrigger>
                 <SelectContent>
                   {availableYears.map(year => (
@@ -1330,6 +1383,26 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
             </Button>
           </div>
 
+          {/* Show message when no year is selected */}
+          {!currentYear && (
+            <Card className="border-dashed border-2 border-muted-foreground/25">
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold text-muted-foreground mb-2">No Year Selected</h3>
+                <p className="text-sm text-muted-foreground text-center mb-4">
+                  Please select a year from the dropdown above or add a new year to start managing your annual budget.
+                </p>
+                <Button onClick={() => setShowAddYear(true)} variant="outline">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add New Year
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Only show budget content when a year is selected */}
+          {currentYear && (
+            <>
           {/* Budget vs Actual Spend */}
           <div className="grid gap-6">
             <Card>
@@ -1559,6 +1632,8 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
             </Card>
 
           </div>
+            </>
+          )}
         </TabsContent>
       </Tabs>
 
