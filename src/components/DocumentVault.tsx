@@ -51,6 +51,7 @@ const DocumentVault = ({ emptyDataMode }: DocumentVaultProps) => {
   const [showArchived, setShowArchived] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [isManageFoldersOpen, setIsManageFoldersOpen] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
   const [tempTitle, setTempTitle] = useState('');
   
@@ -115,11 +116,24 @@ const DocumentVault = ({ emptyDataMode }: DocumentVaultProps) => {
 
   const handleCreateFolder = async () => {
     const name = newFolderName.trim();
-    if (!name) return;
+    if (!name) {
+      toast.error('Please enter a folder name');
+      return;
+    }
+
+    // Check if folder name already exists
+    const existingFolder = folders.find(f => f.name.toLowerCase() === name.toLowerCase());
+    if (existingFolder) {
+      toast.error(`Folder "${name}" already exists`);
+      return;
+    }
 
     try {
       console.log(`Creating folder: ${name}`);
+      console.log('Current folders before creation:', folders);
+      
       const result = await createFolder(name);
+      console.log('API response:', result);
       
       if (result.success && result.data) {
         console.log('Folder created successfully:', result.data);
@@ -130,8 +144,15 @@ const DocumentVault = ({ emptyDataMode }: DocumentVaultProps) => {
           name: result.data.folderName
         };
         
-        setFolders((prev) => [...prev, newFolder]);
+        console.log('Adding new folder to state:', newFolder);
+        setFolders((prev) => {
+          const updated = [...prev, newFolder];
+          console.log('Updated folders:', updated);
+          return updated;
+        });
+        
         setNewFolderName('');
+        setIsManageFoldersOpen(false);
         toast.success(`Folder "${name}" created successfully!`);
       } else {
         console.error('Failed to create folder:', result.error);
@@ -541,25 +562,7 @@ const filteredDocuments = documents
           </Button>
           <Button 
             className="bg-blue-600 hover:bg-blue-700"
-            onClick={() => {
-              // Create file input element
-              const input = document.createElement('input');
-              input.type = 'file';
-              input.multiple = true;
-              input.accept = '.pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif';
-              input.onchange = (e) => {
-                const files = (e.target as HTMLInputElement).files;
-                if (files && files.length > 0) {
-                  console.log('Files selected:', files);
-                  if (files.length === 1) {
-                    handleFileUpload(files[0]);
-                  } else {
-                    handleMultipleFileUpload(files);
-                  }
-                }
-              };
-              input.click();
-            }}
+            onClick={() => setIsUploadModalOpen(true)}
             disabled={isUploading}
           >
             {isUploading ? (
@@ -638,14 +641,9 @@ const filteredDocuments = documents
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={async () => {
-                    const name = prompt('Enter folder name:');
-                    console.log('Prompt result:', name);
-                    if (name?.trim()) {
-                      console.log('Setting folder name and calling API:', name.trim());
-                      setNewFolderName(name.trim());
-                      await handleCreateFolder();
-                    }
+                  onClick={() => {
+                    setNewFolderName('');
+                    setIsManageFoldersOpen(true);
                   }}
                 >
                   <Plus className="h-4 w-4 mr-1" /> Folder
@@ -1159,7 +1157,7 @@ const filteredDocuments = documents
                 folders.map((folder) => (
                   <div key={folder.id} className="flex items-center justify-between p-2 border rounded">
                     <span>{folder.name}</span>
-                    <Button 
+                    {/* <Button 
                       variant="destructive" 
                       size="sm"
                       onClick={() => {
@@ -1170,10 +1168,68 @@ const filteredDocuments = documents
                       }}
                     >
                       Delete
-                    </Button>
+                    </Button> */}
                   </div>
                 ))
               )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Upload Document Modal */}
+      <Dialog open={isUploadModalOpen} onOpenChange={setIsUploadModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Upload Documents</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+              <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-sm text-gray-600 mb-4">
+                Select files to upload to your document vault
+              </p>
+              <input
+                type="file"
+                multiple
+                accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
+                onChange={(e) => {
+                  const files = e.target.files;
+                  if (files && files.length > 0) {
+                    console.log('Files selected:', files);
+                    if (files.length === 1) {
+                      handleFileUpload(files[0]);
+                    } else {
+                      handleMultipleFileUpload(files);
+                    }
+                    setIsUploadModalOpen(false);
+                  }
+                }}
+                className="hidden"
+                id="file-upload"
+              />
+              <Button 
+                onClick={() => document.getElementById('file-upload')?.click()}
+                disabled={isUploading}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {isUploading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Uploading... ({uploadProgress}%)
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Choose Files
+                  </>
+                )}
+              </Button>
+            </div>
+            
+            <div className="text-xs text-gray-500">
+              <p>Supported formats: PDF, DOC, DOCX, TXT, JPG, JPEG, PNG, GIF</p>
+              <p>Maximum file size: 10MB per file</p>
             </div>
           </div>
         </DialogContent>
