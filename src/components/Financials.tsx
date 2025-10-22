@@ -552,7 +552,9 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
     ];
     const monthName = monthNames[monthIndex];
     
-    console.log(`Adding line item to ${monthName} (index: ${monthIndex})`);
+    console.log(`Adding NEW line item to ${monthName} (index: ${monthIndex})`);
+    console.log('New line item ID:', newLineItem.id);
+    console.log('This item will be marked as NEW and sent to backend when Save is clicked');
     
     setMonthsByYear(prev => {
       const currentMonths = getCurrentMonths();
@@ -579,7 +581,8 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
         }
         
         console.log('Updated monthsByYear:', updated);
-        console.log('New line item added:', newLineItem);
+        console.log('New line item added with ID:', newLineItem.id);
+        console.log('Total line items in month after adding:', updatedMonth.lineItems.length);
         return updated;
       }
       return prev;
@@ -704,10 +707,15 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
     const monthData = getCurrentMonths().find(m => m.id === monthId);
     if (monthData) {
       console.log('Month data to save:', monthData);
+      console.log('All line items:', monthData.lineItems);
       
-      // Prepare array of new line items to save
+      // ONLY filter for NEW line items (those with IDs starting with 'new-')
       const newLineItems = monthData.lineItems
-        .filter(item => item.id.startsWith('new-'))
+        .filter(item => {
+          const isNew = item.id.startsWith('new-');
+          console.log(`Line item ${item.id}: isNew=${isNew}, description="${item.description}", amount=${item.amount}`);
+          return isNew;
+        })
         .map(item => ({
           itemName: item.description.split(':')[0]?.trim() || 'New Item',
           category: 'General',
@@ -715,12 +723,15 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
           amount: item.amount || 0
         }));
       
+      console.log(`Filtered new line items:`, newLineItems);
+      console.log(`Total new items to save: ${newLineItems.length}`);
+      
       if (newLineItems.length === 0) {
         toast.info('No new line items to save');
         return;
       }
       
-      console.log(`Saving ${newLineItems.length} new line items to API:`, newLineItems);
+      console.log(`Saving ONLY ${newLineItems.length} NEW line items to API:`, newLineItems);
       
       try {
         const response = await saveLineItem(financeId, apiMonthId.toString(), newLineItems);
@@ -739,7 +750,7 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
         }));
         
         setEditingMonth(null);
-        toast.success(`${newLineItems.length} line items saved successfully!`);
+        toast.success(`${newLineItems.length} new line items saved successfully!`);
       } catch (error) {
         console.error('Error saving line items:', error);
         toast.error('Failed to save line items');
