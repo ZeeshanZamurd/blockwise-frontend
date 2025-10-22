@@ -511,6 +511,7 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
           }
         }
         
+        
         setNewYear('');
         setShowAddYear(false);
       } catch (error) {
