@@ -438,13 +438,25 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
   };
 
   const addYear = async () => {
-    if (newYear && !monthsByYear[newYear]) {
-      // Validate that the new year is valid
-      const yearNum = parseInt(newYear);
-      if (yearNum < 2020 || yearNum > 2030) {
-        toast.error('Please enter a valid year between 2020 and 2030');
-        return;
-      }
+    if (!newYear.trim()) {
+      toast.error('Please enter a year');
+      return;
+    }
+
+    // Validate that the new year is valid
+    const yearNum = parseInt(newYear);
+    if (yearNum < 2020 || yearNum > 2030) {
+      toast.error('Please enter a valid year between 2020 and 2030');
+      return;
+    }
+
+    // Check if year already exists in availableYears
+    if (availableYears.includes(newYear)) {
+      toast.error(`Year ${newYear} already exists`);
+      return;
+    }
+
+    console.log(`Creating new year: ${newYear}`);
       
       try {
         // Try to fetch existing budget from API first
@@ -460,8 +472,9 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
           setCurrentYear(newYear);
           setTempBudget(apiData.totalBudget);
           
-          // Update available years list
+          // Update available years list and finance ID mapping
           setAvailableYears(prev => [...prev, newYear].sort());
+          setYearToFinanceId(prev => ({ ...prev, [newYear]: apiData.id }));
           
           toast.success(`Year ${newYear} loaded with budget £${apiData.totalBudget.toLocaleString()}`);
         } else {
@@ -477,8 +490,9 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
             setCurrentYear(newYear);
             setTempBudget(apiData.totalBudget);
             
-            // Update available years list
+            // Update available years list and finance ID mapping
             setAvailableYears(prev => [...prev, newYear].sort());
+            setYearToFinanceId(prev => ({ ...prev, [newYear]: apiData.id }));
             
             toast.success(`Year ${newYear} created with budget £${apiData.totalBudget.toLocaleString()}`);
           } else {
@@ -490,7 +504,7 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
             setCurrentYear(newYear);
             setTempBudget(120000);
             
-            // Update available years list
+            // Update available years list (no finance ID for fallback case)
             setAvailableYears(prev => [...prev, newYear].sort());
             
             toast.error(createResponse.error || 'Failed to create year budget, using default values');
@@ -502,7 +516,6 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
       } catch (error) {
         console.error('Error adding year:', error);
         toast.error('Failed to add year');
-      }
     }
   };
 
@@ -691,8 +704,15 @@ const Financials = ({ emptyDataMode }: FinancialsProps) => {
     
     // Get finance ID for current year
     const financeId = yearToFinanceId[currentYear];
+    console.log('Finance ID lookup:', {
+      currentYear,
+      yearToFinanceId,
+      financeId
+    });
+    
     if (!financeId) {
-      toast.error(`No finance ID found for year ${currentYear}`);
+      toast.error(`No finance ID found for year ${currentYear}. Please refresh the page or recreate the year.`);
+      console.error('Missing finance ID for year:', currentYear, 'Available mappings:', yearToFinanceId);
       return;
     }
     
