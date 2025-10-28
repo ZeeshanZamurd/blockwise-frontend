@@ -534,17 +534,171 @@ const MeetingsSection = ({ emptyDataMode }: MeetingsSectionProps) => {
         <TabsContent value="agm">
           <div className="grid gap-4">
             {meetings.filter(m => m.type.toLowerCase().includes('agm')).map((meeting) => (
-              <Card key={meeting.id}>
-                <CardHeader>
-                  <CardTitle>{meeting.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-600">{formatDate(meeting.date)} at {formatTime(meeting.time)}</p>
-                  <div className="mt-2">
-                    {getStatusBadge(meeting.status)}
-                  </div>
-                </CardContent>
-              </Card>
+              <Dialog key={meeting.id}>
+                <DialogTrigger asChild>
+                  <Card 
+                    className={`hover:shadow-md transition-all cursor-pointer ${
+                      clickedMeetingId === meeting.id 
+                        ? 'bg-blue-50 border-blue-200' 
+                        : 'hover:bg-gray-50'
+                    }`}
+                    onClick={() => {
+                      setSelectedMeeting(meeting);
+                      setClickedMeetingId(meeting.id);
+                    }}
+                  >
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="text-lg">{meeting.title}</CardTitle>
+                          <div className="flex items-center gap-4 text-sm text-gray-600 mt-2">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-4 w-4" />
+                              {formatDate(meeting.date)} at {formatTime(meeting.time)}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Users className="h-4 w-4" />
+                              {meeting.attendees ? meeting.attendees.length : 0} attendees
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline">{meeting.type}</Badge>
+                          {getStatusBadge(meeting.status)}
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4 text-sm text-gray-600">
+                          {meeting.transcript && (
+                            <div className="flex items-center gap-1">
+                              <FileText className="h-4 w-4" />
+                              Transcript available
+                            </div>
+                          )}
+                          {meeting.videoUrl && (
+                            <div className="flex items-center gap-1">
+                              <Video className="h-4 w-4" />
+                              Recording available
+                            </div>
+                          )}
+                          {meeting.documentId && (
+                            <div className="flex items-center gap-1">
+                              <FileText className="h-4 w-4" />
+                              Document attached
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>{selectedMeeting?.title}</DialogTitle>
+                  </DialogHeader>
+                  {selectedMeeting && (
+                    <div className="space-y-6">
+                      {/* Meeting Overview */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <h3 className="font-semibold mb-2">Meeting Details</h3>
+                          <div className="space-y-1 text-sm">
+                            <p><strong>Type:</strong> {selectedMeeting.type}</p>
+                            <p><strong>Date:</strong> {formatDate(selectedMeeting.date)}</p>
+                            <p><strong>Time:</strong> {formatTime(selectedMeeting.time)}</p>
+                            <p><strong>Status:</strong> {selectedMeeting.status}</p>
+                          </div>
+                        </div>
+                        <div>
+                          <h3 className="font-semibold mb-2">Attendees</h3>
+                          <div className="space-y-1">
+                            {selectedMeeting.attendees && selectedMeeting.attendees.length > 0 ? (
+                              selectedMeeting.attendees.map((attendee, index) => (
+                                <div key={index} className="flex items-center gap-2 text-sm">
+                                  <Users className="h-3 w-3" />
+                                  {attendee}
+                                </div>
+                              ))
+                            ) : (
+                              <p className="text-sm text-gray-500">No attendees specified</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Notes */}
+                      {selectedMeeting.notes && (
+                        <div>
+                          <h3 className="font-semibold mb-2">Meeting Notes</h3>
+                          <div className="bg-gray-50 p-4 rounded-lg">
+                            <p className="text-sm">{selectedMeeting.notes}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Transcript */}
+                      {selectedMeeting.transcript && (
+                        <div>
+                          <h3 className="font-semibold mb-2">Transcript</h3>
+                          <div className="bg-gray-50 p-4 rounded-lg max-h-40 overflow-y-auto">
+                            <p className="text-sm whitespace-pre-wrap">{selectedMeeting.transcript}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Video */}
+                      {selectedMeeting.videoUrl && (
+                        <div>
+                          <h3 className="font-semibold mb-2">Recording</h3>
+                          <div className="flex items-center gap-2">
+                            <Video className="h-4 w-4" />
+                            <a 
+                              href={selectedMeeting.videoUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline text-sm"
+                            >
+                              View meeting recording
+                            </a>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Document */}
+                      {selectedMeeting.documentId && (
+                        <div>
+                          <h3 className="font-semibold mb-2">Meeting Document</h3>
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4" />
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleViewDocument(selectedMeeting.documentId!)}
+                                className="flex items-center gap-1"
+                              >
+                                <Eye className="h-3 w-3" />
+                                View Document
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleDownloadDocument(selectedMeeting.documentId!)}
+                                className="flex items-center gap-1"
+                              >
+                                <Download className="h-3 w-3" />
+                                Download
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
             ))}
           </div>
         </TabsContent>
@@ -552,17 +706,171 @@ const MeetingsSection = ({ emptyDataMode }: MeetingsSectionProps) => {
         <TabsContent value="board">
           <div className="grid gap-4">
             {meetings.filter(m => m.type.toLowerCase().includes('board') || m.type.toLowerCase().includes('meeting')).map((meeting) => (
-              <Card key={meeting.id}>
-                <CardHeader>
-                  <CardTitle>{meeting.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-600">{formatDate(meeting.date)} at {formatTime(meeting.time)}</p>
-                  <div className="mt-2">
-                    {getStatusBadge(meeting.status)}
-                  </div>
-                </CardContent>
-              </Card>
+              <Dialog key={meeting.id}>
+                <DialogTrigger asChild>
+                  <Card 
+                    className={`hover:shadow-md transition-all cursor-pointer ${
+                      clickedMeetingId === meeting.id 
+                        ? 'bg-blue-50 border-blue-200' 
+                        : 'hover:bg-gray-50'
+                    }`}
+                    onClick={() => {
+                      setSelectedMeeting(meeting);
+                      setClickedMeetingId(meeting.id);
+                    }}
+                  >
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="text-lg">{meeting.title}</CardTitle>
+                          <div className="flex items-center gap-4 text-sm text-gray-600 mt-2">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-4 w-4" />
+                              {formatDate(meeting.date)} at {formatTime(meeting.time)}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Users className="h-4 w-4" />
+                              {meeting.attendees ? meeting.attendees.length : 0} attendees
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline">{meeting.type}</Badge>
+                          {getStatusBadge(meeting.status)}
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4 text-sm text-gray-600">
+                          {meeting.transcript && (
+                            <div className="flex items-center gap-1">
+                              <FileText className="h-4 w-4" />
+                              Transcript available
+                            </div>
+                          )}
+                          {meeting.videoUrl && (
+                            <div className="flex items-center gap-1">
+                              <Video className="h-4 w-4" />
+                              Recording available
+                            </div>
+                          )}
+                          {meeting.documentId && (
+                            <div className="flex items-center gap-1">
+                              <FileText className="h-4 w-4" />
+                              Document attached
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>{selectedMeeting?.title}</DialogTitle>
+                  </DialogHeader>
+                  {selectedMeeting && (
+                    <div className="space-y-6">
+                      {/* Meeting Overview */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <h3 className="font-semibold mb-2">Meeting Details</h3>
+                          <div className="space-y-1 text-sm">
+                            <p><strong>Type:</strong> {selectedMeeting.type}</p>
+                            <p><strong>Date:</strong> {formatDate(selectedMeeting.date)}</p>
+                            <p><strong>Time:</strong> {formatTime(selectedMeeting.time)}</p>
+                            <p><strong>Status:</strong> {selectedMeeting.status}</p>
+                          </div>
+                        </div>
+                        <div>
+                          <h3 className="font-semibold mb-2">Attendees</h3>
+                          <div className="space-y-1">
+                            {selectedMeeting.attendees && selectedMeeting.attendees.length > 0 ? (
+                              selectedMeeting.attendees.map((attendee, index) => (
+                                <div key={index} className="flex items-center gap-2 text-sm">
+                                  <Users className="h-3 w-3" />
+                                  {attendee}
+                                </div>
+                              ))
+                            ) : (
+                              <p className="text-sm text-gray-500">No attendees specified</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Notes */}
+                      {selectedMeeting.notes && (
+                        <div>
+                          <h3 className="font-semibold mb-2">Meeting Notes</h3>
+                          <div className="bg-gray-50 p-4 rounded-lg">
+                            <p className="text-sm">{selectedMeeting.notes}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Transcript */}
+                      {selectedMeeting.transcript && (
+                        <div>
+                          <h3 className="font-semibold mb-2">Transcript</h3>
+                          <div className="bg-gray-50 p-4 rounded-lg max-h-40 overflow-y-auto">
+                            <p className="text-sm whitespace-pre-wrap">{selectedMeeting.transcript}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Video */}
+                      {selectedMeeting.videoUrl && (
+                        <div>
+                          <h3 className="font-semibold mb-2">Recording</h3>
+                          <div className="flex items-center gap-2">
+                            <Video className="h-4 w-4" />
+                            <a 
+                              href={selectedMeeting.videoUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline text-sm"
+                            >
+                              View meeting recording
+                            </a>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Document */}
+                      {selectedMeeting.documentId && (
+                        <div>
+                          <h3 className="font-semibold mb-2">Meeting Document</h3>
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4" />
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleViewDocument(selectedMeeting.documentId!)}
+                                className="flex items-center gap-1"
+                              >
+                                <Eye className="h-3 w-3" />
+                                View Document
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleDownloadDocument(selectedMeeting.documentId!)}
+                                className="flex items-center gap-1"
+                              >
+                                <Download className="h-3 w-3" />
+                                Download
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
             ))}
           </div>
         </TabsContent>

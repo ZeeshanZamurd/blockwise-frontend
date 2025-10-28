@@ -504,7 +504,7 @@ export const useDocument = () => {
     
     try {
       console.log(`Updating archive status for document ${documentId} to ${isArchived}`);
-      const response = await api.put(`/api/v1/document/${documentId}/archive`, {
+      const response = await api.put(`/api/v1/document/${documentId}`, {
         isArchived
       });
       const responseData = response.data;

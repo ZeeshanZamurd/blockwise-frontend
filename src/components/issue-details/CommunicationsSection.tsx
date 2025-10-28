@@ -31,6 +31,7 @@ interface CommunicationsSectionProps {
     fromEmail?: string;
     toEmail?: string;
     bodyText?: string;
+    bodyHtml?: string;
     summary?: string;
     // Context format
     id?: string;
@@ -87,9 +88,9 @@ const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, 
       ? emails.filter(email => currentIssue.linkedEmailIds?.includes(email.id))
       : [];
 
-  // Show only first 4 items unless showAll is true
-  const displayedLinkedEmails = showAll ? linkedEmails : linkedEmails.slice(0, 4);
-  const hasMoreItems = linkedEmails.length > 4;
+  // Show only first 3 items unless showAll is true
+  const displayedLinkedEmails = showAll ? linkedEmails : linkedEmails.slice(0, 3);
+  const hasMoreItems = linkedEmails.length > 3;
 
   // Use API emails for filtering instead of context emails
   const filteredEmails = apiEmails.filter(email =>
@@ -378,6 +379,7 @@ const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, 
                 from: communication.fromEmail,
                 to: communication.toEmail,
                 body: communication.bodyText,
+                bodyHtml: communication.bodyHtml,
                 summary: communication.summary,
                 date: communication.messageId // Use messageId as date fallback
               } : communication;
@@ -406,13 +408,17 @@ const CommunicationsSection: React.FC<CommunicationsSectionProps> = ({ issueId, 
                     <span>From: {email.from}</span>
                     <span>To: {email.to || 'N/A'}</span>
                   </div>
-                  {isApiFormat && communication.bodyText && (
+                  {isApiFormat && (communication.bodyText || communication.bodyHtml) && (
                     <details className="mt-2">
                       <summary className="text-xs text-blue-600 cursor-pointer hover:text-blue-800">
                         View full message
                       </summary>
-                      <div className="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-700 max-h-32 overflow-y-auto">
-                        {communication.summary}
+                      <div className="mt-2 p-4 bg-gray-50 rounded text-sm text-gray-700 max-h-96 overflow-y-auto whitespace-pre-wrap">
+                        {communication.bodyHtml ? (
+                          <div dangerouslySetInnerHTML={{ __html: communication.bodyHtml }} />
+                        ) : (
+                          <div>{communication.bodyText}</div>
+                        )}
                       </div>
                     </details>
                   )}

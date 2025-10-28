@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AlertTriangle, Calendar, FileText, CheckCircle, Clock, Users, PoundSterling, Shield, Activity, Eye, ArrowRight, TriangleAlert, Mail, MessageSquare, User, Phone, Mail as MailIcon, Clock as ClockIcon, Repeat } from 'lucide-react';
+import { AlertTriangle, Calendar, FileText, CheckCircle, Clock, Users, PoundSterling, Shield, Activity, Eye, ArrowRight, TriangleAlert, Mail, MessageSquare, User, Phone, Mail as MailIcon, Clock as ClockIcon, Repeat, Copy } from 'lucide-react';
 import EnhancedIssueDetailsModal from './EnhancedIssueDetailsModal';
 import EmailProcessing from './EmailProcessing';
 import ExpiryBanner from './ExpiryBanner';
@@ -34,6 +34,13 @@ const Dashboard = ({ emptyDataMode = false, userData }: DashboardProps) => {
   const { issues, updateIssue } = useIssues();
   const { fetchIssues, getIssueById, getIssuesByBuildingIdAndPriority, isLoading: isIssuesLoading } = useIssue();
   const { building } = useBuilding();
+
+  // Copy email to clipboard
+  const copyEmailToClipboard = () => {
+    if (building?.uniqueEmail) {
+      navigator.clipboard.writeText(building.uniqueEmail);
+    }
+  };
 
   // Fetch issues when component mounts
   useEffect(() => {
@@ -524,6 +531,30 @@ const Dashboard = ({ emptyDataMode = false, userData }: DashboardProps) => {
         <h2 className="text-3xl font-bold text-gray-900 mb-2">Building Overview</h2>
         <p className="text-gray-600">Centralised hub for issues, communications and scheduling</p>
       </div>
+
+      {/* Your Building Email Section */}
+      {building?.uniqueEmail && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center space-x-2 mb-2">
+            <Mail className="h-5 w-5 text-blue-600" />
+            <h3 className="font-semibold text-blue-900">Your Building Email</h3>
+          </div>
+          <p className="text-sm text-blue-800 mb-3">Forward emails to this address to start processing them:</p>
+          <div className="flex items-center space-x-2">
+            <div className="flex-1 font-mono text-sm bg-white p-3 rounded border border-gray-300 text-gray-900">
+              {building.uniqueEmail}
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={copyEmailToClipboard}
+              className="shrink-0"
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Top-Level KPIs - now with 4 modules */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
